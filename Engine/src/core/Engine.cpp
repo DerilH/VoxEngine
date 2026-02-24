@@ -29,6 +29,7 @@ VOX_NS
         Vox::Resources::ResourcesManager::Get().loadAll();
 
         auto window = new Render::Windowing::Window(mTitle, 920, 480);
+        mWindows.emplace(mTitle,window);
         mRenderer = Render::RendererFactory::Create(mShaderRepository, Render::VULKAN_API);
         mRenderer->init();
 
@@ -49,6 +50,10 @@ VOX_NS
     Render::Windowing::Window * Engine::getWindow(std::string name) const {
         const auto res = mWindows.find(name);
         return res != mWindows.end() ? res->second : nullptr;
+    }
+
+    void Engine::setGui(std::function<void(Render::Vulkan::FrameSync)> foo) {
+        mRenderer->setGui(foo);
     }
 
 NS_END

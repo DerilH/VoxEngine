@@ -26,6 +26,7 @@ public:
     ~Engine();
     void init();
     void run();
+    void setGui(std::function<void(Render::Vulkan::FrameSync)> foo);
     Render::Windowing::Window* getWindow(std::string name) const;
 };
 NS_END

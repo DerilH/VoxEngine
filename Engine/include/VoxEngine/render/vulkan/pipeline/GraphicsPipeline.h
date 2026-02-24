@@ -64,7 +64,7 @@ VULKAN_NS
 
         PipelineBuilder &msaa(VkSampleCountFlagBits flags = VK_SAMPLE_COUNT_1_BIT, VkBool32 enableShading = VK_FALSE) &;
 
-        PipelineBuilder &dynamic(const Buffer<VkDynamicState> states) &;
+        PipelineBuilder &dynamic(Buffer<VkDynamicState> states) &;
 
         PipelineBuilder &layout(Buffer<VkDescriptorSetLayout> sets, Buffer<VkPushConstantRange> constants) &;
 

@@ -7,13 +7,10 @@
 #include <VoxEngine/render/vulkan/RenderPass.h>
 
 namespace Vox::Render::Vulkan {
-    int RenderPass::sIndex = 0;
-
-    RenderPass::RenderPass(VkRenderPass renderPass, const RenderPassType type) : VulkanObject(renderPass), mType(type), mId(sIndex) {
-        sIndex++;
+    RenderPass::RenderPass(VkRenderPass renderPass, const RenderPassType type) : VulkanObject(renderPass), mType(type) {
     }
 
-    RenderPass RenderPass::Create(const LogicalDevice& device, VkFormat format, RenderPassType type) {
+    RenderPass RenderPass::Create(const LogicalDevice& device, VkFormat format, RenderPassType type, bool dynamic) {
         VkAttachmentDescription colorAttachment{};
         colorAttachment.format = format;
         colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -54,20 +51,11 @@ namespace Vox::Render::Vulkan {
         VkRenderPass renderPass = VK_NULL_HANDLE;
         VK_CHECK(vkCreateRenderPass(device.getHandle(), &renderPassInfo, nullptr, &renderPass), "failed to create render pass!");
         return RenderPass(renderPass, type);
-
-
-    }
-
-    int RenderPass::getId() const {
-        return mId;
     }
 
     RenderPassType RenderPass::getType() const {
         return mType;
     }
 
-    bool RenderPass::operator==(const RenderPass &other) const {
-        return mId == other.mId;
-    }
 }
 

@@ -17,27 +17,13 @@ VULKAN_NS
     class RenderPass : public VulkanObject<VkRenderPass>{
         friend class LogicalDevice;
 
-        static int sIndex;
         const RenderPassType mType;
-        const int mId;
-
         explicit RenderPass(VkRenderPass renderPass, RenderPassType type);
 
-        static RenderPass Create(const LogicalDevice &device, VkFormat format, RenderPassType type);
+        static RenderPass Create(const LogicalDevice &device, VkFormat format, RenderPassType type, bool dynamic = true);
 
     public:
 
-        int getId() const;
-
         RenderPassType getType() const;
-
-        bool operator==(const RenderPass &other) const;
     };
 NS_END
-
-template<>
-struct std::hash<Vox::Render::Vulkan::RenderPass> {
-    std::size_t operator()(const Vox::Render::Vulkan::RenderPass &k) const noexcept {
-        return std::hash<uint32_t>{}(k.getId());
-    }
-};

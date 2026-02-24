@@ -20,6 +20,7 @@ VULKAN_NS
 
         VkFramebuffer getFramebuffer(RenderPassType type) const override;
         VkImageView getImageView() const override;
+        VkImage getImage() const override;
 
         RenderPass &getRenderPass(RenderPassType type) const override;
 

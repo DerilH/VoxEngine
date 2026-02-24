@@ -69,7 +69,7 @@ namespace Vox::Render::Vulkan {
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-        createInfo.pEnabledFeatures = &deviceFeatures;
+//        createInfo.pEnabledFeatures = &deviceFeatures;
 
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();
@@ -79,7 +79,17 @@ namespace Vox::Render::Vulkan {
                 VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
         dynamicRendering.dynamicRendering = VK_TRUE;
 
-        createInfo.pNext = &dynamicRendering;
+
+        VkPhysicalDeviceSynchronization2Features sync2{};
+        sync2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
+        sync2.synchronization2 = VK_TRUE;
+        sync2.pNext = &dynamicRendering;
+
+        VkPhysicalDeviceFeatures2 features2{};
+        features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        features2.pNext = &sync2;
+
+        createInfo.pNext = &features2;
 
 
         if (ENABLE_VALIDATION_LAYERS) {

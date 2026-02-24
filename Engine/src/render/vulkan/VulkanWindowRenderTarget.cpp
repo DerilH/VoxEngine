@@ -56,5 +56,8 @@ VULKAN_NS
     VkImageView VulkanWindowRenderTarget::getImageView() const {
         return mSurface.getSwapChain()[mFrames[mCurrentFrame].getCurrentImageIndex()];
     }
+    VkImage VulkanWindowRenderTarget::getImage() const {
+        return mSurface.getSwapChain().getImage(mFrames[mCurrentFrame].getCurrentImageIndex());
+    }
 
 NS_END

@@ -7,6 +7,10 @@
 #include <vector>
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan_core.h>
+#include "VoxCore/Define.h"
+#include "VoxCore/Assert.h"
+#include "VoxCore/Severity.h"
+#include "VoxCore/Logger.h"
 
 namespace Vox::Render::Vulkan {
     const std::vector<const char*> VALIDATION_LAYERS = {
@@ -63,6 +67,7 @@ namespace Vox::Render::Vulkan {
         }
         extensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
         extensions.emplace_back("VK_KHR_xlib_surface");
+
 
         return extensions;
     }

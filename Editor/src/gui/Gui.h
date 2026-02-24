@@ -8,14 +8,14 @@
 #include <VoxEngine/render/windowing/Window.h>
 
 namespace Vox::Editor {
-    class Gui {
-        const Render::Windowing::Window& mWindow;
+    class Gui : SingletonBase<Gui>{
+        Render::Windowing::Window* mWindow;
         bool mInitialized = false;
         Render::FpsCounter mFpsCounter;
     public:
-        explicit Gui(const Render::Windowing::Window &m_window);
 
-        void init();
+
+        void init(Render::Windowing::Window& window);
         void render(Render::Vulkan::FrameSync& frame);
     };
 }

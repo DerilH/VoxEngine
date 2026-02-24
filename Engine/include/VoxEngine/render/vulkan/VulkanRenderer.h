@@ -30,7 +30,8 @@ VULKAN_NS
 
         void registerMesh(Resources::ModelAsset* model);
 
-        void recordCommandBuffer(VulkanRenderTarget &target, std::function<void()> misc);
+        void recordCommandBuffer(VulkanRenderTarget &targe);
+        void addRenderTarget(RenderTarget* target) override;
     };
 
 NS_END

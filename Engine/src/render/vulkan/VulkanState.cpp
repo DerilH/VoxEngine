@@ -15,7 +15,8 @@
 namespace Vox::Render::Vulkan {
     const std::vector<const char *> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-        VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
+        VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
+        "VK_KHR_synchronization2"
     };
 
     VulkanState::VulkanState(int apiVersion, const Shader::ShaderRepository &repository) : mApiVersion(apiVersion), mShaderRepository(repository) {

@@ -187,4 +187,8 @@ namespace Vox::Render::Vulkan {
     void SwapChain::markForRebuild() {
         mNeedsRebuild = true;
     }
+
+    VkImage SwapChain::getImage(int index) const {
+        return mImages.at(index);
+    }
 }

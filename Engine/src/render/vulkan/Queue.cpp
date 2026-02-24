@@ -41,6 +41,6 @@ namespace Vox::Render::Vulkan {
         submitInfo.signalSemaphoreCount = finishSemaphores.size;
         submitInfo.pSignalSemaphores = finishSemaphores.pData;
 
-        VK_CHECK(vkQueueSubmit(mHandle, 1, &submitInfo, VK_NULL_HANDLE), "Queue submit error");
+        VK_CHECK(vkQueueSubmit(mHandle, 1, &submitInfo, fence), "Queue submit error");
     }
 }

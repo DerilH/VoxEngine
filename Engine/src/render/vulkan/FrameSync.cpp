@@ -29,6 +29,7 @@ VULKAN_NS
             VkResult res = swapChain->get().acquireNextImage(mImageWaitSemaphore, &imgIndex);
             if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) {
                 swapChain->get().markForRebuild();
+                mStarted = false;
                 return -1;
             } else { VK_CHECK(res, "Failed to acquire swapchain image")}
         }
@@ -40,10 +41,6 @@ VULKAN_NS
     void FrameSync::submit() {
         VOX_CHECK(mStarted, "Frame not started");
         VOX_CHECK(mRenderWaitSemaphore.has_value(), "Image wait semaphore not set")
-
-        static VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-        VkSubmitInfo submitInfo = {};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
         mDevice.getQueue(GRAPHICS_QUEUE).submit({mCommandBuffer}, {mImageWaitSemaphore}, {mRenderWaitSemaphore.value()}, {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT }, mFence);
         mStarted = false;

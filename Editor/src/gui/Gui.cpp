@@ -12,10 +12,8 @@
 #include <VoxEngine/render/windowing/Window.h>
 
 namespace Vox::Editor {
-    Gui::Gui(const Render::Windowing::Window &m_window) : mWindow(m_window) {
-    }
-
-    void Gui::init() {
+    void Gui::init(Render::Windowing::Window& window) {
+        mWindow = &window;
         if (mInitialized) {
             LOG_ERROR("Gui already initialized");
             return;
@@ -27,7 +25,7 @@ namespace Vox::Editor {
         (void) io;
         ImGui::StyleColorsDark();
 
-        ImGui_ImplGlfw_InitForVulkan(mWindow.getHandle(), true);
+        ImGui_ImplGlfw_InitForVulkan(mWindow->getHandle(), true);
         const Render::Vulkan::VulkanState *mVKstate = Render::Vulkan::VulkanState::Get();
 
         VkDescriptorPool pool; {
@@ -54,20 +52,27 @@ namespace Vox::Editor {
             vkCreateDescriptorPool(mVKstate->device->getHandle(), &poolInfo, nullptr, &pool);
         }
 
-
         ImGui_ImplVulkan_InitInfo init_info = {};
         init_info.Instance = mVKstate->instance;
         init_info.PhysicalDevice = mVKstate->physicalDevice->getHandle();
         init_info.Device = mVKstate->device->getHandle();
+
         const Render::Vulkan::Queue &queue = mVKstate->device->getQueues().at(Vox::Render::Vulkan::GRAPHICS_QUEUE);
         init_info.QueueFamily = queue.getFamily().index();
         init_info.Queue = queue.getHandle();
         init_info.DescriptorPool = pool;
-        init_info.PipelineInfoMain.RenderPass = mVKstate->renderPass->getHandle();
         init_info.PipelineInfoMain.Subpass = 0;
         init_info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
         init_info.MinImageCount = 2;
-        // init_info.ImageCount = mVKstate->surface->getSwapChain().getImageCount();
+        init_info.ImageCount = 3;
+        init_info.UseDynamicRendering = true;
+
+        init_info.PipelineInfoMain.PipelineRenderingCreateInfo = {.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
+        init_info.PipelineInfoMain.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
+
+        VkFormat _swapchainImageFormat = VK_FORMAT_R32G32B32A32_SFLOAT;
+        init_info.PipelineInfoMain.PipelineRenderingCreateInfo.pColorAttachmentFormats = &_swapchainImageFormat;
+
 
         ImGui_ImplVulkan_Init(&init_info);
         mInitialized = true;
@@ -98,6 +103,7 @@ namespace Vox::Editor {
 
         ImGui::Render();
         ImDrawData *draw_data = ImGui::GetDrawData();
-        ImGui_ImplVulkan_RenderDrawData(draw_data, frame.getCmdBuffer().getHandle());
+
+        ImGui_ImplVulkan_RenderDrawData(draw_data, frame.getCmdBuffer().getHandle(),  nullptr);
     }
 }

@@ -37,6 +37,7 @@ VULKAN_NS
 
         VkFramebuffer operator[](const RenderPassType &renderPassType, int index) const;
         VkImageView operator[](int index) const;
+        VkImage getImage(int index) const;
 
         VkExtent2D getExtent() const;
         int getImageCount() const;

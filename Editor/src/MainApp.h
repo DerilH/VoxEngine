@@ -21,9 +21,11 @@ public:
         mEngine = new Vox::Engine("Vox", Vox::Render::VULKAN_API);
         mEngine->init();
 
-         gui = new Vox::Editor::Gui(*mEngine->getWindow("Vox"));
-         gui->init();
+         gui = new Vox::Editor::Gui();
+         gui->init(*mEngine->getWindow("Vox"));
 
+         auto a = [this](Vox::Render::Vulkan::FrameSync frameSync) {gui->render(frameSync);};
+         mEngine->setGui(a);
         mEngine->run();
 
         cleanup();
