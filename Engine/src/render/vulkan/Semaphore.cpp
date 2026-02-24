@@ -6,7 +6,7 @@
 #include <VoxEngine/render/vulkan/Semaphore.h>
 
 VULKAN_NS
-    Semaphore::Semaphore(const VkSemaphore semaphore) : mHandle(semaphore) {
+    Semaphore::Semaphore(const VkSemaphore semaphore) : VulkanObject(semaphore) {
 }
 
 Semaphore Semaphore::Create(const LogicalDevice &device) {
@@ -16,10 +16,6 @@ Semaphore Semaphore::Create(const LogicalDevice &device) {
     VkSemaphore semaphore;
     VK_CHECK(vkCreateSemaphore(device.getHandle(), &semaphoreInfo, nullptr, &semaphore), "Cannot create semaphore");
     return Semaphore(semaphore);
-}
-
-VkSemaphore Semaphore::getHandle() const {
-    return mHandle;
 }
 
 NS_END

@@ -30,7 +30,7 @@ VULKAN_NS
             if (res == VK_ERROR_OUT_OF_DATE_KHR || res == VK_SUBOPTIMAL_KHR) {
                 swapChain->get().markForRebuild();
                 return -1;
-            } else VK_CHECK(res, "Failed to acquire swapchain image")
+            } else { VK_CHECK(res, "Failed to acquire swapchain image")}
         }
 
         mCurrentImageIndex = imgIndex;
@@ -45,42 +45,7 @@ VULKAN_NS
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-        const VkSemaphore waitSemaphores[] = {mImageWaitSemaphore.getHandle()};
-        submitInfo.waitSemaphoreCount = 1;
-        submitInfo.pWaitSemaphores = waitSemaphores;
-        submitInfo.pWaitDstStageMask = waitStages;
-
-        submitInfo.commandBufferCount = 1;
-        VkCommandBuffer bfs = {mCommandBuffer.getHandle()};
-        submitInfo.pCommandBuffers = &bfs;
-
-        const VkSemaphore signalSemaphores[] = {mRenderWaitSemaphore.value().getHandle()};
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = signalSemaphores;
-
-        mDevice.getQueue(GRAPHICS_QUEUE).submit(mCommandBuffer, true);
-//        VK_CHECK(vkQueueSubmit(mDevice.getQueue(GRAPHICS_QUEUE).getHandle(), 1, &submitInfo, mFence.getHandle()), "failed to submit draw command buffers");
+        mDevice.getQueue(GRAPHICS_QUEUE).submit({mCommandBuffer}, {mImageWaitSemaphore}, {mRenderWaitSemaphore.value()}, {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT }, mFence);
         mStarted = false;
     }
-
-    const Semaphore &FrameSync::getRenderWaitSemaphore() const {
-        return mRenderWaitSemaphore.value();
-    }
-
-    const Semaphore &FrameSync::getImageWaitSemaphore() const {
-        return mImageWaitSemaphore;
-    }
-
-    CommandBuffer FrameSync::getCmdBuffer() const {
-        return mCommandBuffer;
-    }
-
-    uint32_t FrameSync::getCurrentImageIndex() const {
-        return mCurrentImageIndex;
-    }
-
-    void FrameSync::setRenderWaitSemaphore(const Semaphore &semaphore) {
-        mRenderWaitSemaphore = semaphore;
-    }
-
 NS_END

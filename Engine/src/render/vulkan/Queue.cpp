@@ -7,11 +7,7 @@
 #include "VoxCore/containers/Buffer.h"
 
 namespace Vox::Render::Vulkan {
-    Queue::Queue(VkQueue handle, const QueueFamily family) : mHandle(handle), mFamily(family) {
-    }
-
-    VkQueue Queue::getHandle() const {
-        return mHandle;
+    Queue::Queue(VkQueue handle, const QueueFamily family) : VulkanObject(handle), mFamily(family) {
     }
 
     QueueFamily Queue::getFamily() const {
@@ -23,6 +19,8 @@ namespace Vox::Render::Vulkan {
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.commandBufferCount = cmdBuffers.size;
         submitInfo.pCommandBuffers = cmdBuffers.pData;
+        submitInfo.waitSemaphoreCount = 0;
+
 
         VK_CHECK(vkQueueSubmit(mHandle, 1, &submitInfo, VK_NULL_HANDLE), "Queue submit error");
         if(wait) {
@@ -30,16 +28,19 @@ namespace Vox::Render::Vulkan {
         }
     }
 
-    void Queue::submit(Buffer, S) const {
+    void Queue::submit(const Buffer<VkCommandBuffer> &cmdBuffers, const Buffer<VkSemaphore> &waitSemaphores, const Buffer<VkSemaphore> &finishSemaphores, const Buffer<VkPipelineStageFlags> & waitStages, VkFence fence) const {
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.commandBufferCount = 1;
-        VkCommandBuffer buffers[] = {buffer.getHandle()};
-        submitInfo.pCommandBuffers = buffers;
+        submitInfo.commandBufferCount = cmdBuffers.size;
+        submitInfo.pCommandBuffers = cmdBuffers.pData;
+
+        submitInfo.waitSemaphoreCount = waitSemaphores.size;
+        submitInfo.pWaitSemaphores = waitSemaphores.pData;
+        submitInfo.pWaitDstStageMask = waitStages.pData;
+
+        submitInfo.signalSemaphoreCount = finishSemaphores.size;
+        submitInfo.pSignalSemaphores = finishSemaphores.pData;
 
         VK_CHECK(vkQueueSubmit(mHandle, 1, &submitInfo, VK_NULL_HANDLE), "Queue submit error");
-        if(wait) {
-            vkQueueWaitIdle(mHandle);
-        }
     }
 }

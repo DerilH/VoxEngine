@@ -26,7 +26,6 @@ public:
     ~Engine();
     void init();
     void run();
-    void compileShaders();
     Render::Windowing::Window* getWindow(std::string name) const;
 };
 NS_END

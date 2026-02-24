@@ -6,7 +6,7 @@
 #include <VoxEngine/render/windowing/Window.h>
 #include <vulkan/vulkan_core.h>
 
-namespace Vox::Render::Vulkan {
+VULKAN_NS
     class LogicalDevice;
     class QueueFamily;
     class Queue;
@@ -37,13 +37,12 @@ namespace Vox::Render::Vulkan {
         friend class Surface;
     };
 
-    class Surface {
+    class Surface : public VulkanObject<VkSurfaceKHR> {
 
         friend class LogicalDevice;
         friend class SwapChain;
 
         Windowing::Window mWindow;
-        VkSurfaceKHR mHandle = VK_NULL_HANDLE;
         LogicalDevice* mCurrentDevice = nullptr;
         const Queue* mPresentQueue = nullptr;
         SwapChain* mCurrentSwapChain = nullptr;
@@ -62,7 +61,6 @@ namespace Vox::Render::Vulkan {
 
         void update();
 
-        VkSurfaceKHR getHandle() const;
         SwapChain& getSwapChain() const;
         VkSurfaceFormatKHR getCurrentFormat() const;
 
@@ -70,4 +68,4 @@ namespace Vox::Render::Vulkan {
         const Queue *getPresentQueue() const;
         void presentFrame(const FrameSync &frame) const;
     };
-}
+NS_END

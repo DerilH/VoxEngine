@@ -36,11 +36,14 @@ namespace Vox::Render::Vulkan {
 
         int i = 0;
         for (const auto &queueFamily: queueFamilies) {
-            for (const auto &queueType: neededQueues) {
-                if (queueFamily.queueFlags & queueType) {
-                    neededQueues.erase(queueType);
+            for (auto it = neededQueues.begin(); it != neededQueues.end(); ) {
+                if (queueFamily.queueFlags & *it) {
+                    auto queueType = *it;
+                    it = neededQueues.erase(it);
                     indices.mData.emplace(queueType, QueueFamily(i, queueType));
                     break;
+                } else {
+                    ++it;
                 }
             }
 

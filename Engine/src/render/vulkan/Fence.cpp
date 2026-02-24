@@ -7,7 +7,7 @@
 #include <VoxEngine/render/vulkan/LogicalDevice.h>
 
 VULKAN_NS
-    Fence::Fence(const VkFence fence) : mHandle(fence) {
+    Fence::Fence(const VkFence fence) : VulkanObject(fence) {
     }
 
     Fence Fence::Create(const LogicalDevice &device) {
@@ -20,8 +20,8 @@ VULKAN_NS
         return Fence(fence);
     }
 
-    VkFence Fence::getHandle() const {
-        return mHandle;
+    void Fence::wait(const LogicalDevice &device, const Buffer<VkFence> &&wait, VkBool32 waitCount, uint64_t timeout) {
+        vkWaitForFences(device, wait.size, wait.pData, waitCount, timeout);
     }
 
 NS_END

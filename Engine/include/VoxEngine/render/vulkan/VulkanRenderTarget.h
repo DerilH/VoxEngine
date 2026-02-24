@@ -42,7 +42,7 @@ VULKAN_NS
         virtual RenderPass& getRenderPass(RenderPassType type) const = 0;
 
         virtual VkFramebuffer getFramebuffer(RenderPassType type) const = 0;
-
+        virtual VkImageView getImageView() const = 0;
         virtual void addRenderPass(RenderPassType type) = 0;
 
         virtual VkFormat getFormat() const = 0;

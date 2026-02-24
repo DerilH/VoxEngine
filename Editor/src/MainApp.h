@@ -21,8 +21,8 @@ public:
         mEngine = new Vox::Engine("Vox", Vox::Render::VULKAN_API);
         mEngine->init();
 
-        // gui = new Vox::Editor::Gui(*mEngine->getWindow());
-        // gui->init();
+         gui = new Vox::Editor::Gui(*mEngine->getWindow("Vox"));
+         gui->init();
 
         mEngine->run();
 

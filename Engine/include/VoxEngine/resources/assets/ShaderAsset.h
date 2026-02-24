@@ -13,7 +13,7 @@ class ShaderAsset : public Asset {
     const Buffer<uint32_t> * mCompiled;
 public:
     explicit ShaderAsset(std::string path, const Buffer<uint32_t> *mCompiled);
-    const Buffer<uint32_t>* getCompiled() const;
+    const Buffer<uint32_t>& getCompiled() const;
 
     AssetType type() override;
 };

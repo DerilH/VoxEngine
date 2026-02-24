@@ -9,8 +9,12 @@
 #include <string>
 #include <set>
 #include "VoxCore/Define.h"
+#include <llvm/ADT/SmallVector.h>
 
 VOX_NS
+    template<typename T>
+    using SmallVector = std::vector<T>;
+
     template<typename T>
     using Vector = std::vector<T>;
 

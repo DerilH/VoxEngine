@@ -8,15 +8,14 @@
 #include "RenderPass.h"
 #include "Semaphore.h"
 
-namespace Vox::Render::Vulkan {
+VULKAN_NS
     class LogicalDevice;
     class Surface;
 
-    class SwapChain {
+    class SwapChain : public VulkanObject<VkSwapchainKHR> {
         friend class Surface;
         friend class LogicalDevice;
 
-        VkSwapchainKHR mHandle;
         std::vector<VkImage> mImages;
         std::vector<VkImageView> mImageViews;
         const LogicalDevice& mDevice;
@@ -37,8 +36,9 @@ namespace Vox::Render::Vulkan {
         ~SwapChain();
 
         VkFramebuffer operator[](const RenderPassType &renderPassType, int index) const;
+        VkImageView operator[](int index) const;
+
         VkExtent2D getExtent() const;
-        VkSwapchainKHR getHandle() const;
         int getImageCount() const;
         bool needsRebuild() const;
         void markForRebuild();
@@ -46,4 +46,4 @@ namespace Vox::Render::Vulkan {
         static VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
         static VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities, const int width, const int height);
     };
-}
+NS_END

@@ -33,14 +33,17 @@ VULKAN_NS
     }
 
     VkFramebuffer VulkanWindowRenderTarget::getFramebuffer(const RenderPassType type) const {
+        VOX_NO_IMPL("getFrameBuffer");
         return mSurface.getSwapChain()[type, mFrames[mCurrentFrame].getCurrentImageIndex()];
     }
 
     RenderPass & VulkanWindowRenderTarget::getRenderPass(RenderPassType type) const {
+        VOX_NO_IMPL("getRenderPass");
         return *mRenderPasses.at(type);
     }
 
     void VulkanWindowRenderTarget::addRenderPass(const RenderPassType type) {
+        VOX_NO_IMPL("getRenderPass");
         auto* pass = mDevice->createHeap<RenderPass>(getFormat(), type);
         mSurface.getSwapChain().addRenderPass(*pass);
         mRenderPasses.emplace(type,pass);
@@ -48,6 +51,10 @@ VULKAN_NS
 
     VkFormat VulkanWindowRenderTarget::getFormat() const {
         return mSurface.getCurrentFormat().format;
+    }
+
+    VkImageView VulkanWindowRenderTarget::getImageView() const {
+        return mSurface.getSwapChain()[mFrames[mCurrentFrame].getCurrentImageIndex()];
     }
 
 NS_END

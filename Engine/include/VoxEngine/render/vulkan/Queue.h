@@ -17,8 +17,7 @@ VULKAN_NS
         Queue(VkQueue handle, QueueFamily family);
 
         void submit(const Buffer<VkCommandBuffer> &cmdBuffers, bool wait) const;
-
-        void submit(const Buffer<VkCommandBuffer> &cmdBuffers, const Buffer<VkSemaphore> &wait) const;
+        void submit(const Buffer<VkCommandBuffer> &cmdBuffers, const Buffer<VkSemaphore> &waitSemaphores, const Buffer<VkSemaphore> &finishSemaphore, const Buffer<VkPipelineStageFlags> & waitStages, VkFence fence = VK_NULL_HANDLE) const;
 
         QueueFamily getFamily() const;
     };

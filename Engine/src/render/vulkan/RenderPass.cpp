@@ -9,7 +9,7 @@
 namespace Vox::Render::Vulkan {
     int RenderPass::sIndex = 0;
 
-    RenderPass::RenderPass(VkRenderPass renderPass, const RenderPassType type) : mHandle(renderPass), mType(type), mId(sIndex) {
+    RenderPass::RenderPass(VkRenderPass renderPass, const RenderPassType type) : VulkanObject(renderPass), mType(type), mId(sIndex) {
         sIndex++;
     }
 
@@ -56,10 +56,6 @@ namespace Vox::Render::Vulkan {
         return RenderPass(renderPass, type);
 
 
-    }
-
-    VkRenderPass RenderPass::getHandle() const {
-        return mHandle;
     }
 
     int RenderPass::getId() const {

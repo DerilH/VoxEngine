@@ -68,7 +68,7 @@ namespace Vox::Render::Vulkan {
         createSwapChain();
     }
 
-    Surface::Surface(const Windowing::Window &window, VkSurfaceKHR handle) : mWindow(window), mHandle(handle) {
+    Surface::Surface(const Windowing::Window &window, VkSurfaceKHR handle) : mWindow(window), VulkanObject(handle) {
     }
 
     Surface *Surface::Create(VkInstance instance, const Windowing::Window &window) {
@@ -90,17 +90,6 @@ namespace Vox::Render::Vulkan {
             old = mCurrentSwapChain;
         }
         mCurrentSwapChain = SwapChain::Create(*this, old == nullptr ? nullptr : old->getHandle());
-
-        if (old != nullptr) {
-            for (const auto &pass: old->mFramebuffers | std::views::keys) {
-                // mCurrentSwapChain->addRenderPass(mCurrentDevice->createRenderPass(getCurrentFormat().format,pass));
-            }
-            delete old;
-        }
-    }
-
-    VkSurfaceKHR Surface::getHandle() const {
-        return mHandle;
     }
 
     SwapChain &Surface::getSwapChain() const {

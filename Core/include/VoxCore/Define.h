@@ -10,7 +10,7 @@ constexpr int GIGABYTE_SIZE = MEGABYTE_SIZE * 1024;
 typedef std::string InternedString;
 
 #ifdef VOX_DEBUG
-constexpr bool ENABLE_VALIDATION_LAYERS = false;
+constexpr bool ENABLE_VALIDATION_LAYERS = true;
 #else
 constexpr bool ENABLE_VALIDATION_LAYERS = false;
 #endif
@@ -21,6 +21,9 @@ constexpr bool ENABLE_VALIDATION_LAYERS = false;
 #define RESOURCES_NS namespace Vox::Resources {
 #define SERIALIZATION_NS namespace Vox::Resources::Serialization {
 #define NS_END }
+
+#define BUILDER_ENTRY(builderClass, name, type, dst) \
+inline builderClass& name(type name) {dst = name; return *this;}\
 
 #define NON_COPYABLE_NON_MOVABLE(ClassName)   \
 ClassName() = delete;     \

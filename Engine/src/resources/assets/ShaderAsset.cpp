@@ -7,8 +7,8 @@
 RESOURCES_NS
     ShaderAsset::ShaderAsset(std::string path, const Buffer<uint32_t> *mCompiled) : Asset(std::move(path)), mCompiled(mCompiled) {}
 
-    const Buffer<uint32_t> *ShaderAsset::getCompiled() const {
-        return mCompiled;
+    const Buffer<uint32_t>& ShaderAsset::getCompiled() const {
+        return *mCompiled;
     }
 
     AssetType ShaderAsset::type() {

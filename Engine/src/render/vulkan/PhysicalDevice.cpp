@@ -12,7 +12,7 @@
 #include <vulkan/vulkan_core.h>
 
 
-namespace Vox::Render::Vulkan {
+VULKAN_NS
     std::vector<VkExtensionProperties> getDeviceExtensions(const VkPhysicalDevice device) {
         uint32_t extensionCount;
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
@@ -28,7 +28,7 @@ namespace Vox::Render::Vulkan {
                                                                                                               capabilities), mFormats(formats), mPresentModes(presentModes) {
     }
 
-    PhysicalDevice::PhysicalDevice(const VkPhysicalDevice handle) : mHandle(handle) {
+    PhysicalDevice::PhysicalDevice(const VkPhysicalDevice handle) : VulkanObject(handle) {
         VkPhysicalDeviceProperties deviceProperties;
         VkPhysicalDeviceMemoryProperties memoryProperties;
         vkGetPhysicalDeviceProperties(mHandle, &deviceProperties);
@@ -71,10 +71,6 @@ namespace Vox::Render::Vulkan {
     // bool PhysicalDevice::isSwapChainAdequate() const {
     //     return !mSwapChainDetails.formats().empty() && !mSwapChainDetails.presentModes().empty();
     // }
-
-    VkPhysicalDevice PhysicalDevice::getHandle() const {
-        return mHandle;
-    }
 
     std::vector<VkExtensionProperties> PhysicalDevice::getAvailableExtensions() const {
         return mAvailableExtensions;
@@ -128,4 +124,4 @@ namespace Vox::Render::Vulkan {
 
         return physicalDevices;
     }
-}
+NS_END

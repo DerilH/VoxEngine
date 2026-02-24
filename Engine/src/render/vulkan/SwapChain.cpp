@@ -39,7 +39,7 @@ namespace Vox::Render::Vulkan {
     SwapChain::SwapChain(const LogicalDevice &device, const VkSwapchainKHR mHandle,
                          std::vector<VkImage> images,
                          std::vector<VkImageView> imageViews,
-                         const VkExtent2D extent) : mHandle(mHandle), mImages(std::move(images)),
+                         const VkExtent2D extent) : VulkanObject(mHandle), mImages(std::move(images)),
                                                                        mImageViews(std::move(imageViews)), mDevice(device), mExtent(extent) {
     }
 
@@ -65,7 +65,7 @@ namespace Vox::Render::Vulkan {
     }
 
     std::vector<VkFramebuffer> SwapChain::createFramebuffers(const LogicalDevice &device, const RenderPass renderPass) const {
-
+        VOX_NO_IMPL("createFramebuffers");
         std::vector<VkFramebuffer> framebuffers(mImageViews.size());
         for (size_t i = 0; i < mImageViews.size(); i++) {
             const VkImageView attachments[] = {mImageViews[i]};
@@ -144,6 +144,7 @@ namespace Vox::Render::Vulkan {
     }
 
     void SwapChain::addRenderPass(const RenderPass& renderPass) {
+        VOX_NO_IMPL("addRenderPass");
         mFramebuffers.emplace(renderPass.getType(), createFramebuffers(mDevice, renderPass));
     }
 
@@ -167,12 +168,12 @@ namespace Vox::Render::Vulkan {
         return mFramebuffers.at(renderPassType).at(index);
     }
 
-    VkExtent2D SwapChain::getExtent() const {
-        return mExtent;
+    VkImageView SwapChain::operator[](const int index) const {
+        return mImageViews.at(index);
     }
 
-    VkSwapchainKHR SwapChain::getHandle() const {
-        return mHandle;
+    VkExtent2D SwapChain::getExtent() const {
+        return mExtent;
     }
 
     int SwapChain::getImageCount() const {

@@ -11,6 +11,7 @@
 #include "VoxCore/SingletonBase.h"
 #include "VoxEngine/resources/ResourcesManager.h"
 #include "VoxEngine/resources/assets/ShaderAsset.h"
+#include "VoxCore/containers/Buffer.h"
 
 VULKAN_NS
     VulkanRenderer::VulkanRenderer(Shader::ShaderRepository &shaderRepository) : Renderer(shaderRepository), mVkState(nullptr) {
@@ -30,31 +31,47 @@ VULKAN_NS
         const auto frag = Vox::Resources::ResourcesManager::Get().get<Resources::ShaderAsset>("shaders/baseShader.frag");
 
         CommandBuffer commandBuffer = target.getCurrentFrame().getCmdBuffer();
-        RenderPass pass = target.getRenderPass(FORWARD_PASS);
-        VkFramebuffer framebuffer = target.getFramebuffer(FORWARD_PASS);
+        VkImageView imageView = target.getImageView();
         VkExtent2D extent = target.getExtent();
 
-        if(mVkState->pipeline == nullptr) {
-            mVkState->pipeline = mVkState->device->createHeap<GraphicsPipeline>(pass, vert->getCompiled(), frag->getCompiled());
-        }
+        if (mVkState->pipeline == nullptr) {
+            PipelineBuilder builder = mVkState->device->builder<GraphicsPipeline>();
+            builder.vertexInput(Vertex::getAttributeDescriptions(),{Vertex::getBindingDescription()});
+            builder.msaa().rasterizer().topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE);
+            builder.layout(Buffer<VkDescriptorSetLayout>::Empty(), Buffer<VkPushConstantRange>::Empty());
+            builder.shader(vert->getCompiled(), VK_SHADER_STAGE_VERTEX_BIT, "main");
+            builder.shader(frag->getCompiled(), VK_SHADER_STAGE_FRAGMENT_BIT, "main");
+            builder.dynamic({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR});
+            builder.rendering({target.getFormat()});
+            builder.viewport(1,1);
 
+            BlendState state = BlendStateBuilder(1).writes(true,true,true,true).endAttachment().build();
+            builder.blend(state);
+
+            mVkState->pipeline = new GraphicsPipeline(builder.build());
+        }
 
         commandBuffer.reset();
         commandBuffer.begin();
 
-        VkRenderPassBeginInfo renderPassInfo{};
-        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = pass.getHandle();
-        renderPassInfo.framebuffer = framebuffer;
-        renderPassInfo.renderArea.offset = {1, 0};
-        renderPassInfo.renderArea.extent = extent;
+        VkRenderingAttachmentInfo colorAttachmentInfo{};
+        colorAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+        colorAttachmentInfo.imageView = imageView;
+        colorAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        colorAttachmentInfo.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        colorAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        VkClearValue clearColor = {{0.2f, 1.0f, 0.3f, 0.1f}};
+        colorAttachmentInfo.clearValue = clearColor;
 
-        VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
-        renderPassInfo.clearValueCount = 1;
-        renderPassInfo.pClearValues = &clearColor;
+        VkRenderingInfo renderingInfo{};
+        renderingInfo.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+        renderingInfo.renderArea.offset = {0, 0};
+        renderingInfo.renderArea.extent = target.getExtent();
+        renderingInfo.layerCount = 1;
+        renderingInfo.colorAttachmentCount = 1;
+        renderingInfo.pColorAttachments = &colorAttachmentInfo;
 
-        vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
+        vkCmdBeginRendering(commandBuffer, &renderingInfo);
         mVkState->pipeline->bind(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS);
 
         VkViewport viewport{};
@@ -64,23 +81,25 @@ VULKAN_NS
         viewport.height = static_cast<float>(extent.height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
-        vkCmdSetViewport(commandBuffer.getHandle(), 0, 1, &viewport);
+        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+        misc();
 
         VkRect2D scissor{};
         scissor.offset = {0, 0};
         scissor.extent = extent;
-        vkCmdSetScissor(commandBuffer.getHandle(), 0, 1, &scissor);
+        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-        for(const auto& mesh : mMeshes) {
+        for (const auto &mesh: mMeshes) {
             mesh->use(commandBuffer);
-            vkCmdDrawIndexed(commandBuffer.getHandle(), mesh->getIndexCount(), 1, 0, 0, 0);
+            vkCmdDrawIndexed(commandBuffer, mesh->getIndexCount(), 1, 0, 0, 0);
         }
 
-        vkCmdEndRenderPass(commandBuffer);
+        vkCmdEndRendering(commandBuffer);
         commandBuffer.end();
     }
 
-    void VulkanRenderer::registerMesh(Resources::ModelAsset* asset) {
+    void VulkanRenderer::registerMesh(Resources::ModelAsset *asset) {
 //        const std::vector<Vertex> vertices = {
 //                {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
 //                {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
@@ -97,13 +116,13 @@ VULKAN_NS
 //
 //        mMeshes.emplace_back(new RenderMesh{v,i});
 
-        for(int i = 0; i < asset->getNestedCount(); i++) {
+        for (int i = 0; i < asset->getNestedCount(); i++) {
             auto mesh = asset->getNested<Resources::MeshAsset>(i);
 
 
             std::vector<Vertex> vertex;
-            for(auto c : mesh->getVertices()) {
-                vertex.emplace_back(c, glm::vec3(1,0,1));
+            for (auto c: mesh->getVertices()) {
+                vertex.emplace_back(c, glm::vec3(1, 0, 1));
             }
 
             auto v = VulkanState::Get()->createVertexBuffer(vertex);

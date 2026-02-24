@@ -9,7 +9,7 @@
 #include <functional>
 #include <VoxEngine/render/RenderPassType.h>
 
-#include "GraphicsPipeline.h"
+#include "VoxEngine/render/vulkan/pipeline/GraphicsPipeline.h"
 
 VULKAN_NS
     class LogicalDevice;
@@ -40,4 +40,4 @@ struct std::hash<Vox::Render::Vulkan::RenderPass> {
     std::size_t operator()(const Vox::Render::Vulkan::RenderPass &k) const noexcept {
         return std::hash<uint32_t>{}(k.getId());
     }
-}
+};

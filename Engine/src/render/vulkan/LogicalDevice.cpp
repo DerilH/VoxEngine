@@ -9,17 +9,13 @@ namespace Vox::Render::Vulkan {
         return queue;
     }
 
-    LogicalDevice::LogicalDevice(const VkDevice handle, const PhysicalDevice &physicalDevice, std::unordered_map<QueueType, Queue> queues) : mHandle(handle),
+    LogicalDevice::LogicalDevice(const VkDevice handle, const PhysicalDevice &physicalDevice, std::unordered_map<QueueType, Queue> queues) : VulkanObject(handle),
                                                                                                                                              mPhysicalDevice(physicalDevice),
                                                                                                                                              mQueues(std::move(queues)) {
         for (const auto [type, queue]: mQueues) {
             mCmdPools.emplace(type, *this->createHeap<CommandPool>(queue.getFamily()));
         }
         mAllocator = VulkanState::Get()->createAllocator(*this);
-    }
-
-    VkDevice LogicalDevice::getHandle() const {
-        return mHandle;
     }
 
     PhysicalDevice LogicalDevice::getPhysicalDevice() const {
@@ -30,7 +26,7 @@ namespace Vox::Render::Vulkan {
         return mQueues;
     }
 
-    const std::unordered_map<QueueType, CommandPool&> &LogicalDevice::getCmdPools() const {
+    const std::unordered_map<QueueType, CommandPool &> &LogicalDevice::getCmdPools() const {
         return mCmdPools;
     }
 
@@ -77,6 +73,14 @@ namespace Vox::Render::Vulkan {
 
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();
+
+        VkPhysicalDeviceDynamicRenderingFeatures dynamicRendering{};
+        dynamicRendering.sType =
+                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
+        dynamicRendering.dynamicRendering = VK_TRUE;
+
+        createInfo.pNext = &dynamicRendering;
+
 
         if (ENABLE_VALIDATION_LAYERS) {
             createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());

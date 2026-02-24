@@ -8,7 +8,7 @@
 #include <VoxEngine/render/vulkan/LogicalDevice.h>
 
 namespace Vox::Render::Vulkan {
-    CommandPool::CommandPool(const VkCommandPool handle, const LogicalDevice& device) : mDevice(device), mHandle(handle) {
+    CommandPool::CommandPool(const VkCommandPool handle, const LogicalDevice &device) : mDevice(device), VulkanObject(handle) {
     }
 
     CommandPool CommandPool::Create(const LogicalDevice &device, const QueueFamily &family) {
@@ -20,10 +20,6 @@ namespace Vox::Render::Vulkan {
         VkCommandPool commandPool;
         VK_CHECK(vkCreateCommandPool(device.getHandle(), &poolInfo, nullptr, &commandPool), "failed to create command pool!");
         return CommandPool(commandPool, device);
-    }
-
-    VkCommandPool CommandPool::getHandle() const {
-        return mHandle;
     }
 
     CommandBuffer CommandPool::allocateBuffer() const {
@@ -38,7 +34,7 @@ namespace Vox::Render::Vulkan {
         return CommandBuffer(commandBuffer);
     }
 
-    const CommandBuffer& CommandPool::startTemp() {
+    const CommandBuffer &CommandPool::startTemp() {
         VOX_CHECK(mOneTimeBuffer == nullptr, "one time buffer already created");
         mOneTimeBuffer = new CommandBuffer(allocateBuffer());
         mOneTimeBuffer->begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
@@ -48,7 +44,7 @@ namespace Vox::Render::Vulkan {
     void CommandPool::submitTemp(const Queue &queue) {
         VOX_CHECK(mOneTimeBuffer != nullptr, "one time buffer not started");
         mOneTimeBuffer->end();
-        queue.submit(*mOneTimeBuffer, true);
+        queue.submit({*mOneTimeBuffer}, true);
         VkCommandBuffer bfs = {mOneTimeBuffer->getHandle()};
         vkFreeCommandBuffers(mDevice.getHandle(), mHandle, 1, &bfs);
         mOneTimeBuffer = nullptr;

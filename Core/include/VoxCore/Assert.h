@@ -19,11 +19,9 @@ throw std::runtime_error(error);\
 #endif
 
 
-
 #define VOX_CHECK(statement, error) \
 if(!(statement)) \
 {                                   \
-                                    \
 LOG_ERROR("{}", error)\
 throw std::runtime_error(error);\
 }
@@ -37,5 +35,11 @@ LOG_WARN("{}", error)\
 
 #define VOX_NO_IMPL(name) VOX_CHECK(false, "Called unimplemented feature: " name)
 
-#define VK_CHECK(statement, error) VOX_CHECK((statement == VK_SUCCESS), error)
-
+#define VK_CHECK(statement, error) \
+{                                  \
+VkResult r = (statement);            \
+if(r != VK_SUCCESS) {              \
+    LOG_ERROR("{}: {}", error, (int)r)\
+    throw std::runtime_error(error);\
+}                                   \
+}\

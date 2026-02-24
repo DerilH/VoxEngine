@@ -41,7 +41,6 @@ RENDER_NS
         virtual void setBuffering(char buffers) = 0;
         void addRenderTarget(RenderTarget* target) {
             mRenderTargets.push_back(target);
-            ((Vulkan::VulkanWindowRenderTarget*)target)->addRenderPass(FORWARD_PASS);
         }
         void stop() {
             mShouldStop = true;

@@ -5,7 +5,7 @@
 #include "VoxEngine/render/vulkan/CommandBuffer.h"
 
 VULKAN_NS
-    CommandBuffer::CommandBuffer(VkCommandBuffer handle) : mHandle(handle) {
+    CommandBuffer::CommandBuffer(VkCommandBuffer handle) : VulkanObject(handle) {
         VOX_ASSERT_PTR(handle, "Command buffer is nullptr")
     }
 
@@ -15,6 +15,7 @@ VULKAN_NS
 
     void CommandBuffer::begin(VkCommandBufferUsageFlags flags) {
         VkCommandBufferBeginInfo beginInfo{};
+
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         VK_CHECK(vkBeginCommandBuffer(mHandle, &beginInfo), "Cannot begin command buffer");
     }
@@ -23,7 +24,4 @@ VULKAN_NS
         VK_CHECK(vkEndCommandBuffer(mHandle), "Cannot end command buffer");
     }
 
-    VkCommandBuffer CommandBuffer::getHandle() const {
-        return mHandle;
-    }
 NS_END

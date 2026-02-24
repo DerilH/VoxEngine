@@ -8,14 +8,10 @@
 VULKAN_NS
     class LogicalDevice;
 
-    class Semaphore {
+    class Semaphore : public VulkanObject<VkSemaphore>{
         friend class LogicalDevice;
-        VkSemaphore mHandle = VK_NULL_HANDLE;
 
         explicit Semaphore(VkSemaphore semaphore);
         static Semaphore Create(const LogicalDevice& device);
-public:
-        VkSemaphore getHandle() const;
     };
-
 NS_END
