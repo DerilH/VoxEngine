@@ -11,11 +11,6 @@ file(GLOB_RECURSE VOX_SOURCES CONFIGURE_DEPENDS
         src/*.cpp
 )
 
-#list(REMOVE_ITEM VOX_SOURCES
-#        ${CMAKE_SOURCE_DIR}/exec/main.cpp
-#        ${CMAKE_SOURCE_DIR}/exec/precompileMain.cpp
-#)
-
 add_executable(VoxEditor src/exec/main.cpp)
 
 target_sources(VoxEditor PRIVATE ${VOX_SOURCES})
@@ -24,6 +19,7 @@ target_link_libraries(VoxEditor
         VoxEngine
         backtrace
         imgui
+        project_options
 )
 
 target_compile_definitions(VoxEditor PRIVATE VOX_DEBUG)

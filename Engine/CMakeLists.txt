@@ -26,8 +26,7 @@ target_link_libraries(VoxEngine
         GPUOpen::VulkanMemoryAllocator
         assimp::assimp
         VoxCore
+        project_options
 )
-target_link_options(VoxEngine PUBLIC -g -rdynamic)
 
 target_include_directories(VoxEngine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_compile_definitions(VoxEngine PRIVATE GLFW_INCLUDE_VULKAN VOX_DEBUG BACKWARD_HAS_DW=1)
