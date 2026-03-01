@@ -5,6 +5,7 @@
 #include "Gui.h"
 
 #include <imgui/imgui.h>
+#include <imnodes/imnodes.h>
 #include <imgui/backend/imgui_impl_glfw.h>
 #include <imgui/backend/imgui_impl_vulkan.h>
 #include <VoxCore/Time.h>
@@ -70,7 +71,7 @@ namespace Vox::Editor {
         init_info.PipelineInfoMain.PipelineRenderingCreateInfo = {.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
         init_info.PipelineInfoMain.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
 
-        VkFormat _swapchainImageFormat = VK_FORMAT_R32G32B32A32_SFLOAT;
+        VkFormat _swapchainImageFormat = VK_FORMAT_R8G8B8A8_SRGB;
         init_info.PipelineInfoMain.PipelineRenderingCreateInfo.pColorAttachmentFormats = &_swapchainImageFormat;
 
 
@@ -78,7 +79,7 @@ namespace Vox::Editor {
         mInitialized = true;
     }
 
-    void Gui::render(Render::Vulkan::FrameSync &frame) {
+    void Gui::render(const Render::Vulkan::CommandBuffer& cmd) {
         mFpsCounter.update(Time::Delta());
         VOX_CHECK(mInitialized, "Gui not initialized");
         ImGui_ImplVulkan_NewFrame();
@@ -104,6 +105,6 @@ namespace Vox::Editor {
         ImGui::Render();
         ImDrawData *draw_data = ImGui::GetDrawData();
 
-        ImGui_ImplVulkan_RenderDrawData(draw_data, frame.getCmdBuffer().getHandle(),  nullptr);
+        ImGui_ImplVulkan_RenderDrawData(draw_data, cmd,  nullptr);
     }
 }

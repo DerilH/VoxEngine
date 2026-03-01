@@ -4,6 +4,7 @@
 
 #pragma once
 #include "Renderer.h"
+#include "RenderCore.h"
 
 RENDER_NS
     class RendererFactory {

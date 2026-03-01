@@ -28,7 +28,7 @@ namespace Vox::Render::Vulkan {
         VertexBuffer* quadBuffer = VK_NULL_HANDLE;
         IndexBuffer* indexBuffer;
         const int mApiVersion;
-        NON_COPYABLE_NON_MOVABLE(VulkanState)
+        NO_COPY_MOVE_DEFAULT(VulkanState)
 
         void createInstance();
 
@@ -36,9 +36,6 @@ namespace Vox::Render::Vulkan {
 
         VertexBuffer* createVertexBuffer(std::vector<Vertex> vertices);
         IndexBuffer* createIndexBuffer(std::vector<uint32_t> indices);
-
-
-        void recordCommandBuffer(VkCommandBuffer commandBuffer, VkExtent2D extent, VkFramebuffer framebuffer, RenderPass pass, std::function<void()> misc);
 
         void cleanup();
 

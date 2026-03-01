@@ -3,12 +3,13 @@
 //
 
 #pragma once
+#include "VoxCore/Logger.h"
 
 #ifdef VOX_DEBUG
 #define VOX_ASSERT(statement, error) \
 if(!(statement)) \
 { \
-LOG_ERROR(error)\
+LOG_ERROR(error);\
 throw std::runtime_error(error);\
 }
 #define VOX_ASSERT_PTR(ptr, error) VOX_ASSERT(ptr != nullptr, error)

@@ -36,7 +36,7 @@ VULKAN_NS
 
         const Semaphore &getRenderWaitSemaphore() const { return mRenderWaitSemaphore.value(); }
         const Semaphore &getImageWaitSemaphore() const { return mImageWaitSemaphore; }
-        CommandBuffer getCmdBuffer() const { return mCommandBuffer; }
+        const CommandBuffer& getCmdBuffer() const { return mCommandBuffer; }
         uint32_t getCurrentImageIndex() const { return mCurrentImageIndex; }
         void setRenderWaitSemaphore(const Semaphore &semaphore) { mRenderWaitSemaphore.emplace(semaphore);}
     };

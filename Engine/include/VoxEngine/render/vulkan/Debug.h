@@ -48,7 +48,9 @@ namespace Vox::Render::Vulkan {
     }
 
     inline void setupDebugMessenger(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger) {
-        if constexpr (!ENABLE_VALIDATION_LAYERS) return;
+        #ifndef VK_ENABLE_VALIDATION
+            return;
+        #endif
 
         VkDebugUtilsMessengerCreateInfoEXT createInfo;
         populateDebugMessengerCreateInfo(createInfo);
@@ -62,9 +64,10 @@ namespace Vox::Render::Vulkan {
 
         std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
 
-        if (ENABLE_VALIDATION_LAYERS) {
+#ifdef VK_ENABLE_VALIDATION
             extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        }
+#endif
+
         extensions.emplace_back(VK_KHR_SURFACE_EXTENSION_NAME);
         extensions.emplace_back("VK_KHR_xlib_surface");
 

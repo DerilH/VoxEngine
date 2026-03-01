@@ -9,17 +9,18 @@
 #include "VulkanRenderTarget.h"
 #include "VulkanState.h"
 #include "RenderMesh.h"
+#include "VoxEngine/render/graph/RenderGraph.h"
 
 VULKAN_NS
     class VulkanRenderer : public Renderer {
-        friend class RendererFactory;
-        VulkanState *mVkState;
-        std::vector<RenderMesh*> mMeshes;
-
+        VulkanState *mVkState = nullptr;
+        RenderGraph* mGraph = nullptr;
 
         void drawFrame(VulkanRenderTarget &target);
 
     public:
+        static std::vector<RenderMesh*> mMeshes;
+
         explicit VulkanRenderer(Shader::ShaderRepository &shaderRepository);
 
         void init() override;
@@ -32,6 +33,9 @@ VULKAN_NS
 
         void recordCommandBuffer(VulkanRenderTarget &targe);
         void addRenderTarget(RenderTarget* target) override;
+        void createGraph();
+        void addPass(RenderPass* pass);
+        RenderGraph& getGraph() const;
     };
 
 NS_END

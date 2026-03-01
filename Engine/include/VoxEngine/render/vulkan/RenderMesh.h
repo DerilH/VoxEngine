@@ -13,7 +13,7 @@ class RenderMesh {
     const VertexBuffer* mVBuffer;
     const IndexBuffer* mIBuffer;
 
-    NON_COPYABLE_NON_MOVABLE(RenderMesh)
+    NO_COPY_MOVE_DEFAULT(RenderMesh)
 
 public:
     RenderMesh(const VertexBuffer *mVBuffer, const IndexBuffer *mIBuffer);

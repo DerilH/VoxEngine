@@ -3,11 +3,6 @@ project(VoxEngine)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 
-add_subdirectory(ThirdParty)
-add_subdirectory(Core)
-add_subdirectory(Engine)
-add_subdirectory(Editor)
-
 add_library(project_options INTERFACE)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_link_options(project_options INTERFACE -g -rdynamic -fsanitize=address)
@@ -18,3 +13,11 @@ else()
     target_compile_options(project_options INTERFACE -O3 -flto)
     target_compile_definitions(project_options INTERFACE VOX_RELEASE)
 endif()
+
+add_subdirectory(ThirdParty)
+add_subdirectory(Core)
+add_subdirectory(Engine)
+add_subdirectory(Editor)
+
+
+

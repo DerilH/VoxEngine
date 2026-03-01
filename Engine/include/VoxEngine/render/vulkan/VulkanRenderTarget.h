@@ -7,6 +7,7 @@
 #include <VoxEngine/render/RenderTarget.h>
 
 #include "FrameSync.h"
+#include "VoxCore/math/Extent.h"
 
 VULKAN_NS
     class VulkanRenderTarget : public RenderTarget {
@@ -15,8 +16,7 @@ VULKAN_NS
         std::vector<Semaphore> mRenderFinishedSemaphores;
         std::vector<FrameSync> mFrames;
         int mCurrentFrame = 0;
-        VkExtent2D mExtent;
-        std::unordered_map<RenderPassType, RenderPass*> mRenderPasses;
+
 
         void createFrames(char buffers);
 
@@ -37,16 +37,7 @@ VULKAN_NS
 
         const FrameSync &getCurrentFrame() const;
 
-        VkExtent2D getExtent() const;
-
-        virtual RenderPass& getRenderPass(RenderPassType type) const = 0;
-
-        virtual VkFramebuffer getFramebuffer(RenderPassType type) const = 0;
-        virtual VkImageView getImageView() const = 0;
-        virtual VkImage getImage() const = 0;
-        virtual void addRenderPass(RenderPassType type) = 0;
-
-        virtual VkFormat getFormat() const = 0;
+        Extent getExtent() const;
     };
 
 NS_END

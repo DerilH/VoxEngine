@@ -8,11 +8,7 @@
 #include "vulkan/VulkanWindowRenderTarget.h"
 
 RENDER_NS
-    typedef enum {
-        VULKAN_API,
-        OPENGL_API
-    }
-    RenderAPI;
+
 
     class Renderer {
         friend class RendererFactory;

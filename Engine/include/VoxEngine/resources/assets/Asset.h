@@ -15,7 +15,7 @@ RESOURCES_NS
         Asset **mNestedAssets = nullptr;
         uint32_t mNestedAssetsCount;
 
-        NON_COPYABLE_NON_MOVABLE(Asset);
+        NO_COPY_MOVE_DEFAULT(Asset);
     public:
         explicit Asset(std::string path, Asset **nested = nullptr, uint32_t nestedCount = 0);
 

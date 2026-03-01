@@ -9,6 +9,7 @@
 #include "Semaphore.h"
 #include <vk_mem_alloc.h>
 #include "VulkanObject.h"
+#include "VoxCore/math/Extent.h"
 
 VULKAN_NS
     class LogicalDevice : public VulkanObject<VkDevice> {

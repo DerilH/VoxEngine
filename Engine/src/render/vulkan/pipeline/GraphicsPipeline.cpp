@@ -44,6 +44,7 @@ namespace Vox::Render::Vulkan {
         info.pName = name.c_str();
         info.module = module;
         info.stage = stageFlags;
+
         mShaderStages.emplace_back(info);
         return *this;
     }
@@ -60,8 +61,6 @@ namespace Vox::Render::Vulkan {
         mVertexInputInfo->vertexAttributeDescriptionCount = attributes.size;
         mVertexInputInfo->pVertexAttributeDescriptions = attributes.pData;
         return *this;
-
-
     }
 
     PipelineBuilder &PipelineBuilder::topology(VkPrimitiveTopology topology, VkBool32 enableRestart) &{

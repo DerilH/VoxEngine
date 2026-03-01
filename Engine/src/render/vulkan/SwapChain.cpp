@@ -3,7 +3,7 @@
 //
 
 #include <VoxEngine/render/vulkan/SwapChain.h>
-#include <VoxEngine/render/vulkan/RenderPass.h>
+#include "VoxEngine/render/vulkan/passes/RenderPass.h"
 #include <VoxEngine/render/vulkan/Surface.h>
 #include <VoxEngine/render/vulkan/LogicalDevice.h>
 
@@ -64,27 +64,6 @@ namespace Vox::Render::Vulkan {
         return view;
     }
 
-    std::vector<VkFramebuffer> SwapChain::createFramebuffers(const LogicalDevice &device, const RenderPass renderPass) const {
-        VOX_NO_IMPL("createFramebuffers");
-        std::vector<VkFramebuffer> framebuffers(mImageViews.size());
-        for (size_t i = 0; i < mImageViews.size(); i++) {
-            const VkImageView attachments[] = {mImageViews[i]};
-
-            VkFramebufferCreateInfo framebufferInfo{};
-            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass = renderPass.getHandle();
-            framebufferInfo.attachmentCount = 1;
-            framebufferInfo.pAttachments = attachments;
-            framebufferInfo.width = mExtent.width;
-            framebufferInfo.height = mExtent.height;
-            framebufferInfo.layers = 1;
-
-            int index;
-            VK_CHECK(vkCreateFramebuffer(device.getHandle(), &framebufferInfo, nullptr, &framebuffers[i]),"failed to create framebuffer!");
-        }
-        return framebuffers;
-    }
-
     SwapChain *SwapChain::Create(const Surface &surface, VkSwapchainKHR old) {
         VOX_CHECK(surface.getCurrentDevice() != nullptr, "Cant create swapchain, set surface device first");
         vkDeviceWaitIdle(surface.getCurrentDevice()->getHandle());
@@ -106,7 +85,7 @@ namespace Vox::Render::Vulkan {
         createInfo.imageColorSpace = surface.getCurrentFormat().colorSpace;
         createInfo.imageExtent = extent;
         createInfo.imageArrayLayers = 1;
-        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
         const QueueFamilyRepository families = surface.mCurrentDevice->getPhysicalDevice().getQueueFamilies();
         const uint32_t queueFamilyIndices[] = {
@@ -130,6 +109,7 @@ namespace Vox::Render::Vulkan {
         VkSwapchainKHR handle = VK_NULL_HANDLE;
         VK_CHECK(vkCreateSwapchainKHR(surface.mCurrentDevice->getHandle(), &createInfo, nullptr, &handle), "failed to create swap chain!");
 
+
         vkGetSwapchainImagesKHR(surface.mCurrentDevice->getHandle(), handle, &imageCount, nullptr);
         std::vector<VkImage> images(imageCount);
         vkGetSwapchainImagesKHR(surface.mCurrentDevice->getHandle(), handle, &imageCount, images.data());
@@ -145,7 +125,6 @@ namespace Vox::Render::Vulkan {
 
     void SwapChain::addRenderPass(const RenderPass& renderPass) {
         VOX_NO_IMPL("addRenderPass");
-        mFramebuffers.emplace(renderPass.getType(), createFramebuffers(mDevice, renderPass));
     }
 
     VkResult SwapChain::acquireNextImage(const Semaphore &semaphore, uint32_t* imageIndex) const {

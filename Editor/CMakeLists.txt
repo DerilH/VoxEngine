@@ -19,6 +19,7 @@ target_link_libraries(VoxEditor
         VoxEngine
         backtrace
         imgui
+        imnodes
         project_options
 )
 

@@ -11,6 +11,8 @@
 #include <VoxEngine/render/vulkan/VulkanState.h>
 
 #include "gui/Gui.h"
+#include "VoxEngine/render/vulkan/VulkanRenderer.h"
+#include "gui/GuiRenderPass.h"
 
 class MainApp {
     Vox::Engine*mEngine = nullptr;
@@ -24,8 +26,9 @@ public:
          gui = new Vox::Editor::Gui();
          gui->init(*mEngine->getWindow("Vox"));
 
-         auto a = [this](Vox::Render::Vulkan::FrameSync frameSync) {gui->render(frameSync);};
-         mEngine->setGui(a);
+//         auto a = [this](Vox::Render::Vulkan::FrameSync frameSync) {gui->render(frameSync.getCmdBuffer());};
+//         mEngine->setGui(a);
+        ((Vox::Render::Vulkan::VulkanRenderer*)mEngine->getRenderer())->addPass(new Vox::Editor::GuiRenderPass(Vox::Render::PRESENT_PASS, {}, {}, gui));
         mEngine->run();
 
         cleanup();

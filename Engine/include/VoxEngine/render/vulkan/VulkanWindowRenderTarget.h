@@ -17,16 +17,6 @@ VULKAN_NS
         bool begin() override;
 
         void present() override;
-
-        VkFramebuffer getFramebuffer(RenderPassType type) const override;
-        VkImageView getImageView() const override;
-        VkImage getImage() const override;
-
-        RenderPass &getRenderPass(RenderPassType type) const override;
-
-        void addRenderPass(RenderPassType type) override;
-
-        VkFormat getFormat() const override;
     };
 
 NS_END

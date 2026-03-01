@@ -116,7 +116,7 @@ namespace Vox::Render::Vulkan {
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
         presentInfo.waitSemaphoreCount = 1;
-        const VkSemaphore s[] = {frame.getRenderWaitSemaphore().getHandle()};
+        const VkSemaphore s[] = {frame.getRenderWaitSemaphore()};
         presentInfo.pWaitSemaphores = s;
 
         presentInfo.swapchainCount = 1;

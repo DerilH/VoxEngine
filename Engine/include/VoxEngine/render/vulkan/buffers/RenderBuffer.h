@@ -19,7 +19,7 @@ VULKAN_NS
 
         static VkBuffer AllocateBuffer(const LogicalDevice &device, VkBufferCreateInfo &bufferCreateInfo, const VmaAllocationCreateInfo &allocInfo, bool exclusive, VmaAllocation &allocation, VmaAllocationInfo &info);
 
-        NON_COPYABLE_NON_MOVABLE(RenderBuffer)
+        NO_COPY_MOVE_DEFAULT(RenderBuffer)
 
     public:
         VmaAllocation getAllocation() const;

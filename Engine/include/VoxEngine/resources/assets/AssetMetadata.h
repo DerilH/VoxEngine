@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "VoxCore/containers/Containers.h"
+
 RESOURCES_NS
 class AssetMetadata {
     InternedString path;

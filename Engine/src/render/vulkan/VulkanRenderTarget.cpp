@@ -20,7 +20,7 @@ VULKAN_NS
         mCurrentFrame = (mCurrentFrame + 1) % mFrames.size();
     }
 
-    VulkanRenderTarget::VulkanRenderTarget(const LogicalDevice *device, const VkExtent2D extent) : mDevice(device), mExtent(extent) {
+    VulkanRenderTarget::VulkanRenderTarget(const LogicalDevice *device, const VkExtent2D extent) : mDevice(device), mExtent({extent.width, extent.height}) {
     }
 
     void VulkanRenderTarget::submit() {
@@ -34,7 +34,7 @@ VULKAN_NS
         return mFrames[mCurrentFrame];
     }
 
-    VkExtent2D VulkanRenderTarget::getExtent() const {
+    Extent VulkanRenderTarget::getExtent() const {
         return mExtent;
     }
 

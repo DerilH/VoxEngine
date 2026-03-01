@@ -7,6 +7,7 @@
 #include "VoxEngine/render/vulkan/VulkanRenderTarget.h"
 #include "VoxEngine/render/windowing/Window.h"
 #include "VoxEngine/resources/ResourcesManager.h"
+#include "VoxEngine/render/RenderCore.h"
 
 VOX_NS
 class Engine {
@@ -19,7 +20,7 @@ class Engine {
     std::string mTitle;
     Render::RenderAPI mRenderApi;
 
-    NON_COPYABLE_NON_MOVABLE(Engine)
+    NO_COPY_MOVE_DEFAULT(Engine)
 public:
 
     explicit Engine(std::string mTitle, Render::RenderAPI renderApi);
@@ -28,5 +29,6 @@ public:
     void run();
     void setGui(std::function<void(Render::Vulkan::FrameSync)> foo);
     Render::Windowing::Window* getWindow(std::string name) const;
+    Render::Renderer* getRenderer() const;
 };
 NS_END

@@ -13,7 +13,7 @@ VULKAN_NS
 
         static StagingBuffer Create(const LogicalDevice &device, VkDeviceSize size);
 
-        NON_COPYABLE_NON_MOVABLE(StagingBuffer)
+        NO_COPY_MOVE_DEFAULT(StagingBuffer)
 
         explicit StagingBuffer(VkBuffer buffer, VmaAllocation alloc, const VmaAllocationInfo &allocInfo);
     public:

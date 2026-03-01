@@ -11,13 +11,14 @@
 #include <VoxEngine/render/vulkan/VulkanState.h>
 #include <VoxEngine/render/vulkan/VulkanWindowRenderTarget.h>
 #include "VoxEngine/render/vulkan/VulkanRenderer.h"
+#include "VoxEngine/render/RenderCore.h"
 
 VOX_NS
     constexpr const char* SHADERS_SRC_PATH = "./resources/shaders";
     constexpr const char* SHADERS_BIN_PATH = "./resources/shadersCache";
 
     Engine::Engine(std::string mTitle, const Render::RenderAPI renderApi) : mTitle(std::move(mTitle)), mRenderApi(renderApi) {
-        VOX_CHECK(mRenderApi == Render::VULKAN_API, "Unsupported render api");
+        VOX_CHECK(mRenderApi == Render::VULKAN_API, "Unsupported execute api");
     }
 
     Engine::~Engine() {
@@ -30,6 +31,8 @@ VOX_NS
 
         auto window = new Render::Windowing::Window(mTitle, 920, 480);
         mWindows.emplace(mTitle,window);
+        Render::InitRenderBackend(Render::VULKAN_API);;
+
         mRenderer = Render::RendererFactory::Create(mShaderRepository, Render::VULKAN_API);
         mRenderer->init();
 
@@ -54,6 +57,10 @@ VOX_NS
 
     void Engine::setGui(std::function<void(Render::Vulkan::FrameSync)> foo) {
         mRenderer->setGui(foo);
+    }
+
+    Render::Renderer* Engine::getRenderer() const {
+        return mRenderer;
     }
 
 NS_END

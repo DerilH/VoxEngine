@@ -5,7 +5,7 @@
 #pragma once
 #include <vulkan/vulkan_core.h>
 
-#include "RenderPass.h"
+#include "VoxEngine/render/vulkan/passes/RenderPass.h"
 #include "Semaphore.h"
 
 VULKAN_NS

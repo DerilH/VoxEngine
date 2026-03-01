@@ -16,6 +16,6 @@ namespace Vox::Editor {
 
 
         void init(Render::Windowing::Window& window);
-        void render(Render::Vulkan::FrameSync& frame);
+        void render(const Render::Vulkan::CommandBuffer& cmd);
     };
 }

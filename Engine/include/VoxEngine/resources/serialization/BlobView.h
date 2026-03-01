@@ -15,6 +15,6 @@ SERIALIZATION_NS
             VOX_ASSERT(ptr != nullptr, "Block pointer is nullptr");
         }
 
-        NON_COPYABLE_NON_MOVABLE(BlobView)
+        NO_COPY_MOVE_DEFAULT(BlobView)
     };
 NS_END
