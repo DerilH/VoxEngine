@@ -267,7 +267,7 @@ static void FrameRender(ImGui_ImplVulkanH_Window* wd, ImDrawData* draw_data)
         check_vk_result(err);
     }
     {
-        err = vkResetCommandPool(g_Device, fd->CommandPool, 0);
+        err = vkResetCommandPool(g_Device, fd->VulkanCommandPool, 0);
         check_vk_result(err);
         VkCommandBufferBeginInfo info = {};
         info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;

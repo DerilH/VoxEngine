@@ -13,7 +13,6 @@ VOX_NS
 class Engine {
     std::unordered_map<std::string, Render::Windowing::Window*> mWindows;
     Render::Renderer* mRenderer;
-    Render::Shader::ShaderRepository mShaderRepository;
     Vox::Resources::ResourcesManager* mResourceManager;
 
     bool mInitialized = false;
@@ -27,7 +26,6 @@ public:
     ~Engine();
     void init();
     void run();
-    void setGui(std::function<void(Render::Vulkan::FrameSync)> foo);
     Render::Windowing::Window* getWindow(std::string name) const;
     Render::Renderer* getRenderer() const;
 };

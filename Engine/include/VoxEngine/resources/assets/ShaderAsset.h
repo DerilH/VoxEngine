@@ -6,14 +6,14 @@
 
 
 #include "Asset.h"
-#include "VoxCore/containers/Buffer.h"
+#include "VoxCore/containers/ArrayView.h"
 
 RESOURCES_NS
 class ShaderAsset : public Asset {
-    const Buffer<uint32_t> * mCompiled;
+    const ArrayView<uint32_t> * mCompiled;
 public:
-    explicit ShaderAsset(std::string path, const Buffer<uint32_t> *mCompiled);
-    const Buffer<uint32_t>& getCompiled() const;
+    explicit ShaderAsset(std::string path, const ArrayView<uint32_t> *mCompiled);
+    const ArrayView<uint32_t>& getCompiled() const;
 
     AssetType type() override;
 };

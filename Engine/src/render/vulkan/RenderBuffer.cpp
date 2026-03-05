@@ -3,13 +3,13 @@
 //
 #include <vk_mem_alloc.h>
 #include "VoxEngine/render/vulkan/buffers/RenderBuffer.h"
-#include "VoxEngine/render/vulkan/LogicalDevice.h"
+#include "VoxEngine/render/vulkan/VulkanDevice.h"
 
 VULKAN_NS
     RenderBuffer::RenderBuffer(const VkBuffer buffer, const VmaAllocation alloc, const VmaAllocationInfo &allocInfo) :  VulkanObject(buffer), mAllocation(alloc), mAllocInfo(std::move(allocInfo)) {
     }
 
-    VkBuffer RenderBuffer::AllocateBuffer(const LogicalDevice &device, VkBufferCreateInfo &bufferCreateInfo, const VmaAllocationCreateInfo &allocInfo, const bool exclusive, VmaAllocation &allocation, VmaAllocationInfo &info) {
+    VkBuffer RenderBuffer::AllocateBuffer(const VulkanDevice &device, VkBufferCreateInfo &bufferCreateInfo, const VmaAllocationCreateInfo &allocInfo, const bool exclusive, VmaAllocation &allocation, VmaAllocationInfo &info) {
         bufferCreateInfo.sharingMode = exclusive ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
 
         VkBuffer buffer = VK_NULL_HANDLE;

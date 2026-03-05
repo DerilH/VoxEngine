@@ -4,7 +4,7 @@
 #include <string>
 #include <shaderc/shaderc.h>
 
-namespace Vox::Render::Shader {
+namespace Vox::Render::Shaders {
     enum class ShaderType {
         VERTEX,
         FRAGMENT,

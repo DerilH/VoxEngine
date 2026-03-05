@@ -10,8 +10,8 @@
 #include <VoxEngine/render/vulkan/Surface.h>
 #include <VoxEngine/render/vulkan/VulkanState.h>
 #include <VoxEngine/render/vulkan/VulkanWindowRenderTarget.h>
-#include "VoxEngine/render/vulkan/VulkanRenderer.h"
 #include "VoxEngine/render/RenderCore.h"
+#include "VoxEngine/resources/assets/ModelAsset.h"
 
 VOX_NS
     constexpr const char* SHADERS_SRC_PATH = "./resources/shaders";
@@ -31,18 +31,23 @@ VOX_NS
 
         auto window = new Render::Windowing::Window(mTitle, 920, 480);
         mWindows.emplace(mTitle,window);
+
         Render::InitRenderBackend(Render::VULKAN_API);;
 
-        mRenderer = Render::RendererFactory::Create(mShaderRepository, Render::VULKAN_API);
+        mRenderer = Render::RendererFactory::Create(Render::VULKAN_API);
         mRenderer->init();
 
-        auto s1 = Render::Vulkan::Surface::Create(Render::Vulkan::VulkanState::Get()->instance, *window);
-        s1->setDevice(Render::Vulkan::VulkanState::Get()->device);
+        mRenderer->addRenderTarget(Render::RenderBackend::Get()->createWindowTarget(window->getExtent(), window->getHandle()));
+
+
+//        auto s1 = Render::Vulkan::Surface::Create(Render::Vulkan::VulkanState::Get()->instance, *window);
+//        s1->setDevice(Render::Vulkan::VulkanState::Get()->device);
+
 
         auto s = mResourceManager->get<Resources::ModelAsset>("mesh.fbx");
-        ((Render::Vulkan::VulkanRenderer*)mRenderer)->registerMesh(s);
+//        ((Render::Vulkan::VulkanRenderer*)mRenderer)->registerMesh(s);
 
-        mRenderer->addRenderTarget(reinterpret_cast<Render::RenderTarget *>(new Render::Vulkan::VulkanWindowRenderTarget(*s1)));
+//        mRenderer->addViewport(reinterpret_cast<Render::RenderTarget *>(new Render::Vulkan::VulkanWindowRenderTarget(*s1)));
     }
 
     void Engine::run() {
@@ -53,10 +58,6 @@ VOX_NS
     Render::Windowing::Window * Engine::getWindow(std::string name) const {
         const auto res = mWindows.find(name);
         return res != mWindows.end() ? res->second : nullptr;
-    }
-
-    void Engine::setGui(std::function<void(Render::Vulkan::FrameSync)> foo) {
-        mRenderer->setGui(foo);
     }
 
     Render::Renderer* Engine::getRenderer() const {

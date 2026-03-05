@@ -1,26 +1,28 @@
 //
-// Created by deril on 2/17/26.
+// Created by deril on 3/3/26.
 //
 
 #pragma once
 
-#include "VoxEngine/render/Enums.h"
+#include "VoxCore/Define.h"
+#include "RenderResource.h"
+#include "Types.h"
 #include "VoxCore/math/Extent.h"
-#include "Texture.h"
-#include "VoxCore/containers/Buffer.h"
 
 RENDER_NS
-class RenderTarget {
-protected:
-    Buffer<Texture*> mTextures;
+class RenderTarget : public RenderResource {
     Extent mExtent;
-    Format mFormat;
 
-    ~RenderTarget() = default;
-
+protected:
+    RenderTarget(Extent extent) : mExtent(extent) {}
 public:
-    Extent getExtent() const {return mExtent;}
-    Format getFormat() const {return mFormat;};
-    virtual Texture* getTexture() = 0;
+    RenderTarget() = delete;
+
+    virtual void beginFrame() = 0;
+    virtual void endFrame() = 0;
+
+    virtual TextureRef getBackBuffer() = 0;
+    virtual void resize(Extent extent) = 0;
+    inline Extent getSize() const {return mExtent;}
 };
 NS_END

@@ -3,24 +3,25 @@
 //
 
 #include "VoxEngine/render/vulkan/VulkanTexture.h"
-#include "VoxEngine/render/vulkan/LogicalDevice.h"
+#include "VoxEngine/render/vulkan/VulkanDevice.h"
+#include "VoxEngine/render/vulkan/VulkanEnums.h"
 
 VULKAN_NS
 
 
-    VulkanTexture::VulkanTexture(VkImage image, TextureHandle handle, VkFormat format, VkImageView view, VmaAllocation allocation) :  VulkanAllocated<VkImage>(image, allocation), Texture(handle), mView(view), format(format) {
+    VulkanTexture::VulkanTexture(Format format, Extent extent, VkImage image, VkImageView view, VmaAllocation allocation) : VulkanAllocated<VkImage>(image, allocation), Texture(format, extent), mView(view) {
 
     }
 
-    VulkanTexture VulkanTexture::Create(const LogicalDevice& device, TextureHandle handle, VkFormat format, VkExtent3D extent, VkImageUsageFlags usage) {
+    VulkanTexture VulkanTexture::Create(Format format, Extent extent, const VulkanDevice& device , VkImageUsageFlags usage) {
         auto allocator = device.getAllocator();
         VkImageCreateInfo imageInfo{};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
         imageInfo.imageType = VK_IMAGE_TYPE_2D;
-        imageInfo.extent = extent;
+        imageInfo.extent = {extent.width, extent.height, 1};
         imageInfo.mipLevels = 1;
         imageInfo.arrayLayers = 1;
-        imageInfo.format = format;
+        imageInfo.format = toVk(format);
         imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
         imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         imageInfo.usage = usage;
@@ -38,7 +39,7 @@ VULKAN_NS
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = image;
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = format;
+        createInfo.format = toVk(format);
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -51,7 +52,7 @@ VULKAN_NS
 
         VkImageView view;
         VK_CHECK(vkCreateImageView(device.getHandle(), &createInfo, nullptr, &view), "Cannot create VkImageView");
-        return VulkanTexture(image, handle, format, view, allocation);
+        return VulkanTexture(format, extent, image, view, allocation);
     }
 
     VkImageView VulkanTexture::getView() const {

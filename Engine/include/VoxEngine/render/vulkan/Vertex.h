@@ -19,8 +19,8 @@ namespace Vox::Render::Vulkan {
             return bindingDescription;
         }
 
-        static Buffer<VkVertexInputAttributeDescription> getAttributeDescriptions() {
-            Buffer<VkVertexInputAttributeDescription> buff(new VkVertexInputAttributeDescription[2], 2);
+        static ArrayView<VkVertexInputAttributeDescription> getAttributeDescriptions() {
+            ArrayView<VkVertexInputAttributeDescription> buff(new VkVertexInputAttributeDescription[2], 2);
             buff[0].binding = 0;
             buff[0].location = 0;
             buff[0].format = VK_FORMAT_R32G32B32_SFLOAT;

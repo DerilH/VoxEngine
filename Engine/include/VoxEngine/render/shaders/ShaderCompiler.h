@@ -5,7 +5,7 @@
 #include "CompiledShader.h"
 #include "ShaderSrc.h"
 
-namespace Vox::Render::Shader {
+namespace Vox::Render::Shaders {
     class ShaderCompiler {
     public:
         static std::vector<std::filesystem::path> listShaders(const std::filesystem::path& path);

@@ -5,13 +5,11 @@
 #include <VoxCore/Time.h>
 #include <VoxEngine/render/shaders/ShaderCompiler.h>
 
-#include <VoxEngine/render/shaders/ShaderRepository.h>
 #include <VoxEngine/render/vulkan/FrameSync.h>
-#include <VoxEngine/render/vulkan/LogicalDevice.h>
+#include <VoxEngine/render/vulkan/VulkanDevice.h>
 #include <VoxEngine/render/vulkan/VulkanState.h>
 
 #include "gui/Gui.h"
-#include "VoxEngine/render/vulkan/VulkanRenderer.h"
 #include "gui/GuiRenderPass.h"
 
 class MainApp {
@@ -28,7 +26,7 @@ public:
 
 //         auto a = [this](Vox::Render::Vulkan::FrameSync frameSync) {gui->render(frameSync.getCmdBuffer());};
 //         mEngine->setGui(a);
-        ((Vox::Render::Vulkan::VulkanRenderer*)mEngine->getRenderer())->addPass(new Vox::Editor::GuiRenderPass(Vox::Render::PRESENT_PASS, {}, {}, gui));
+//        mEngine->getRenderer()->addPass(new Vox::Editor::GuiRenderPass(Vox::Render::PRESENT_PASS, {}, {}, gui));
         mEngine->run();
 
         cleanup();

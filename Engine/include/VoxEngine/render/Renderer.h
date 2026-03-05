@@ -3,49 +3,42 @@
 //
 
 #pragma once
+
 #include "RenderTarget.h"
-#include "shaders/ShaderRepository.h"
 #include "vulkan/VulkanWindowRenderTarget.h"
+#include "RenderCore.h"
+#include "VoxEngine/render/graph/RenderGraph.h"
 
 RENDER_NS
-
-
     class Renderer {
         friend class RendererFactory;
     protected:
-        std::vector<RenderTarget*> mRenderTargets;
-        Shader::ShaderRepository &mShaderRepository;
+        Vector<RenderTargetRef > mRenderTargets;
         int mBufferingLevel = 0;
         bool mShouldStop = false;
-        std::function<void(Vulkan::FrameSync)> mGui;
+        RenderAPI mBackendApi;
+        RenderGraph* mGraph = nullptr;
 
-        explicit Renderer(Shader::ShaderRepository &shaderRepository) : mShaderRepository(shaderRepository) {
+        explicit Renderer(RenderAPI api) : mBackendApi(api) {
         }
 
+    protected:
+        void drawFrame(RenderTargetRef target);
+        void executeGraph(RenderTargetRef viewport, CommandBufferRef cmdBuffer);
     public:
-        Renderer(const Renderer &) = delete;
+        void init();
 
-        Renderer(const Renderer &&) = delete;
+        void renderLoop();
 
-        Renderer &operator=(const Renderer &) = delete;
+        void setBuffering(char buffers);
 
-        virtual ~Renderer() = default;
+        void addRenderTarget(RenderTargetRef target);
 
-        virtual void init() = 0;
+        void stop();
 
-        virtual void renderLoop() = 0;
+        void createGraph();
 
-        virtual void setBuffering(char buffers) = 0;
-        virtual void addRenderTarget(RenderTarget* target) {
-            mRenderTargets.push_back(target);
-        }
-        void stop() {
-            mShouldStop = true;
-        }
-
-        void setGui(std::function<void(Render::Vulkan::FrameSync)> foo) {
-            mGui = foo;
-        }
+        NO_COPY_MOVE_DEFAULT(Renderer);
     };
 
 NS_END

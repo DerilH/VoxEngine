@@ -6,7 +6,7 @@
 
 
 #include "VoxCore/containers/Containers.h"
-#include "VoxCore/containers/Buffer.h"
+#include "VoxCore/containers/ArrayView.h"
 VULKAN_NS
 class BlendState {
     VkPipelineColorBlendStateCreateInfo mState;
@@ -19,7 +19,7 @@ public:
 };
 
 class BlendStateBuilder {
-    Buffer <VkPipelineColorBlendAttachmentState> mPerAttachment;
+    ArrayView <VkPipelineColorBlendAttachmentState> mPerAttachment;
     uint32_t mCurrent = 0;
 public:
     BlendStateBuilder(uint32_t attachmentsCount);

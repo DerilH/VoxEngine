@@ -4,10 +4,10 @@
 
 #include "VoxEngine/render/vulkan/StagingBuffer.h"
 
-#include "VoxEngine/render/vulkan/LogicalDevice.h"
+#include "VoxEngine/render/vulkan/VulkanDevice.h"
 
 VULKAN_NS
-    StagingBuffer StagingBuffer::Create(const LogicalDevice &device, VkDeviceSize size) {
+    StagingBuffer StagingBuffer::Create(const VulkanDevice &device, VkDeviceSize size) {
         VkBufferCreateInfo bufferCreateInfo{};
         bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;

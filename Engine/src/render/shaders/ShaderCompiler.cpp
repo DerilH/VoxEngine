@@ -1,7 +1,7 @@
 #include <shaderc/shaderc.hpp>
 #include <VoxEngine/render/shaders/ShaderCompiler.h>
 
-namespace Vox::Render::Shader {
+namespace Vox::Render::Shaders {
     std::vector<std::filesystem::path> ShaderCompiler::listShaders(const std::filesystem::path &path) {
         std::vector<std::filesystem::path> shaders;
         for (const auto &entry: std::filesystem::directory_iterator(path)) {

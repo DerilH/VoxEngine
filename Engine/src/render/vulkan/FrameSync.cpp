@@ -3,16 +3,17 @@
 //
 
 #include <VoxEngine/render/vulkan/FrameSync.h>
-#include <VoxEngine/render/vulkan/LogicalDevice.h>
+#include <VoxEngine/render/vulkan/VulkanDevice.h>
+#include <VoxEngine/render/vulkan/VulkanTypes.h>
 
 VULKAN_NS
-    FrameSync::FrameSync(const LogicalDevice &device, Fence fence, Semaphore imageSemaphore, const CommandBuffer buffer) : mDevice(device), mFence(std::move(fence)), mImageWaitSemaphore(std::move(imageSemaphore)), mCommandBuffer(buffer) {
+    FrameSync::FrameSync(const VulkanDevice &device, Fence fence, Semaphore imageSemaphore, CommandBufferRef buffer) : mDevice(device), mFence(std::move(fence)), mImageWaitSemaphore(std::move(imageSemaphore)), mCommandBuffer(buffer) {
     }
 
-    FrameSync FrameSync::Create(const LogicalDevice &device) {
+    FrameSync FrameSync::Create(const VulkanDevice &device) {
         const Fence fence = device.create<Fence>();
         const Semaphore imageSemaphore = device.create<Semaphore>();
-        const CommandBuffer buffer = device.getCmdPool(GRAPHICS_QUEUE).allocateBuffer();
+        CommandBufferRef buffer = device.getCmdPool(GRAPHICS_QUEUE).allocBuffer();
         return {device, fence, imageSemaphore, buffer};
     }
 
@@ -42,7 +43,7 @@ VULKAN_NS
         VOX_CHECK(mStarted, "Frame not started");
         VOX_CHECK(mRenderWaitSemaphore.has_value(), "Image wait semaphore not set")
 
-        mDevice.getQueue(GRAPHICS_QUEUE).submit({mCommandBuffer}, {mImageWaitSemaphore}, {mRenderWaitSemaphore.value()}, {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT }, mFence);
+        mDevice.getQueue(GRAPHICS_QUEUE).submit({ResourceCast(mCommandBuffer)->getHandle()}, {mImageWaitSemaphore}, {mRenderWaitSemaphore.value()}, {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT }, mFence);
         mStarted = false;
     }
 NS_END

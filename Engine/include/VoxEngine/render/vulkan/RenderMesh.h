@@ -6,7 +6,7 @@
 #include <VoxCore/Define.h>
 #include "VoxEngine/render/vulkan/buffers/VertexBuffer.h"
 #include "VoxEngine/render/vulkan/buffers/IndexBuffer.h"
-#include "CommandBuffer.h"
+#include "VulkanCommandBuffer.h"
 
 VULKAN_NS
 class RenderMesh {
@@ -19,6 +19,6 @@ public:
     RenderMesh(const VertexBuffer *mVBuffer, const IndexBuffer *mIBuffer);
 
     void use(const CommandBuffer& cmdBuffer) const;
-    int getIndexCount() const;
+    uint32_t getIndexCount() const;
 };
 NS_END

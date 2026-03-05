@@ -1,5 +1,6 @@
-#include <VoxEngine/render/vulkan/LogicalDevice.h>
+#include <VoxEngine/render/vulkan/VulkanDevice.h>
 #include <VoxEngine/render/vulkan/VulkanState.h>
+#include "VoxEngine/render/vulkan/VulkanBackend.h"
 
 namespace Vox::Render::Vulkan {
     VkQueue acquireQueue(const VkDevice device, const QueueFamilyRepository &queueFamilies, const QueueType queueType,
@@ -9,45 +10,45 @@ namespace Vox::Render::Vulkan {
         return queue;
     }
 
-    LogicalDevice::LogicalDevice(const VkDevice handle, const PhysicalDevice &physicalDevice, std::unordered_map<QueueType, Queue> queues) : VulkanObject(handle),
-                                                                                                                                             mPhysicalDevice(physicalDevice),
-                                                                                                                                             mQueues(std::move(queues)) {
+    VulkanDevice::VulkanDevice(const VkDevice handle, const PhysicalDevice &physicalDevice, std::unordered_map<QueueType, Queue> queues) : VulkanObject(handle),
+                                                                                                                                           mPhysicalDevice(physicalDevice),
+                                                                                                                                           mQueues(std::move(queues)) {
         for (const auto [type, queue]: mQueues) {
-            mCmdPools.emplace(type, *this->createHeap<CommandPool>(queue.getFamily()));
+            mCmdPools.emplace(type, *this->createHeap<VulkanCommandPool>(queue.getFamily()));
         }
-        mAllocator = VulkanState::Get()->createAllocator(*this);
+        mAllocator = VulkanBackend::Get()->createAllocator(*this);
     }
 
-    PhysicalDevice LogicalDevice::getPhysicalDevice() const {
+    PhysicalDevice VulkanDevice::getPhysicalDevice() const {
         return mPhysicalDevice;
     }
 
-    const std::unordered_map<QueueType, Queue> &LogicalDevice::getQueues() const {
+    const std::unordered_map<QueueType, Queue> &VulkanDevice::getQueues() const {
         return mQueues;
     }
 
-    const std::unordered_map<QueueType, CommandPool &> &LogicalDevice::getCmdPools() const {
+    const std::unordered_map<QueueType, VulkanCommandPool &> &VulkanDevice::getCmdPools() const {
         return mCmdPools;
     }
 
-    const Queue &LogicalDevice::getQueue(const QueueType type) const {
+    const Queue &VulkanDevice::getQueue(const QueueType type) const {
         return mQueues.at(type);
     }
 
-    CommandPool &LogicalDevice::getCmdPool(const QueueType type) const {
+    VulkanCommandPool &VulkanDevice::getCmdPool(const QueueType type) const {
         return mCmdPools.at(type);
     }
 
-    VmaAllocator LogicalDevice::getAllocator() const {
+    VmaAllocator VulkanDevice::getAllocator() const {
         return mAllocator;
     }
 
-    void LogicalDevice::waitIdle() const {
+    void VulkanDevice::waitIdle() const {
         vkDeviceWaitIdle(mHandle);
     }
 
-    LogicalDevice *LogicalDevice::Create(const PhysicalDevice &physDevice, std::vector<const char *> extensions,
-                                         std::vector<const char *> validationLayers) {
+    VulkanDevice *VulkanDevice::Create(const PhysicalDevice &physDevice, std::vector<const char *> extensions,
+                                       std::vector<const char *> validationLayers) {
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         QueueFamilyRepository queueFamilies = physDevice.getQueueFamilies();
 
@@ -92,13 +93,12 @@ namespace Vox::Render::Vulkan {
         createInfo.pNext = &features2;
 
 
-        if (ENABLE_VALIDATION_LAYERS) {
+#ifdef ENABLE_VALIDATION_LAYERS
             createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
             createInfo.ppEnabledLayerNames = validationLayers.data();
-        } else {
+#else
             createInfo.enabledLayerCount = 0;
-        }
-
+#endif
         VkDevice device;
         VK_CHECK(vkCreateDevice(physDevice.getHandle(), &createInfo, nullptr, &device),
                  "failed to create logical device!");
@@ -109,12 +109,12 @@ namespace Vox::Render::Vulkan {
             queues.emplace(queueFamily.type(), Queue{queue, queueFamily});
         }
 
-        std::unordered_map<QueueType, CommandPool> cmdPools;
+        std::unordered_map<QueueType, VulkanCommandPool> cmdPools;
         for (const auto &queueFamily: queueFamilies.getUniqueFamilies()) {
             VkQueue queue = acquireQueue(device, queueFamilies, queueFamily.type());
             queues.emplace(queueFamily.type(), Queue{queue, queueFamily});
         }
 
-        return new LogicalDevice{device, physDevice, std::move(queues)};
+        return new VulkanDevice{device, physDevice, std::move(queues)};
     }
 }

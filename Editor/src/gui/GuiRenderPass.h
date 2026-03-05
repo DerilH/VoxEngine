@@ -3,17 +3,17 @@
 //
 
 #pragma once
-#include <VoxEngine/render/vulkan/passes/RenderPass.h>
+#include <VoxEngine/render/passes/RenderPass.h>
 #include "Gui.h"
 
 namespace Vox::Editor {
-    class GuiRenderPass : public Render::Vulkan::RenderPass{
+    class GuiRenderPass : public Render::RenderPass{
     public:
         Gui* mGui;
-        GuiRenderPass(Render::RenderPassType mType, Vector<Render::AttachmentDesc> reads, Vector<Render::AttachmentDesc> writes, Gui* gui) : RenderPass(mType, reads, writes), mGui(gui) {}
+        GuiRenderPass(Render::RenderPassType mType, ArrayView<Render::AttachmentDesc> reads, ArrayView<Render::AttachmentDesc> writes, Gui* gui) : RenderPass(mType, reads, writes), mGui(gui) {}
 
-        void execute(const Render::RenderContext& context) override {
-            mGui->render(const_cast<Render::Vulkan::CommandBuffer&>(*mCmdBuffer));
+        void execute(Render::CommandBufferRef cmdBuffer) override {
+            mGui->render(cmdBuffer);
         }
     };
 }

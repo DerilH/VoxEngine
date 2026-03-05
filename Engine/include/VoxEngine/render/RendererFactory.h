@@ -13,7 +13,7 @@ RENDER_NS
         virtual ~RendererFactory() = default;
 
     public:
-        static Renderer *Create(Shader::ShaderRepository& shaderRepository, RenderAPI api);
+        static Renderer *Create(RenderAPI api);
     };
 
 NS_END

@@ -8,7 +8,7 @@
 #include "VoxEngine/render/vulkan/VulkanObject.h"
 
 VULKAN_NS
-    class LogicalDevice;
+    class VulkanDevice;
 
     class RenderBuffer : public VulkanObject<VkBuffer>{
     protected:
@@ -17,7 +17,7 @@ VULKAN_NS
 
         RenderBuffer(VkBuffer buffer, VmaAllocation alloc, const VmaAllocationInfo &allocInfo);
 
-        static VkBuffer AllocateBuffer(const LogicalDevice &device, VkBufferCreateInfo &bufferCreateInfo, const VmaAllocationCreateInfo &allocInfo, bool exclusive, VmaAllocation &allocation, VmaAllocationInfo &info);
+        static VkBuffer AllocateBuffer(const VulkanDevice &device, VkBufferCreateInfo &bufferCreateInfo, const VmaAllocationCreateInfo &allocInfo, bool exclusive, VmaAllocation &allocation, VmaAllocationInfo &info);
 
         NO_COPY_MOVE_DEFAULT(RenderBuffer)
 

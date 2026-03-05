@@ -3,7 +3,7 @@
 //
 
 
-#include <VoxEngine/render/vulkan/LogicalDevice.h>
+#include <VoxEngine/render/vulkan/VulkanDevice.h>
 #include <VoxEngine/render/vulkan/Surface.h>
 #include <VoxEngine/render/vulkan/FrameSync.h>
 #include <VoxEngine/render/vulkan/SwapChain.h>
@@ -58,7 +58,7 @@ namespace Vox::Render::Vulkan {
     }
 
 
-    void Surface::setDevice(LogicalDevice *device) {
+    void Surface::setDevice(VulkanDevice *device) {
         mCurrentDevice = device;
         const std::optional<QueueFamily> family = findPresentFamily();
         VOX_CHECK(family.has_value(), "Device cant be used for present");
@@ -73,6 +73,7 @@ namespace Vox::Render::Vulkan {
 
     Surface *Surface::Create(VkInstance instance, const Windowing::Window &window) {
         VkSurfaceKHR s = nullptr;
+        
         VK_CHECK(glfwCreateWindowSurface(instance, window.getHandle(), nullptr, &s),
                  "failed to create window surface!");
         return new Surface{window, s};
@@ -100,7 +101,7 @@ namespace Vox::Render::Vulkan {
         return mCurrentFormat;
     }
 
-    const LogicalDevice *Surface::getCurrentDevice() const {
+    const VulkanDevice *Surface::getCurrentDevice() const {
         return mCurrentDevice;
     }
 

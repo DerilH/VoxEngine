@@ -5,9 +5,9 @@
 #include "VoxEngine/resources/assets/ShaderAsset.h"
 
 RESOURCES_NS
-    ShaderAsset::ShaderAsset(std::string path, const Buffer<uint32_t> *mCompiled) : Asset(std::move(path)), mCompiled(mCompiled) {}
+    ShaderAsset::ShaderAsset(std::string path, const ArrayView<uint32_t> *mCompiled) : Asset(std::move(path)), mCompiled(mCompiled) {}
 
-    const Buffer<uint32_t>& ShaderAsset::getCompiled() const {
+    const ArrayView<uint32_t>& ShaderAsset::getCompiled() const {
         return *mCompiled;
     }
 

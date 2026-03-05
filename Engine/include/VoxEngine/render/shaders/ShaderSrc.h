@@ -1,7 +1,7 @@
 #pragma once
 #include <fstream>
 
-namespace Vox::Render::Shader {
+namespace Vox::Render::Shaders {
     class ShaderSrc {
     public:
         const ShaderType type;

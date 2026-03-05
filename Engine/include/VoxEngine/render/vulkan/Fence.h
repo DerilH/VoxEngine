@@ -5,17 +5,17 @@
 #pragma once
 #include <vulkan/vulkan_core.h>
 #include "VulkanObject.h"
-#include "VoxCore/containers/Buffer.h"
+#include "VoxCore/containers/ArrayView.h"
 VULKAN_NS
-    class LogicalDevice;
+    class VulkanDevice;
 
     class Fence : public VulkanObject<VkFence> {
-        friend class LogicalDevice;
+        friend class VulkanDevice;
 
         explicit Fence(VkFence fence);
-        static Fence Create(const LogicalDevice& device);
+        static Fence Create(const VulkanDevice& device);
 public:
-        inline static void wait(const LogicalDevice& device, const Buffer<VkFence>&& wait, VkBool32 waitCount = VK_TRUE, uint64_t timeout = 0);
+        inline static void wait(const VulkanDevice& device, const ArrayView<VkFence>&& wait, VkBool32 waitCount = VK_TRUE, uint64_t timeout = 0);
     };
 
 NS_END

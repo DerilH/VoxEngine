@@ -4,7 +4,7 @@
 #include <vector>
 #include "ShaderType.h"
 
-namespace Vox::Render::Shader {
+namespace Vox::Render::Shaders {
     class CompiledShader {
     public:
         const ShaderType type;

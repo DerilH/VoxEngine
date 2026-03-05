@@ -7,27 +7,27 @@
 #include "Queue.h"
 #include "Semaphore.h"
 #include "SwapChain.h"
-#include "CommandBuffer.h"
+#include "VulkanCommandBuffer.h"
 
 VULKAN_NS
-    class LogicalDevice;
+    class VulkanDevice;
 
     class FrameSync {
-        friend class LogicalDevice;
+        friend class VulkanDevice;
 
-        const LogicalDevice &mDevice;
+        const VulkanDevice &mDevice;
         Fence mFence;
         Semaphore mImageWaitSemaphore;
-        CommandBuffer mCommandBuffer;
+        CommandBufferRef mCommandBuffer;
 
         bool mStarted = false;
         uint32_t mCurrentImageIndex = 0;
 
         std::optional<Semaphore> mRenderWaitSemaphore;
 
-        FrameSync(const LogicalDevice &device, Fence fence, Semaphore imageSemaphore, CommandBuffer buffer);
+        FrameSync(const VulkanDevice &device, Fence fence, Semaphore imageSemaphore, CommandBufferRef buffer);
 
-        static FrameSync Create(const LogicalDevice &device);
+        static FrameSync Create(const VulkanDevice &device);
 
     public:
         uint32_t begin(std::optional<std::reference_wrapper<SwapChain>> swapChain);
@@ -36,7 +36,7 @@ VULKAN_NS
 
         const Semaphore &getRenderWaitSemaphore() const { return mRenderWaitSemaphore.value(); }
         const Semaphore &getImageWaitSemaphore() const { return mImageWaitSemaphore; }
-        const CommandBuffer& getCmdBuffer() const { return mCommandBuffer; }
+        const CommandBufferRef getCmdBuffer() const { return mCommandBuffer; }
         uint32_t getCurrentImageIndex() const { return mCurrentImageIndex; }
         void setRenderWaitSemaphore(const Semaphore &semaphore) { mRenderWaitSemaphore.emplace(semaphore);}
     };

@@ -5,26 +5,31 @@
 #pragma once
 
 
-#include "VoxEngine/render/vulkan/passes/PassTransition.h"
-#include "VoxEngine/render/graph/TextureHandle.h"
+#include "VoxEngine/render/passes/PassTransition.h"
+#include "VoxEngine/render/graph/GraphTexture.h"
+#include "Types.h"
 
 RENDER_NS
 struct AttachmentDesc {
-public:
+    GraphTextureRef texture;
     PassTransition transition;
-    TextureHandle textureHandle;
-    AttachmentDesc(TextureHandle& handle, PassTransition& trans) : textureHandle(handle), transition(trans) {}
+    AttachmentDesc(GraphTextureRef handle, PassTransition trans) : texture(handle), transition(trans) {
+
+    }
 
     bool operator==(const AttachmentDesc& other) const {
-        return textureHandle.id == other.textureHandle.id;
+        return texture == other.texture && transition == other.transition;
     }
 };
 NS_END
+
 namespace std {
     template<>
     struct hash<Vox::Render::AttachmentDesc> {
-        std::size_t operator()(const Vox::Render::AttachmentDesc &p) const noexcept {
-            return p.textureHandle.id;
+        size_t operator()(const Vox::Render::AttachmentDesc& desc) const noexcept {
+            size_t h1 = hash<Vox::Render::GraphTextureRef>{}(desc.texture);
+            size_t h2 = hash<int>{}(static_cast<int>(desc.transition));
+            return h1 ^ (h2 << 1);
         }
     };
 }

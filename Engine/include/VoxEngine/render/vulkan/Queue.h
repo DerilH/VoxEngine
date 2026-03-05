@@ -5,8 +5,8 @@
 #pragma once
 
 #include "QueueFamilyRepository.h"
-#include "CommandBuffer.h"
-#include "VoxCore/containers/Buffer.h"
+#include "VulkanCommandBuffer.h"
+#include "VoxCore/containers/ArrayView.h"
 #include "VulkanObject.h"
 
 VULKAN_NS
@@ -16,8 +16,8 @@ VULKAN_NS
     public:
         Queue(VkQueue handle, QueueFamily family);
 
-        void submit(const Buffer<VkCommandBuffer> &cmdBuffers, bool wait) const;
-        void submit(const Buffer<VkCommandBuffer> &cmdBuffers, const Buffer<VkSemaphore> &waitSemaphores, const Buffer<VkSemaphore> &finishSemaphore, const Buffer<VkPipelineStageFlags> & waitStages, VkFence fence = VK_NULL_HANDLE) const;
+        void submit(const ArrayView<VkCommandBuffer> &cmdBuffers, bool wait) const;
+        void submit(const ArrayView<VkCommandBuffer> &cmdBuffers, const ArrayView<VkSemaphore> &waitSemaphores, const ArrayView<VkSemaphore> &finishSemaphore, const ArrayView<VkPipelineStageFlags> & waitStages, VkFence fence = VK_NULL_HANDLE) const;
 
         QueueFamily getFamily() const;
     };

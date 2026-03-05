@@ -6,11 +6,11 @@
 
 #include <vulkan/vulkan_core.h>
 #include "RenderBuffer.h"
-#include "VoxEngine/render/vulkan/CommandBuffer.h"
+#include "VoxEngine/render/vulkan/VulkanCommandBuffer.h"
 #include <vector>
 
 VULKAN_NS
-    class LogicalDevice;
+    class VulkanDevice;
 
     constexpr int IndexTypeSize(VkIndexType type) {
         switch(type) {
@@ -24,12 +24,12 @@ VULKAN_NS
     }
 
     class IndexBuffer : public RenderBuffer{
-        friend class LogicalDevice;
+        friend class VulkanDevice;
         VkIndexType mIndexType;
         int mCount;
 
     private:
-        static IndexBuffer Create(const LogicalDevice& device, VkDeviceSize size, VkIndexType indexType);
+        static IndexBuffer Create(const VulkanDevice& device, VkDeviceSize size, VkIndexType indexType);
         IndexBuffer(VkBuffer buffer, VmaAllocation alloc, const VmaAllocationInfo &allocInfo, VkIndexType indexType, int count);
 
     public:

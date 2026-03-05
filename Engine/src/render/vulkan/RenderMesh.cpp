@@ -12,7 +12,7 @@ VULKAN_NS
         mIBuffer->bind(cmdBuffer);
     }
 
-    int RenderMesh::getIndexCount() const{
+    uint32_t RenderMesh::getIndexCount() const{
         return mIBuffer->getCount();
 }
 

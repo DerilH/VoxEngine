@@ -17,4 +17,5 @@ VULKAN_NS
     inline VkExtent3D toVk(Extent3D& extent) { return {extent.width, extent.height, extent.depth}; }
 
     inline VkExtent3D toVk(Extent3D&& extent) { return {extent.width, extent.height, extent.depth}; }
+
 NS_END

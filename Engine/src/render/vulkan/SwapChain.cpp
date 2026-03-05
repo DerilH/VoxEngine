@@ -3,9 +3,9 @@
 //
 
 #include <VoxEngine/render/vulkan/SwapChain.h>
-#include "VoxEngine/render/vulkan/passes/RenderPass.h"
+#include "VoxEngine/render/passes/RenderPass.h"
 #include <VoxEngine/render/vulkan/Surface.h>
-#include <VoxEngine/render/vulkan/LogicalDevice.h>
+#include <VoxEngine/render/vulkan/VulkanDevice.h>
 
 namespace Vox::Render::Vulkan {
     VkPresentModeKHR SwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
@@ -36,14 +36,14 @@ namespace Vox::Render::Vulkan {
         }
     }
 
-    SwapChain::SwapChain(const LogicalDevice &device, const VkSwapchainKHR mHandle,
+    SwapChain::SwapChain(const VulkanDevice &device, const VkSwapchainKHR mHandle,
                          std::vector<VkImage> images,
                          std::vector<VkImageView> imageViews,
                          const VkExtent2D extent) : VulkanObject(mHandle), mImages(std::move(images)),
                                                                        mImageViews(std::move(imageViews)), mDevice(device), mExtent(extent) {
     }
 
-    VkImageView createImageView(const LogicalDevice &device, const VkImage image, const VkFormat format) {
+    VkImageView createImageView(const VulkanDevice &device, const VkImage image, const VkFormat format) {
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = image;
@@ -123,28 +123,15 @@ namespace Vox::Render::Vulkan {
         return new SwapChain(*surface.mCurrentDevice, handle, std::move(images), std::move(imageViews), extent);
     }
 
-    void SwapChain::addRenderPass(const RenderPass& renderPass) {
-        VOX_NO_IMPL("addRenderPass");
-    }
-
     VkResult SwapChain::acquireNextImage(const Semaphore &semaphore, uint32_t* imageIndex) const {
         return vkAcquireNextImageKHR(mDevice.getHandle(), this->getHandle(), UINT64_MAX, semaphore.getHandle(), VK_NULL_HANDLE, imageIndex);
     }
 
     SwapChain::~SwapChain() {
-        for (const auto& pass : mFramebuffers | std::views::values) {
-            for (const auto& framebuffer : pass) {
-                vkDestroyFramebuffer(mDevice.getHandle(), framebuffer, nullptr);
-            }
-        }
         for (const auto &view: mImageViews) {
             vkDestroyImageView(mDevice.getHandle(), view, nullptr);
         }
         vkDestroySwapchainKHR(mDevice.getHandle(), mHandle, nullptr);
-    }
-
-    VkFramebuffer SwapChain::operator[](const RenderPassType &renderPassType, const int index) const {
-        return mFramebuffers.at(renderPassType).at(index);
     }
 
     VkImageView SwapChain::operator[](const int index) const {

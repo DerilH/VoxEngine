@@ -4,10 +4,12 @@
 
 #pragma once
 #include <VoxEngine/render/windowing/Window.h>
+#include <VoxEngine/render/vulkan/Surface.h>
+#include <VoxEngine/render/vulkan/VulkanObject.h>
 #include <vulkan/vulkan_core.h>
 
 VULKAN_NS
-    class LogicalDevice;
+    class VulkanDevice;
     class QueueFamily;
     class Queue;
     class FrameSync;
@@ -39,11 +41,11 @@ VULKAN_NS
 
     class Surface : public VulkanObject<VkSurfaceKHR> {
 
-        friend class LogicalDevice;
+        friend class VulkanDevice;
         friend class SwapChain;
 
         Windowing::Window mWindow;
-        LogicalDevice* mCurrentDevice = nullptr;
+        VulkanDevice* mCurrentDevice = nullptr;
         const Queue* mPresentQueue = nullptr;
         SwapChain* mCurrentSwapChain = nullptr;
         VkSurfaceFormatKHR mCurrentFormat;
@@ -56,7 +58,7 @@ VULKAN_NS
     public:
         Surface() = delete;
 
-        void setDevice(LogicalDevice* device);
+        void setDevice(VulkanDevice* device);
         static Surface *Create(VkInstance instance, const Windowing::Window &window);
 
         void update();
@@ -64,7 +66,7 @@ VULKAN_NS
         SwapChain& getSwapChain() const;
         VkSurfaceFormatKHR getCurrentFormat() const;
 
-        const LogicalDevice* getCurrentDevice() const;
+        const VulkanDevice* getCurrentDevice() const;
         const Queue *getPresentQueue() const;
         void presentFrame(const FrameSync &frame) const;
     };

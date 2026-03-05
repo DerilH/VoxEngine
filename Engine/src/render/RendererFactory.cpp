@@ -3,17 +3,9 @@
 //
 
 #include <VoxEngine/render/RendererFactory.h>
-#include <VoxEngine/render/vulkan/VulkanRenderer.h>
+
 RENDER_NS
-    Renderer* RendererFactory::Create(Shader::ShaderRepository& shaderRepository, const RenderAPI api) {
-    switch (api) {
-        case OPENGL_API:
-            VOX_NO_IMPL("OpenGL renderer");
-
-        case VULKAN_API:
-            return new Vulkan::VulkanRenderer(shaderRepository);
+    Renderer* RendererFactory::Create(const RenderAPI api) {
+        return new Renderer(api);
     }
-    return nullptr;
-}
-
 NS_END

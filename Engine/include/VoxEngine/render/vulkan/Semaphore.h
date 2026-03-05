@@ -6,12 +6,12 @@
 #include <vulkan/vulkan_core.h>
 
 VULKAN_NS
-    class LogicalDevice;
+    class VulkanDevice;
 
     class Semaphore : public VulkanObject<VkSemaphore>{
-        friend class LogicalDevice;
+        friend class VulkanDevice;
 
         explicit Semaphore(VkSemaphore semaphore);
-        static Semaphore Create(const LogicalDevice& device);
+        static Semaphore Create(const VulkanDevice& device);
     };
 NS_END

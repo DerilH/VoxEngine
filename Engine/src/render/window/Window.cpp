@@ -8,32 +8,22 @@
 namespace Vox::Render::Windowing {
     bool Window::sGlfwInitialized = false;
 
-    Window::Window(std::string title, const int width, const int height) : mTitle(std::move(title)), mWidth(width),
-                                                                           mHeight(height) {
+    Window::Window(std::string title, const int width, const int height) : mTitle(std::move(title)), mExtent(Extent(width,height)){
         glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
         InitGlfw();
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        LOG_ERROR("{}", glfwGetPlatform());
 
-        mHandle = glfwCreateWindow(mWidth, mHeight, title.c_str(), nullptr, nullptr);
+        mHandle = glfwCreateWindow(mExtent.width, mExtent.height, title.c_str(), nullptr, nullptr);
 
 
         glfwSetWindowUserPointer(mHandle, this);
         glfwSetWindowSizeCallback(mHandle, [](GLFWwindow *p, const int w, const int h) {
             auto *window = static_cast<Window *>(glfwGetWindowUserPointer(p));
-            window->mWidth = w;
-            window->mHeight = h;
+            window->mExtent.width = w;
+            window->mExtent.height = h;
             LOG_VERBOSE("Resized: w:{}, h:{}", w, h);
         });
-    }
-
-    int Window::getWidth() const {
-        return mWidth;
-    }
-
-    int Window::getHeight() const {
-        return mHeight;
     }
 
     std::string Window::getTitle() {
@@ -46,9 +36,9 @@ namespace Vox::Render::Windowing {
     }
 
     void Window::resize(const int width, const int height) {
-        mWidth = width;
-        mHeight = height;
-        glfwSetWindowSize(mHandle, mWidth, mHeight);
+        mExtent.width = width;
+        mExtent.height = height;
+        glfwSetWindowSize(mHandle, mExtent.width, mExtent.height);
     }
 
     GLFWwindow *Window::getHandle() const {
@@ -79,5 +69,17 @@ namespace Vox::Render::Windowing {
             glfwTerminate();
             sGlfwInitialized = false;
         }
+    }
+
+    Extent Window::getExtent() const {
+        return mExtent;
+    }
+
+    uint32_t Window::getHeight() const {
+        return mExtent.width;
+    }
+
+    uint32_t Window::getWidth() const {
+        return mExtent.height;
     }
 }

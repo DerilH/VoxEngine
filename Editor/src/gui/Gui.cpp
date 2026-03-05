@@ -3,6 +3,8 @@
 //
 
 #include "Gui.h"
+#include "VoxEngine/render/RenderBackend.h"
+#include "VoxEngine/render/vulkan/VulkanBackend.h"
 
 #include <imgui/imgui.h>
 #include <imnodes/imnodes.h>
@@ -11,6 +13,9 @@
 #include <VoxCore/Time.h>
 #include <VoxEngine/render/vulkan/VulkanState.h>
 #include <VoxEngine/render/windowing/Window.h>
+#include <VoxEngine/render/vulkan/VulkanTypes.h>
+#include <VoxEngine/render/vulkan/VulkanCommandBuffer.h>
+#include <VoxEngine/render/vulkan/VulkanDevice.h>
 
 namespace Vox::Editor {
     void Gui::init(Render::Windowing::Window& window) {
@@ -27,7 +32,7 @@ namespace Vox::Editor {
         ImGui::StyleColorsDark();
 
         ImGui_ImplGlfw_InitForVulkan(mWindow->getHandle(), true);
-        const Render::Vulkan::VulkanState *mVKstate = Render::Vulkan::VulkanState::Get();
+        auto device = Render::Vulkan::ResourceCast(Render::RenderBackend::Get()->getDevice());
 
         VkDescriptorPool pool; {
             VkDescriptorPoolSize poolSizes[] = {
@@ -50,15 +55,15 @@ namespace Vox::Editor {
             poolInfo.pPoolSizes = poolSizes;
             poolInfo.maxSets = 100;
 
-            vkCreateDescriptorPool(mVKstate->device->getHandle(), &poolInfo, nullptr, &pool);
+            vkCreateDescriptorPool(device->getHandle(), &poolInfo, nullptr, &pool);
         }
 
         ImGui_ImplVulkan_InitInfo init_info = {};
-        init_info.Instance = mVKstate->instance;
-        init_info.PhysicalDevice = mVKstate->physicalDevice->getHandle();
-        init_info.Device = mVKstate->device->getHandle();
+        init_info.Instance = Render::Vulkan::VulkanBackend::Get()->getVkInstance();
+        init_info.PhysicalDevice = device->getPhysicalDevice().getHandle();
+        init_info.Device = device->getHandle();
 
-        const Render::Vulkan::Queue &queue = mVKstate->device->getQueues().at(Vox::Render::Vulkan::GRAPHICS_QUEUE);
+        const Render::Vulkan::Queue &queue = device->getQueues().at(Vox::Render::Vulkan::GRAPHICS_QUEUE);
         init_info.QueueFamily = queue.getFamily().index();
         init_info.Queue = queue.getHandle();
         init_info.DescriptorPool = pool;
@@ -79,7 +84,7 @@ namespace Vox::Editor {
         mInitialized = true;
     }
 
-    void Gui::render(const Render::Vulkan::CommandBuffer& cmd) {
+    void Gui::render(Render::CommandBufferRef cmd) {
         mFpsCounter.update(Time::Delta());
         VOX_CHECK(mInitialized, "Gui not initialized");
         ImGui_ImplVulkan_NewFrame();
@@ -105,6 +110,6 @@ namespace Vox::Editor {
         ImGui::Render();
         ImDrawData *draw_data = ImGui::GetDrawData();
 
-        ImGui_ImplVulkan_RenderDrawData(draw_data, cmd,  nullptr);
+        ImGui_ImplVulkan_RenderDrawData(draw_data, Render::Vulkan::ResourceCast(cmd)->getHandle(),  nullptr);
     }
 }

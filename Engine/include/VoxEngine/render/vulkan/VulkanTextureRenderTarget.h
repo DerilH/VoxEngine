@@ -11,14 +11,14 @@
 #include "VoxEngine/render/Enums.h"
 
 VULKAN_NS
-class LogicalDevice;
+class VulkanDevice;
 class VulkanTextureRenderTarget : public VulkanRenderTarget, public VulkanTexture {
-    friend class LogicalDevice;
+    friend class VulkanDevice;
 protected:
-    explicit VulkanTextureRenderTarget(const LogicalDevice* device, TextureHandle handle, VkImage image, VkFormat format, VkImageView view, VmaAllocation allocation, VkExtent2D extent);
+    explicit VulkanTextureRenderTarget(const VulkanDevice* device, TextureHandle handle, VkImage image, VkFormat format, VkImageView view, VmaAllocation allocation, VkExtent2D extent);
 
 public:
-    static VulkanTextureRenderTarget Create(const LogicalDevice& device, TextureHandle handle, VkExtent2D extent, VkFormat format, VkImageUsageFlags usage);
+    static VulkanTextureRenderTarget Create(const VulkanDevice& device, TextureHandle handle, VkExtent2D extent, VkFormat format, VkImageUsageFlags usage);
 
 
     bool begin() override;

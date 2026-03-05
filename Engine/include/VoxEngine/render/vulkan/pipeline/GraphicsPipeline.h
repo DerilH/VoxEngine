@@ -6,26 +6,27 @@
 
 #include <vector>
 #include <vulkan/vulkan_core.h>
-#include "VoxCore/containers/Buffer.h"
-#include "VoxEngine/render/vulkan/CommandBuffer.h"
+#include "VoxCore/containers/ArrayView.h"
+#include "VoxEngine/render/state/RasterizerState.h"
+#include "VoxEngine/render/vulkan/VulkanCommandBuffer.h"
 #include "VoxEngine/render/vulkan/VulkanObject.h"
 #include "VoxCore/containers/Containers.h"
 #include "BlendState.h"
 
 VULKAN_NS
-    class LogicalDevice;
+    class VulkanDevice;
     class PipelineBuilder;
     class RenderPass;
 
     class GraphicsPipeline : public VulkanObject<VkPipeline> {
-        friend class LogicalDevice;
+        friend class VulkanDevice;
         friend class PipelineBuilder;
 
         VkPipelineLayout mLayout;
 
         GraphicsPipeline(VkPipeline pipeline, VkPipelineLayout layout);
 
-        static PipelineBuilder Builder(const LogicalDevice &device);
+        static PipelineBuilder Builder(const VulkanDevice &device);
 
     public:
 
@@ -35,7 +36,7 @@ VULKAN_NS
     };
 
     class PipelineBuilder {
-        const LogicalDevice &mDevice;
+        const VulkanDevice &mDevice;
         SmallVector<VkPipelineShaderStageCreateInfo> mShaderStages{};
         std::optional<VkPipelineVertexInputStateCreateInfo> mVertexInputInfo{};
         std::optional<VkPipelineInputAssemblyStateCreateInfo> mInputAssembly{};
@@ -50,25 +51,25 @@ VULKAN_NS
         bool built = false;
 
     public:
-        explicit PipelineBuilder(const LogicalDevice &mDevice);
+        explicit PipelineBuilder(const VulkanDevice &mDevice);
 
-        PipelineBuilder &shader(const Buffer<uint32_t> &code, VkShaderStageFlagBits stageFlags, InternedString name) &;
+        PipelineBuilder &shader(const ArrayView<uint32_t> &code, VkShaderStageFlagBits stageFlags, InternedString name) &;
 
-        PipelineBuilder &vertexInput(const Buffer<VkVertexInputAttributeDescription> &attributes, const Buffer<VkVertexInputBindingDescription> bindings) &;
+        PipelineBuilder &vertexInput(const ArrayView<VkVertexInputAttributeDescription> &attributes, const ArrayView<VkVertexInputBindingDescription> bindings) &;
 
         PipelineBuilder &topology(VkPrimitiveTopology topology, VkBool32 enableRestart) &;
 
         PipelineBuilder &viewport(uint32_t viewportsCount, uint32_t scissorsCount) &;
 
-        PipelineBuilder &rasterizer(VkPolygonMode polygonMode = VK_POLYGON_MODE_FILL, float lineWidth = 1, VkBool32 depthBias = VK_TRUE, VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT, VkFrontFace fronFace = VK_FRONT_FACE_CLOCKWISE) &;
+        PipelineBuilder &rasterizer(const RasterizerState &state) &;
 
         PipelineBuilder &msaa(VkSampleCountFlagBits flags = VK_SAMPLE_COUNT_1_BIT, VkBool32 enableShading = VK_FALSE) &;
 
-        PipelineBuilder &dynamic(Buffer<VkDynamicState> states) &;
+        PipelineBuilder &dynamic(ArrayView<VkDynamicState> states) &;
 
-        PipelineBuilder &layout(Buffer<VkDescriptorSetLayout> sets, Buffer<VkPushConstantRange> constants) &;
+        PipelineBuilder &layout(ArrayView<VkDescriptorSetLayout> sets, ArrayView<VkPushConstantRange> constants) &;
 
-        PipelineBuilder &rendering(const Buffer<VkFormat> &formats) &;
+        PipelineBuilder &rendering(const ArrayView<VkFormat> &formats) &;
 
         BUILDER_ENTRY(PipelineBuilder, blend, BlendState, mBlend)
 

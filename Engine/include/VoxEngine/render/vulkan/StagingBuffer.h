@@ -6,12 +6,12 @@
 #include "VoxEngine/render/vulkan/buffers/RenderBuffer.h"
 
 VULKAN_NS
-    class LogicalDevice;
+    class VulkanDevice;
 
     class StagingBuffer : public RenderBuffer {
-        friend class LogicalDevice;
+        friend class VulkanDevice;
 
-        static StagingBuffer Create(const LogicalDevice &device, VkDeviceSize size);
+        static StagingBuffer Create(const VulkanDevice &device, VkDeviceSize size);
 
         NO_COPY_MOVE_DEFAULT(StagingBuffer)
 

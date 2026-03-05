@@ -5,31 +5,28 @@
 #pragma once
 #include <vulkan/vulkan_core.h>
 
-#include "VoxEngine/render/vulkan/passes/RenderPass.h"
+#include "VoxEngine/render/passes/RenderPass.h"
+#include "VoxEngine/render/vulkan/VulkanObject.h"
 #include "Semaphore.h"
 
 VULKAN_NS
-    class LogicalDevice;
+    class VulkanDevice;
     class Surface;
 
     class SwapChain : public VulkanObject<VkSwapchainKHR> {
         friend class Surface;
-        friend class LogicalDevice;
+        friend class VulkanDevice;
 
         std::vector<VkImage> mImages;
         std::vector<VkImageView> mImageViews;
-        const LogicalDevice& mDevice;
+        const VulkanDevice& mDevice;
         VkExtent2D mExtent;
-        std::unordered_map<RenderPassType, std::vector<VkFramebuffer>> mFramebuffers;
         bool mNeedsRebuild = false;
 
-        SwapChain(const LogicalDevice &device, VkSwapchainKHR mHandle, std::vector<VkImage> images, std::vector<VkImageView> imageViews, VkExtent2D extent);
+        SwapChain(const VulkanDevice &device, VkSwapchainKHR mHandle, std::vector<VkImage> images, std::vector<VkImageView> imageViews, VkExtent2D extent);
 
-        std::vector<VkFramebuffer> createFramebuffers(const LogicalDevice &device, RenderPass renderPass) const;
         static SwapChain* Create(const Surface &surface, VkSwapchainKHR old = nullptr);
     public:
-        void addRenderPass(const RenderPass &renderPass);
-
         VkResult acquireNextImage(const Semaphore &semaphore, uint32_t *imageIndex) const;
 
         SwapChain() = delete;
