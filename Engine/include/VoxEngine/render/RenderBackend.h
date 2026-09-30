@@ -32,6 +32,7 @@ RENDER_NS
 
         virtual IndexBufferRef createIndexBuffer(const void* data, uint32_t size, IndexType type) = 0;
         virtual VertexBufferRef createVertexBuffer(const void* data, uint32_t size, BufferUsage usage) = 0;
+        virtual UniformBufferRef createUniformBuffer(uint32_t size) = 0;
 
         virtual DeviceRef getDevice() {return mCurrentDevice;}
 

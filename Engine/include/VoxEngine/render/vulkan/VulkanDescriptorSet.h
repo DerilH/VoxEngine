@@ -11,6 +11,8 @@
 
 VULKAN_NS
     class VulkanDevice;
+    class VulkanUniformBuffer;
+
     class VulkanDescriptorSet : public VulkanObject<VkDescriptorSet> {
         friend class VulkanDevice;
         VkDescriptorSetLayout mLayout;
@@ -20,6 +22,8 @@ VULKAN_NS
     public:
         NO_COPY_MOVE_DEFAULT(VulkanDescriptorSet);
         VkDescriptorSetLayout getLayouts() const;
+
+        void update(const VulkanDevice& device, uint32_t binding, const VulkanUniformBuffer& buffer);
     };
 
 NS_END

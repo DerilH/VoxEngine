@@ -15,6 +15,7 @@ VULKAN_NS
     class VulkanDevice;
     class VulkanPipelineState : public PipelineState, public VulkanObject<VkPipeline> {
         friend class VulkanDevice;
+        friend class VulkanCommandBuffer;
         Vector<VkDescriptorSetLayout> mDescriptorLayouts;
         VkPipelineLayout mLayout;
 

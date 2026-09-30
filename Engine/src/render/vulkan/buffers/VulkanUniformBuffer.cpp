@@ -26,4 +26,11 @@ VULKAN_NS
     VulkanUniformBuffer::VulkanUniformBuffer(VkBuffer buffer, VmaAllocation alloc, const VmaAllocationInfo& allocInfo) : RenderBuffer(BufferUsage::UNIFORM), VulkanRenderBuffer(buffer, alloc, allocInfo), UniformBuffer(UniformBinding(0,0)) {
     }
 
+    void VulkanUniformBuffer::write(const void* data, uint32_t size) {
+        void* mappedData = mAllocInfo.pMappedData;
+        if (mappedData) {
+            memcpy(mappedData, data, std::min((uint32_t)mAllocInfo.size, size));
+        }
+    }
+
 NS_END

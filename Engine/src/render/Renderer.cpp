@@ -2,16 +2,20 @@
 // Created by deril on 3/1/26.
 //
 #include "VoxEngine/render/Renderer.h"
-#include "VoxEngine/render/windowing/Window.h"
 #include "VoxEngine/render/RenderCore.h"
 #include "VoxEngine/render/passes/GeometryPass.h"
 #include "VoxEngine/render/passes/PassTransition.h"
 #include "VoxEngine/render/RenderTarget.h"
 #include "VoxEngine/resources/assets/MeshAsset.h"
 #include "VoxEngine/render/state/Shader.h"
-#include <functional>
 #include <VoxEngine/render/vulkan/VulkanFrameSync.h>
-
+#include <VoxEngine/render/vulkan/VulkanDevice.h>
+#include <VoxEngine/render/vulkan/VulkanDescriptorSet.h>
+#include <VoxEngine/render/vulkan/buffers/VulkanUniformBuffer.h>
+#include <VoxEngine/render/vulkan/VulkanResourceCast.h>
+#include <glm/ext/matrix_float4x4.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 RENDER_NS
     void Renderer::init() {
         VOX_ASSERT(RenderBackend::Initialized(), "Render backend not initialized");
@@ -101,6 +105,21 @@ RENDER_NS
             VertexBufferRef vBuff = RenderBackend::Get()->createVertexBuffer(data(asset->getVertices()), sizeof(glm::vec3) * asset->getVertices().size(), BufferUsage::VERTEX);
             IndexBufferRef iBuff = RenderBackend::Get()->createIndexBuffer(data(asset->getIndices()), sizeof(uint32_t) * asset->getIndices().size(), IndexType::UINT32);
             mesh = mMeshes[asset->getPath()] = new RenderMesh(vBuff, iBuff);
+
+            // Инициализация identity матрицы для меша
+            auto ubo = RenderBackend::Get()->createUniformBuffer(sizeof(glm::mat4));
+            glm::mat4 identity(1.0f);
+            identity = glm::translate(identity, glm::vec3(0,0,-4));
+            ubo->write(&identity, sizeof(identity));
+            mesh->setModelUbo(ubo);
+
+            // Создание и обновление дескриптор сета для меша (set = 1)
+            auto vkDevice = Vulkan::ResourceCast(RenderBackend::Get()->getDevice());
+            auto layout = vkDevice->getModelDescriptorSetLayout();
+            auto set = vkDevice->createDescriptorSet(layout);
+            set->update(*vkDevice, 0, *dynamic_cast<Vulkan::VulkanUniformBuffer*>(ubo));
+            mesh->setDescriptorSet(set);
+            dynamic_cast<Vulkan::VulkanUniformBuffer*>(ubo)->setDescriptorSet(set);
         } else mesh = it->second;
         mDrawListByStateHash[desc].emplace_back(mesh);
     }

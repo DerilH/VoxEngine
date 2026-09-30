@@ -37,6 +37,7 @@ VULKAN_NS
         IndexBufferRef createIndexBuffer(const void* data, uint32_t size, IndexType type) override;
 
         VertexBufferRef createVertexBuffer(const void* data, uint32_t size, BufferUsage usage) override;
+        UniformBufferRef createUniformBuffer(uint32_t size) override;
 
         VmaAllocator createAllocator(const VulkanDevice& device);
 

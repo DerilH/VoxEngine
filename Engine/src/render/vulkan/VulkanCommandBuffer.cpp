@@ -6,6 +6,9 @@
 #include "VoxEngine/render/vulkan/VulkanUtil.h"
 #include "VoxEngine/render/buffers/IndexBuffer.h"
 #include "VoxEngine/render/buffers/VertexBuffer.h"
+#include "VoxEngine/render/vulkan/VulkanBackend.h"
+#include "VoxEngine/render/vulkan/VulkanDescriptorSet.h"
+#include "VoxEngine/render/vulkan/buffers/VulkanUniformBuffer.h"
 #include "VoxEngine/render/vulkan/VulkanResourceCast.h"
 #include "VoxEngine/render/state/PipelineState.h"
 
@@ -125,7 +128,9 @@ VULKAN_NS
 
     void VulkanCommandBuffer::bindPipelineState(PipelineStateRef state) {
         VOX_ASSERT(mStarted, "Command buffer not started")
-        vkCmdBindPipeline(*this, VK_PIPELINE_BIND_POINT_GRAPHICS, *ResourceCast(state));
+        auto vkState = ResourceCast(state);
+        mCurrentLayout = vkState->mLayout;
+        vkCmdBindPipeline(*this, VK_PIPELINE_BIND_POINT_GRAPHICS, *vkState);
     }
 
     void VulkanCommandBuffer::drawIndexed(uint32_t indexCount) {
@@ -151,7 +156,18 @@ VULKAN_NS
     }
 
     void VulkanCommandBuffer::bindUniformBuffer(UniformBufferRef buffer) {
+        VOX_ASSERT(mStarted, "Command buffer not started")
+        auto vkDevice = ResourceCast(VulkanBackend::Get()->getDevice());
 
+        // Биндим глобальный дескриптор сет (set = 0)
+        VkDescriptorSet globalSet = vkDevice->getGlobalDescriptorSet()->getHandle();
+        vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, 0, 1, &globalSet, 0, nullptr);
+
+        // Биндим дескриптор сет меша (set = 1), если он есть
+        if (auto internalSet = (VulkanDescriptorSet*)buffer->getInternalDescriptorSet()) {
+            VkDescriptorSet meshSet = internalSet->getHandle();
+            vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, 1, 1, &meshSet, 0, nullptr);
+        }
     }
 
     VkImageMemoryBarrier2 createBarrier(PassTransition transition, TextureRef texture) {

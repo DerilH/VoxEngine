@@ -17,9 +17,13 @@ RENDER_NS
         }
 
     public:
+        virtual void write(const void* data, uint32_t size) = 0;
+
         inline void bind(CommandBufferRef cmdBuffer, uint32_t offset) {
             cmdBuffer->bindUniformBuffer(this);
         }
+
+        virtual void* getInternalDescriptorSet() const { return nullptr; }
     };
 
 NS_END

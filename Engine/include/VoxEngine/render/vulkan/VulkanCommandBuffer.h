@@ -49,6 +49,11 @@ VULKAN_NS
         void bindVertexBuffer(VertexBufferRef buffer) override;
 
         void bindUniformBuffer(UniformBufferRef buffer) override;
+
+        VkPipelineLayout getCurrentLayout() const { return mCurrentLayout; }
+    private:
+        VkPipelineLayout mCurrentLayout = VK_NULL_HANDLE;
+    public:
         NO_COPY_MOVE_DEFAULT(VulkanCommandBuffer)
 
     };

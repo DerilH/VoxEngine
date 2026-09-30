@@ -7,6 +7,7 @@
 #include "VoxEngine/render/vulkan/VulkanDevice.h"
 #include "VoxEngine/render/vulkan/VulkanResourceCast.h"
 #include "VoxEngine/render/vulkan/VulkanUtil.h"
+#include <VoxEngine/render/vulkan/buffers/VulkanUniformBuffer.h>
 #include <vulkan/vulkan.h>
 
 VULKAN_NS
@@ -148,6 +149,11 @@ VULKAN_NS
         cmdBuffer->end();
         queue.submit({*cmdBuffer}, true);
         return buffer;
+    }
+
+    UniformBufferRef VulkanBackend::createUniformBuffer(uint32_t size) {
+        VulkanDevice* device = ResourceCast(mCurrentDevice);
+        return device->createHeap<VulkanUniformBuffer>(size);
     }
 
 NS_END
