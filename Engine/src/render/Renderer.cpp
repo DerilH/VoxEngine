@@ -4,25 +4,30 @@
 #include "VoxEngine/render/Renderer.h"
 #include "VoxEngine/render/windowing/Window.h"
 #include "VoxEngine/render/RenderCore.h"
-#include "VoxEngine/render/passes/RenderPass.h"
 #include "VoxEngine/render/passes/GeometryPass.h"
 #include "VoxEngine/render/passes/PassTransition.h"
 #include "VoxEngine/render/RenderTarget.h"
+#include "VoxEngine/resources/assets/MeshAsset.h"
+#include "VoxEngine/render/state/Shader.h"
+#include <functional>
+#include <VoxEngine/render/vulkan/VulkanFrameSync.h>
 
 RENDER_NS
     void Renderer::init() {
         VOX_ASSERT(RenderBackend::Initialized(), "Render backend not initialized");
         setBuffering(3);
+        createGraph();
     }
 
     void Renderer::renderLoop() {
-        while (!mShouldStop) {
-            Time::Update();
-            for (const auto& target: mRenderTargets) {
-                target->beginFrame();
-                drawFrame(target);
-                target->endFrame();
-            }
+        Time::Update();
+        for (const auto& target: mRenderTargets) {
+            if (target->beginFrame() == -1) continue;
+            drawFrame(target);
+            target->endFrame();
+        }
+        for (auto& list: mDrawListByStateHash | std::views::values) {
+            list.clear();
         }
     }
 
@@ -36,7 +41,7 @@ RENDER_NS
 
     void Renderer::createGraph() {
         mGraph = new RenderGraph();
-        auto color = mGraph->createTexture();
+        color = mGraph->createTexture();
         mGraph->addPass(new GeometryPass(RenderPassType::GBUFFER_PASS, {{}}, {{color, PassTransition::NONE_W_ATTACHMENT}}));
     }
 
@@ -45,42 +50,72 @@ RENDER_NS
     }
 
     void Renderer::drawFrame(RenderTargetRef target) {
-        CommandBufferRef cmdBuffer = nullptr;
+        color->setExact(target->getBackBuffer());
+
+        auto cmdBuffer = ((Vulkan::Surface*) target)->getCurrentFrame().getCmdBuffer();
         cmdBuffer->reset();
         cmdBuffer->begin();
 
-        cmdBuffer->beginDrawingTarget(target);
         executeGraph(target, cmdBuffer);
-        cmdBuffer->endDrawingTarget(target);
 
         cmdBuffer->end();
     }
 
     void Renderer::executeGraph(RenderTargetRef target, CommandBufferRef cmdBuffer) {
 
+        cmdBuffer->setViewportState(0, 0, target->getSize());
+        cmdBuffer->setScissor(0, 0, target->getSize());
 
-        cmdBuffer->setViewportState(0,0,target->getSize());
-        cmdBuffer->setScissor(0,0,target->getSize());
+        mGraph->execute({this, cmdBuffer}, target);
+    }
 
-        mGraph->execute(cmdBuffer,target);
+    void Renderer::clearDrawList(const PipelineStateDesc& state) {
+        mDrawListByStateHash.at(state);
+    }
+
+    const HashMap<PipelineStateDesc, Vector<DrawItem>>& Renderer::getDrawLists() const {
+        return mDrawListByStateHash;
+    }
+
+    const Vector<DrawItem>& Renderer::getDrawList(const PipelineStateDesc& state) const {
+        return mDrawListByStateHash.at(state);
     }
 
 
-//void VulkanRenderer::registerMesh(Resources::ModelAsset* asset) {
-//    for (int i = 0; i < asset->getNestedCount(); i++) {
-//        auto mesh = asset->getNested<Resources::MeshAsset>(i);
-//
-//
-//        std::vector<Vertex> vertex;
-//        for (auto c: mesh->getVertices()) {
-//            vertex.emplace_back(c, glm::vec3(1, 0, 1));
-//        }
-//
-//        auto v = VulkanState::Get()->createVertexBuffer(vertex);
-//        auto indices = VulkanState::Get()->createIndexBuffer(mesh->getIndices());
-//        mMeshes.emplace_back(new RenderMesh(v, indices));
-//    }
-//}
+    void Renderer::draw(Resources::ShaderAsset* vertexShaderAsset, Resources::ShaderAsset* fragmentShaderAsset, Resources::MeshAsset* asset) {
+        auto vertexShader = new Shader(&vertexShaderAsset->getCompiled());
+        auto fragmentShader = new Shader(&fragmentShaderAsset->getCompiled());
+
+        ShaderState shaderState = ShaderState::GetBuilder().shaders({vertexShader, fragmentShader}).build();
+        Vector<BlendState> blendState = BlendState::GetBuilder().startAttachment().endAttachment().build();
+        RasterizerState rasterizerState = RasterizerState::GetBuilder().build();
+        PrimitiveTopology topology = PrimitiveTopology::TRIANGLE_LIST;
+        MSAAState msaaState;
+        RenderingState renderingState = RenderingState({mRenderTargets[0]->getBackBuffer()->getFormat()}, Format::UNDEFINED, Format::UNDEFINED);
+        auto blend = ArrayView<BlendState>::Copy(blendState);
+        PipelineStateDesc desc(shaderState, blend, rasterizerState, topology, msaaState, renderingState);
+
+        auto it = mMeshes.find(asset->getPath());
+        RenderMesh* mesh;
+        if (it == mMeshes.end()) {
+            VertexBufferRef vBuff = RenderBackend::Get()->createVertexBuffer(data(asset->getVertices()), sizeof(glm::vec3) * asset->getVertices().size(), BufferUsage::VERTEX);
+            IndexBufferRef iBuff = RenderBackend::Get()->createIndexBuffer(data(asset->getIndices()), sizeof(uint32_t) * asset->getIndices().size(), IndexType::UINT32);
+            mesh = mMeshes[asset->getPath()] = new RenderMesh(vBuff, iBuff);
+        } else mesh = it->second;
+        mDrawListByStateHash[desc].emplace_back(mesh);
+    }
+
+    PipelineStateRef Renderer::getPipelineState(PipelineStateDesc desc) {
+        auto it = mPipelineStateByHash.find(desc);
+        if (it != mPipelineStateByHash.end()) return it->second;;
+
+        PipelineStateRef pso = RenderBackend::Get()->createPSO(desc);
+        mPipelineStateByHash[desc] = pso;
+        mDrawListByStateHash[desc] = Vector<DrawItem>();
+        return pso;
+    }
+
+
 
 //    void VulkanRenderer::addRenderTarget(RenderTarget* target) {
 //        Renderer::addRenderTarget(target);

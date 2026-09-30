@@ -7,11 +7,9 @@
 
 #include <utility>
 #include <VoxEngine/render/RendererFactory.h>
-#include <VoxEngine/render/vulkan/Surface.h>
-#include <VoxEngine/render/vulkan/VulkanState.h>
-#include <VoxEngine/render/vulkan/VulkanWindowRenderTarget.h>
 #include "VoxEngine/render/RenderCore.h"
 #include "VoxEngine/resources/assets/ModelAsset.h"
+#include "VoxEngine/resources/assets/ShaderAsset.h"
 
 VOX_NS
     constexpr const char* SHADERS_SRC_PATH = "./resources/shaders";
@@ -51,7 +49,17 @@ VOX_NS
     }
 
     void Engine::run() {
-        mRenderer->renderLoop();
+        while (!mWindows[mTitle]->shouldClose()) {
+            auto vertex = mResourceManager->get<Resources::ShaderAsset>("shaders/baseShader.vert");
+            auto fragment = mResourceManager->get<Resources::ShaderAsset>("shaders/baseShader.frag");
+            auto model = mResourceManager->get<Resources::ModelAsset>("teapot.fbx");
+            for(int i = 0; i < model->getNestedCount(); i++) {
+                auto mesh = model->getNested<Resources::MeshAsset>(i);
+                mRenderer->draw(vertex,fragment,mesh);
+            }
+            mRenderer->renderLoop();
+            Vox::Render::Windowing::Window::pollEvents();
+        }
     }
 
 

@@ -7,13 +7,14 @@
 
 #include "Asset.h"
 #include "VoxCore/containers/ArrayView.h"
+#include "VoxEngine/render/shaders/CompiledShader.h"
 
 RESOURCES_NS
 class ShaderAsset : public Asset {
-    const ArrayView<uint32_t> * mCompiled;
+    const Render::Shaders::CompiledShader mCompiled;
 public:
-    explicit ShaderAsset(std::string path, const ArrayView<uint32_t> *mCompiled);
-    const ArrayView<uint32_t>& getCompiled() const;
+    explicit ShaderAsset(std::string path, const Render::Shaders::CompiledShader mCompiled);
+    const Render::Shaders::CompiledShader& getCompiled() const;
 
     AssetType type() override;
 };

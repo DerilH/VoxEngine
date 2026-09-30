@@ -12,8 +12,8 @@ namespace Vox::Editor {
         Gui* mGui;
         GuiRenderPass(Render::RenderPassType mType, ArrayView<Render::AttachmentDesc> reads, ArrayView<Render::AttachmentDesc> writes, Gui* gui) : RenderPass(mType, reads, writes), mGui(gui) {}
 
-        void execute(Render::CommandBufferRef cmdBuffer) override {
-            mGui->render(cmdBuffer);
+        void execute(Render::RenderContext context) override {
+            mGui->render(context);
         }
     };
 }

@@ -33,10 +33,9 @@ RENDER_NS
         GraphTextureRef createTexture(InternedString slot = "");
 
         GraphTextureRef getTexture(InternedString slot);
-
-
+        Vector<GraphTextureRef> getTextures();
         const Vector<RenderPassRef>& compile(RenderTargetRef endTarget);
 
-        void execute(CommandBufferRef cmdBuffer, RenderTargetRef target);
+        void execute(RenderContext context, const RenderTargetRef target);
     };
 NS_END

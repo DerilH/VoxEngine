@@ -1,5 +1,8 @@
 #include <VoxEngine/render/vulkan/VulkanDevice.h>
 #include <VoxEngine/render/vulkan/VulkanState.h>
+#include <VoxEngine/render/vulkan/VulkanUtil.h>
+#include <VoxEngine/render/vulkan/VulkanDescriptorSet.h>
+
 #include "VoxEngine/render/vulkan/VulkanBackend.h"
 
 namespace Vox::Render::Vulkan {
@@ -17,17 +20,38 @@ namespace Vox::Render::Vulkan {
             mCmdPools.emplace(type, *this->createHeap<VulkanCommandPool>(queue.getFamily()));
         }
         mAllocator = VulkanBackend::Get()->createAllocator(*this);
+
+        initGlobalDescriptors();
+    }
+
+    void VulkanDevice::initGlobalDescriptors() {
+        mGlobalDescriptorPool = this->createHeap<VulkanDescriptorPool>(4, ArrayView<VkDescriptorPoolSize>({{toVk(ShaderResourceType::UNIFORM_BUFFER), 1}}));
+
+        VkDescriptorSetLayoutCreateInfo createInfo{};
+        createInfo.bindingCount = 1;
+
+        VkDescriptorSetLayoutBinding binding{};
+        binding.descriptorCount = 1;
+        binding.descriptorType = toVk(ShaderResourceType::UNIFORM_BUFFER);
+        binding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
+
+        createInfo.pBindings = &binding;
+
+        VkDescriptorSetLayout layout;
+        vkCreateDescriptorSetLayout(*this, &createInfo, nullptr, &layout);
+
+        mGlobalDescriptors = this->createHeap<VulkanDescriptorSet>(mGlobalDescriptorPool, layout);
     }
 
     PhysicalDevice VulkanDevice::getPhysicalDevice() const {
         return mPhysicalDevice;
     }
 
-    const std::unordered_map<QueueType, Queue> &VulkanDevice::getQueues() const {
+    const HashMap<QueueType, Queue> &VulkanDevice::getQueues() const {
         return mQueues;
     }
 
-    const std::unordered_map<QueueType, VulkanCommandPool &> &VulkanDevice::getCmdPools() const {
+    const HashMap<QueueType, VulkanCommandPool &> &VulkanDevice::getCmdPools() const {
         return mCmdPools;
     }
 
@@ -41,6 +65,10 @@ namespace Vox::Render::Vulkan {
 
     VmaAllocator VulkanDevice::getAllocator() const {
         return mAllocator;
+    }
+
+    const VulkanDescriptorSetRef &VulkanDevice::getGlobalDescriptorSet() const {
+        return mGlobalDescriptors;
     }
 
     void VulkanDevice::waitIdle() const {
@@ -70,7 +98,7 @@ namespace Vox::Render::Vulkan {
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
 
-//        createInfo.pEnabledFeatures = &deviceFeatures;
+        //        createInfo.pEnabledFeatures = &deviceFeatures;
 
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();
@@ -94,27 +122,34 @@ namespace Vox::Render::Vulkan {
 
 
 #ifdef ENABLE_VALIDATION_LAYERS
-            createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-            createInfo.ppEnabledLayerNames = validationLayers.data();
+        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        createInfo.ppEnabledLayerNames = validationLayers.data();
 #else
-            createInfo.enabledLayerCount = 0;
+        createInfo.enabledLayerCount = 0;
 #endif
         VkDevice device;
         VK_CHECK(vkCreateDevice(physDevice.getHandle(), &createInfo, nullptr, &device),
                  "failed to create logical device!");
 
-        std::unordered_map<QueueType, Queue> queues;
+        HashMap<QueueType, Queue> queues;
         for (const auto &queueFamily: queueFamilies.getUniqueFamilies()) {
             VkQueue queue = acquireQueue(device, queueFamilies, queueFamily.type());
             queues.emplace(queueFamily.type(), Queue{queue, queueFamily});
         }
 
-        std::unordered_map<QueueType, VulkanCommandPool> cmdPools;
         for (const auto &queueFamily: queueFamilies.getUniqueFamilies()) {
             VkQueue queue = acquireQueue(device, queueFamilies, queueFamily.type());
             queues.emplace(queueFamily.type(), Queue{queue, queueFamily});
         }
 
         return new VulkanDevice{device, physDevice, std::move(queues)};
+    }
+
+    VkBuffer VulkanDevice::allocateBuffer(VkBufferCreateInfo &bufferCreateInfo, const VmaAllocationCreateInfo &allocInfo, const bool exclusive, VmaAllocation &allocation, VmaAllocationInfo &info) const {
+        bufferCreateInfo.sharingMode = exclusive ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
+
+        VkBuffer buffer = VK_NULL_HANDLE;
+        VK_CHECK(vmaCreateBuffer(getAllocator(), &bufferCreateInfo, &allocInfo, &buffer, &allocation, &info), "failed to allocate buffers");
+        return buffer;
     }
 }

@@ -8,6 +8,8 @@
 #include "VoxCore/Assert.h"
 #include "WindowRenderTarget.h"
 #include "Device.h"
+#include "Enums.h"
+#include "VoxEngine/render/state/PipelineStateDesc.h"
 
 RENDER_NS
     class RenderBackend {
@@ -21,9 +23,16 @@ RENDER_NS
 
     public:
 
-        virtual void beginFrame() = 0;
+        virtual int32_t beginFrame() = 0;
         virtual void endFrame() = 0;
         virtual RenderTargetRef createWindowTarget(Extent extent, void* windowHandle) = 0;
+        virtual CommandPoolRef createCommandPool() = 0;
+        virtual TextureRef createTexture(Format format, Extent extent) = 0;
+        virtual PipelineStateRef createPSO(const PipelineStateDesc& desc) = 0;
+
+        virtual IndexBufferRef createIndexBuffer(const void* data, uint32_t size, IndexType type) = 0;
+        virtual VertexBufferRef createVertexBuffer(const void* data, uint32_t size, BufferUsage usage) = 0;
+
         virtual DeviceRef getDevice() {return mCurrentDevice;}
 
         static void Init(RenderBackend* backend) {

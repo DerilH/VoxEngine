@@ -11,14 +11,14 @@
 
 RENDER_NS
 class RenderTarget : public RenderResource {
+protected:
     Extent mExtent;
 
-protected:
     RenderTarget(Extent extent) : mExtent(extent) {}
 public:
     RenderTarget() = delete;
 
-    virtual void beginFrame() = 0;
+    virtual int32_t beginFrame() = 0;
     virtual void endFrame() = 0;
 
     virtual TextureRef getBackBuffer() = 0;

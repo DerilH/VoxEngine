@@ -7,13 +7,13 @@
 #include "VoxCore/Define.h"
 #include "VoxEngine/render/Enums.h"
 #include "VoxCore/containers/Containers.h"
-#include "xxhash.h"
+#include <xxh3.h>
 
 RENDER_NS
     class BlendState {
         friend struct std::hash<Vox::Render::BlendState>;
-        uint8_t mColorWriteMask = 0;
-        bool mblendEnable = false;
+        uint8_t mColorWriteMask = 0x0000000F;
+        bool mBlendEnable = false;
         BlendFactor mSrcFactor;
         BlendFactor mDstFactor;
         BlendFactor mSrcAlphaFactor;
@@ -27,7 +27,7 @@ RENDER_NS
 
         uint8_t getColorWriteMask() const { return mColorWriteMask; }
 
-        bool isBlendEnable() const { return mblendEnable; }
+        bool isBlendEnable() const { return mBlendEnable; }
 
         BlendFactor getSrcFactor() const {return mSrcFactor;}
 
@@ -62,7 +62,7 @@ RENDER_NS
                 return *this;
             }
 
-            BUILDER_ENTRY(Builder, enable, bool, mPerAttachment[mCurrent].mblendEnable);
+            BUILDER_ENTRY(Builder, enable, bool, mPerAttachment[mCurrent].mBlendEnable);
 
             BUILDER_ENTRY(Builder, srcFactor, BlendFactor, mPerAttachment[mCurrent].mSrcFactor);
 
@@ -80,6 +80,10 @@ RENDER_NS
         };
 
         inline static Builder GetBuilder() { return {}; }
+
+        inline bool operator==(const BlendState& other) const {
+            return mColorWriteMask == other.mColorWriteMask && mBlendEnable == other.mBlendEnable && mSrcFactor == other.mSrcFactor && mDstFactor == other.mDstFactor && mSrcAlphaFactor == other.mSrcAlphaFactor && mDstAlphaFactor == other.mDstAlphaFactor && mColorBlendOp == other.mColorBlendOp && mAlphaBlendOp == other.mAlphaBlendOp;
+        }
     };
 NS_END
 
@@ -91,7 +95,7 @@ namespace std {
             XXH64_reset(state, 0);
 
             XXH64_update(state, &s.mColorWriteMask, sizeof(uint8_t));
-            XXH64_update(state, &s.mblendEnable, sizeof(bool));
+            XXH64_update(state, &s.mBlendEnable, sizeof(bool));
             XXH64_update(state, &s.mSrcFactor, sizeof(Vox::Render::BlendFactor));
             XXH64_update(state, &s.mSrcAlphaFactor, sizeof(Vox::Render::BlendFactor));
             XXH64_update(state, &s.mDstFactor, sizeof(Vox::Render::BlendFactor));

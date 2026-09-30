@@ -40,7 +40,7 @@ LOG_WARN("{}", error)\
 {                                  \
 VkResult r = (statement);            \
 if(r != VK_SUCCESS) {              \
-    LOG_ERROR("{}: {}", error, (int)r)\
+    LOG_ERROR("{}: {}", error, (uint32_t)r)\
     throw std::runtime_error(error);\
 }                                   \
 }\

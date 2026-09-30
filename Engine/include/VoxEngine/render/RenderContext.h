@@ -10,7 +10,10 @@
 #include "VoxCore/containers/Containers.h"
 
 RENDER_NS
-class RenderContext {
-public:
+class Renderer;
+struct RenderContext {
+    Renderer* renderer;
+    const CommandBufferRef cmdBuffer;
+    RenderContext(Renderer* renderer, CommandBufferRef cmdBuffer) : renderer(renderer), cmdBuffer(cmdBuffer) {}
 };
 NS_END

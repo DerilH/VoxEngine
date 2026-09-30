@@ -5,7 +5,7 @@
 
 RENDER_NS
     RasterizerState RasterizerState::Builder::build() const& {
-        return {mPolygonMode, mLineWidth, mCullMode, mFrontFace, mDepthClampEnable, mDiscardEnable, mDepthBiasEnable};
+        return {mPolygonMode, mLineWidth, mCullMode, mFrontFace, mDepthClampEnable, mDiscardEnable, mDepthBiasEnable, mDepthBiasConstantFactor, mDepthBiasClamp, mDepthBiasSlopeFactor};
     }
     RasterizerState::Builder RasterizerState::GetBuilder() {
         return {};

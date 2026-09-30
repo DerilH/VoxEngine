@@ -17,11 +17,12 @@ RENDER_NS
 
         explicit Texture(Format format, Extent extent) : mFormat(format), mExtent(extent) {
         }
+
+        virtual ~Texture() = 0;
+
     public:
 
         NO_COPY_MOVE_DEFAULT(Texture);
-        virtual ~Texture() = 0;
-
         inline Format getFormat() const {return mFormat;}
         inline Extent getExtent() const {return mExtent;}
     };

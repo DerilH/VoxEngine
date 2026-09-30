@@ -8,20 +8,25 @@
 #include "RenderBuffer.h"
 
 RENDER_NS
-    class IndexBuffer : public RenderBuffer {
+    class IndexBuffer : virtual public RenderBuffer {
+    protected:
         IndexType mIndexType;
         uint32_t mCount;
-    public:
-        explicit IndexBuffer(BufferUsage usage, IndexType type, uint32_t count) : RenderBuffer(usage), mIndexType(type), mCount(count) {};
 
-        inline void bind(CommandBufferRef cmdBuffer) override {
+        explicit IndexBuffer(const IndexType type, const uint32_t count) : mIndexType(type), mCount(count) {};
+
+    public:
+
+        inline void bind(CommandBufferRef cmdBuffer) {
             cmdBuffer->bindIndexBuffer(this);
         }
 
         inline IndexType getIndexType() const { return mIndexType; }
 
-        inline uint32_t getCount() const {return mCount;}
+        inline uint32_t getCount() const { return mCount; }
+
         inline void setCount(uint32_t count) { mCount = count; }
+
     };
 
 NS_END

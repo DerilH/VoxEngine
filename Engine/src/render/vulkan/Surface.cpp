@@ -5,14 +5,15 @@
 
 #include <VoxEngine/render/vulkan/VulkanDevice.h>
 #include <VoxEngine/render/vulkan/Surface.h>
-#include <VoxEngine/render/vulkan/FrameSync.h>
+#include <VoxEngine/render/vulkan/VulkanFrameSync.h>
 #include <VoxEngine/render/vulkan/SwapChain.h>
+#include "VoxEngine/render/vulkan/VulkanUtil.h"
 
 namespace Vox::Render::Vulkan {
     SwapChainSupportDetails Surface::querySwapChainSupport() const {
         VkSurfaceCapabilitiesKHR capabilities;
 
-        VkPhysicalDevice device = mCurrentDevice->getPhysicalDevice().getHandle();
+        VkPhysicalDevice device = mDevice->getPhysicalDevice().getHandle();
         VkSurfaceKHR surface = mHandle;
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &capabilities);
 
@@ -36,9 +37,9 @@ namespace Vox::Render::Vulkan {
     }
 
     std::optional<QueueFamily> Surface::findPresentFamily() const {
-        for (const auto &family: mCurrentDevice->getPhysicalDevice().getQueueFamilies().getUniqueFamilies()) {
+        for (const auto& family: mDevice->getPhysicalDevice().getQueueFamilies().getUniqueFamilies()) {
             VkBool32 presentSupport = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(mCurrentDevice->getPhysicalDevice().getHandle(), family.index(), mHandle, &presentSupport);
+            vkGetPhysicalDeviceSurfaceSupportKHR(mDevice->getPhysicalDevice().getHandle(), family.index(), mHandle, &presentSupport);
 
             if (presentSupport) {
                 return family;
@@ -47,8 +48,8 @@ namespace Vox::Render::Vulkan {
         return std::nullopt;
     }
 
-    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
-        for (const auto &availableFormat: availableFormats) {
+    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
+        for (const auto& availableFormat: availableFormats) {
             if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 return availableFormat;
             }
@@ -58,58 +59,69 @@ namespace Vox::Render::Vulkan {
     }
 
 
-    void Surface::setDevice(VulkanDevice *device) {
-        mCurrentDevice = device;
+    void Surface::setDevice(VulkanDevice* device) {
+        mDevice = device;
         const std::optional<QueueFamily> family = findPresentFamily();
         VOX_CHECK(family.has_value(), "Device cant be used for present");
-
         mPresentQueue = &(device->getQueues().at(family->type()));
-        mCurrentFormat = chooseSwapSurfaceFormat(querySwapChainSupport().formats());
+        mSurfaceFormat = chooseSwapSurfaceFormat(querySwapChainSupport().formats());
+        mImageFormat = fromVk(mSurfaceFormat.format);
         createSwapChain();
     }
 
-    Surface::Surface(const Windowing::Window &window, VkSurfaceKHR handle) : mWindow(window), VulkanObject(handle) {
+    SwapChainSupportDetails::SwapChainSupportDetails(const VkSurfaceCapabilitiesKHR& capabilities,
+                                                     const Vector<VkSurfaceFormatKHR>& formats,
+                                                     const Vector<VkPresentModeKHR>& presentModes) : mCapabilities(
+            capabilities), mFormats(formats), mPresentModes(presentModes) {
     }
 
-    Surface *Surface::Create(VkInstance instance, const Windowing::Window &window) {
+    Surface::Surface(Extent extent, VkSurfaceKHR handle, void* windowHandle) : WindowRenderTarget(extent, windowHandle), mWindow(windowHandle), VulkanObject(handle) {
+    }
+
+    Surface* Surface::Create(Extent extent, VkInstance instance, void* window) {
         VkSurfaceKHR s = nullptr;
-        
-        VK_CHECK(glfwCreateWindowSurface(instance, window.getHandle(), nullptr, &s),
+
+        VK_CHECK(glfwCreateWindowSurface(instance, (GLFWwindow*) window, nullptr, &s),
                  "failed to create window surface!");
-        return new Surface{window, s};
+        return new Surface{extent, s, window};
     }
 
     void Surface::update() {
-        if (mCurrentSwapChain != nullptr && mCurrentSwapChain->needsRebuild()) {
+        if (mCurrentSwapChain == nullptr || mCurrentSwapChain->needsRebuild()) {
             createSwapChain();
         }
     }
 
     void Surface::createSwapChain() {
-        SwapChain *old = nullptr;
+        SwapChain* old = nullptr;
         if (mCurrentSwapChain != nullptr) {
             old = mCurrentSwapChain;
         }
         mCurrentSwapChain = SwapChain::Create(*this, old == nullptr ? nullptr : old->getHandle());
+        createFrames(mCurrentSwapChain->getImageCount());
     }
 
-    SwapChain &Surface::getSwapChain() const {
+    SwapChain& Surface::getSwapChain() const {
         return *mCurrentSwapChain;
     }
 
-    VkSurfaceFormatKHR Surface::getCurrentFormat() const {
-        return mCurrentFormat;
+    Format Surface::getImageFormat() const {
+        return mImageFormat;
     }
 
-    const VulkanDevice *Surface::getCurrentDevice() const {
-        return mCurrentDevice;
+    VkSurfaceFormatKHR Surface::getSurfaceFormat() const {
+        return mSurfaceFormat;
     }
 
-    const Queue *Surface::getPresentQueue() const {
+    const VulkanDevice* Surface::getDevice() const {
+        return mDevice;
+    }
+
+    const Queue* Surface::getPresentQueue() const {
         return mPresentQueue;
     }
 
-    void Surface::presentFrame(const FrameSync &frame) const {
+    void Surface::presentFrame(const VulkanFrameSync& frame) const {
         VOX_ASSERT(mPresentQueue != nullptr, "No queue provided for present")
         VOX_ASSERT(mCurrentSwapChain != nullptr, "No swapchain provided for present")
 
@@ -127,6 +139,49 @@ namespace Vox::Render::Vulkan {
         const uint32_t index = frame.getCurrentImageIndex();
         presentInfo.pImageIndices = &index;
 
-        vkQueuePresentKHR(mPresentQueue->getHandle(), &presentInfo);
+        VK_CHECK(vkQueuePresentKHR(mPresentQueue->getHandle(), &presentInfo), "Cannot present frame");
+    }
+
+    int32_t Surface::beginFrame() {
+        this->update();
+        auto& e = this->getSwapChain();
+        mExtent = {e.getExtent().width, e.getExtent().height};
+
+        auto frame = mFrames[mCurrentFrame];
+        const uint32_t index = frame->begin(e);
+        if (index == -1) {
+            LOG_VERBOSE("Swapchain rebuild needed");
+            return -1;
+        }
+        frame->setRenderWaitSemaphore(*mRenderFinishedSemaphores[index]);
+        return 0;
+    }
+
+    void Surface::endFrame() {
+        mFrames[mCurrentFrame]->submit();
+        presentFrame(*mFrames[mCurrentFrame]);
+        mCurrentFrame = (mCurrentFrame + 1) % mFrames.size();
+    }
+
+    TextureRef Surface::getBackBuffer() {
+        return mCurrentSwapChain->getTexture(mFrames[mCurrentFrame]->getCurrentImageIndex());
+    }
+
+    void Surface::resize(Extent extent) {
+        VOX_NO_IMPL("Resize not implemented")
+    }
+
+    void Surface::createFrames(const uint8_t buffers) {
+        mFrames.clear();
+        mFrames.reserve(buffers);
+        mRenderFinishedSemaphores.reserve(buffers);
+        for (int i = 0; i < buffers; i++) {
+            mFrames.emplace_back(mDevice->createHeap<VulkanFrameSync>());
+            mRenderFinishedSemaphores.emplace_back(mDevice->createHeap<Semaphore>());
+        }
+    }
+
+    VulkanFrameSync& Surface::getCurrentFrame() const {
+        return *mFrames[mCurrentFrame];
     }
 }

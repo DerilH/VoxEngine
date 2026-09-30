@@ -21,12 +21,22 @@ VULKAN_NS
         explicit VulkanBackend() = default;
 
     public:
+        virtual ~VulkanBackend() = default;
 
-        void beginFrame() override;
+        int32_t beginFrame() override;
 
         void endFrame() override;
 
         RenderTargetRef createWindowTarget(Extent extent, void* windowHandle) override;
+        CommandPoolRef createCommandPool() override;
+
+        TextureRef createTexture(Format format, Extent extent) override;
+
+        PipelineStateRef createPSO(const PipelineStateDesc& desc) override;
+
+        IndexBufferRef createIndexBuffer(const void* data, uint32_t size, IndexType type) override;
+
+        VertexBufferRef createVertexBuffer(const void* data, uint32_t size, BufferUsage usage) override;
 
         VmaAllocator createAllocator(const VulkanDevice& device);
 

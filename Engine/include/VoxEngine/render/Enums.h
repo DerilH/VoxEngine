@@ -10,6 +10,18 @@
 #include "VoxCore/Logger.h"
 
 
+#define SHADER_RESOURCE_TYPE_LIST(M)\
+    M(ShaderResourceType, SAMPLER,                   VK_DESCRIPTOR_TYPE_SAMPLER,                  NO, NO)\
+    M(ShaderResourceType, COMBINED_IMAGE_SAMPLER,    VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,   NO, NO)\
+    M(ShaderResourceType, SAMPLED_IMAGE,             VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,             NO, NO)\
+    M(ShaderResourceType, STORAGE_IMAGE,             VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,             NO, NO)\
+    M(ShaderResourceType, UNIFORM_TEXEL_BUFFER,      VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,      NO, NO)\
+    M(ShaderResourceType, STORAGE_TEXEL_BUFFER,      VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,      NO, NO)\
+    M(ShaderResourceType, UNIFORM_BUFFER,            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,            NO, NO)\
+    M(ShaderResourceType, STORAGE_BUFFER,            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,            NO, NO)\
+    M(ShaderResourceType, UNIFORM_BUFFER_DYNAMIC,    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,    NO, NO)\
+    M(ShaderResourceType, STORAGE_BUFFER_DYNAMIC,    VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,    NO, NO)\
+    M(ShaderResourceType, INPUT_ATTACHMENT,          VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,          NO, NO)
 
 #define FRONT_FACE_LIST(M)\
     M(FrontFace, CLOCKWISE,    VK_FRONT_FACE_CLOCKWISE,       NO, NO)\
@@ -40,15 +52,58 @@
     M(BufferUsage, VERTEX,   VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,      NO, NO)\
     M(BufferUsage, SSBO,   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,      NO, NO)\
     M(BufferUsage, UNIFORM,   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,      NO, NO)\
+    M(BufferUsage, TRANSFER_SRC,   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,      NO, NO)\
 
 #define INDEX_TYPE_LIST(M)\
     M(IndexType, UINT8,    VK_INDEX_TYPE_UINT8,       NO, NO)\
     M(IndexType, UINT16,   VK_INDEX_TYPE_UINT16,      NO, NO)\
     M(IndexType, UINT32,   VK_INDEX_TYPE_UINT32,      NO, NO)\
 
-#define FORMAT_LIST(M)\
-    M(Format, RGBA8, VK_FORMAT_R8G8B8A8_UNORM,  NO, NO)\
-    M(Format, D32,   VK_FORMAT_D32_SFLOAT,      NO, NO)\
+#define FORMAT_LIST(M)                                                          \
+    M(Format, UNDEFINED,          VK_FORMAT_UNDEFINED,           NO,  NO)      \
+    M(Format, RGBA8,          VK_FORMAT_R8G8B8A8_UNORM,           NO,  NO)      \
+    M(Format, BGRA8,          VK_FORMAT_B8G8R8A8_UNORM,           NO,  NO)      \
+                                                        \
+    M(Format, RGBA8_SRGB,     VK_FORMAT_R8G8B8A8_SRGB,            YES, NO)      \
+    M(Format, BGRA8_SRGB,     VK_FORMAT_B8G8R8A8_SRGB,            YES, NO)      \
+                                                     \
+    M(Format, RGB10A2,        VK_FORMAT_A2B10G10R10_UNORM_PACK32, NO,  NO)      \
+    M(Format, RG11B10F,       VK_FORMAT_B10G11R11_UFLOAT_PACK32,  NO,  NO)      \
+                                                         \
+    M(Format, RG16F,          VK_FORMAT_R16G16_SFLOAT,            NO,  NO)      \
+    M(Format, RGBA16F,        VK_FORMAT_R16G16B16A16_SFLOAT,      NO,  NO)      \
+    M(Format, RGBA32F,        VK_FORMAT_R32G32B32A32_SFLOAT,      NO,  NO)      \
+                                             \
+    M(Format, R8,             VK_FORMAT_R8_UNORM,                 NO,  NO)      \
+    M(Format, R8_SRGB,        VK_FORMAT_R8_SRGB,                  YES, NO)      \
+    M(Format, R16F,           VK_FORMAT_R16_SFLOAT,               NO,  NO)      \
+                                                             \
+    M(Format, D16,            VK_FORMAT_D16_UNORM,                NO,  NO)      \
+    M(Format, D32,            VK_FORMAT_D32_SFLOAT,               NO,  NO)      \
+                                                         \
+    M(Format, D24S8,          VK_FORMAT_D24_UNORM_S8_UINT,        NO,  NO)      \
+    M(Format, D32S8,          VK_FORMAT_D32_SFLOAT_S8_UINT,       NO,  NO)      \
+                                                   \
+    M(Format, BC1_RGB,        VK_FORMAT_BC1_RGB_UNORM_BLOCK,      NO,  YES)     \
+    M(Format, BC1_RGB_SRGB,   VK_FORMAT_BC1_RGB_SRGB_BLOCK,       YES, YES)     \
+    M(Format, BC1_RGBA,       VK_FORMAT_BC1_RGBA_UNORM_BLOCK,     NO,  YES)     \
+    M(Format, BC1_RGBA_SRGB,  VK_FORMAT_BC1_RGBA_SRGB_BLOCK,      YES, YES)     \
+    M(Format, BC3_RGBA,       VK_FORMAT_BC3_UNORM_BLOCK,          NO,  YES)     \
+    M(Format, BC3_RGBA_SRGB,  VK_FORMAT_BC3_SRGB_BLOCK,           YES, YES)     \
+    M(Format, BC4_R,          VK_FORMAT_BC4_UNORM_BLOCK,          NO,  YES)     \
+    M(Format, BC5_RG,         VK_FORMAT_BC5_UNORM_BLOCK,          NO,  YES)     \
+    M(Format, BC7_RGBA,       VK_FORMAT_BC7_UNORM_BLOCK,          NO,  YES)     \
+    M(Format, BC7_RGBA_SRGB,  VK_FORMAT_BC7_SRGB_BLOCK,           YES, YES)     \
+                                                           \
+    M(Format, ETC2_RGB,       VK_FORMAT_ETC2_R8G8B8_UNORM_BLOCK,  NO,  YES)     \
+    M(Format, ETC2_RGB_SRGB,  VK_FORMAT_ETC2_R8G8B8_SRGB_BLOCK,   YES, YES)     \
+    M(Format, ETC2_RGBA1,     VK_FORMAT_ETC2_R8G8B8A1_UNORM_BLOCK,NO,  YES)     \
+    M(Format, ETC2_RGBA1_SRGB,VK_FORMAT_ETC2_R8G8B8A1_SRGB_BLOCK, YES, YES)     \
+    M(Format, ETC2_RGBA8,     VK_FORMAT_ETC2_R8G8B8A8_UNORM_BLOCK,NO,  YES)     \
+    M(Format, ETC2_RGBA8_SRGB,VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK, YES, YES)     \
+                                                                                \
+    M(Format, ASTC_4x4,       VK_FORMAT_ASTC_4x4_UNORM_BLOCK,     NO,  YES)     \
+    M(Format, ASTC_4x4_SRGB,  VK_FORMAT_ASTC_4x4_SRGB_BLOCK,      YES, YES)
 
 #define SHADER_STAGE_LIST(M)\
     M(ShaderStage, VERTEX_SHADER,     VK_SHADER_STAGE_VERTEX_BIT,   NO, NO)\
@@ -113,7 +168,7 @@
 #define CROSS_EXPAND_GL_CASE_FROM(enumType, name, vk, dx, gl) case gl: return enumType::name;
 
 #define DEFINE_ENUM_CONVERTER(EnumType, ApiEnumType, LIST_MACRO, EXPAND_MACRO, Name)\
-constexpr ApiEnumType to##Name(EnumType format) {\
+constexpr inline ApiEnumType to##Name(EnumType format) {\
     switch (format) {\
         LIST_MACRO(EXPAND_MACRO)\
         default:\
@@ -123,7 +178,7 @@ constexpr ApiEnumType to##Name(EnumType format) {\
 }\
 
 #define DEFINE_ENUM_CONVERTER_FROM(EnumType, ApiEnumType, LIST_MACRO, EXPAND_MACRO, Name)\
-constexpr EnumType from##Name(ApiEnumType format) {\
+constexpr inline EnumType from##Name(ApiEnumType format) {\
     switch (format) {\
         LIST_MACRO(EXPAND_MACRO)\
         default:\
@@ -155,5 +210,7 @@ RENDER_NS
     DEFINE_CROSS_ENUM(BlendFactor, BLEND_FACTOR_LIST);
     DEFINE_CROSS_ENUM(BlendOp, BLEND_OP_LIST)
     DEFINE_CROSS_ENUM(MSAASamples, MSAA_COUNT_LIST);
+    DEFINE_CROSS_ENUM(ShaderResourceType, SHADER_RESOURCE_TYPE_LIST);
+
 #include "IndexType.inl"
 NS_END

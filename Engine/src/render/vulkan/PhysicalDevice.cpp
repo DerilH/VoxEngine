@@ -10,22 +10,17 @@
 #include <VoxEngine/render/vulkan/PhysicalDevice.h>
 #include <VoxEngine/render/vulkan/Surface.h>
 #include <vulkan/vulkan_core.h>
+#include "VoxCore/containers/Containers.h"
 
 
 VULKAN_NS
-    std::vector<VkExtensionProperties> getDeviceExtensions(const VkPhysicalDevice device) {
+    Vector<VkExtensionProperties> getDeviceExtensions(const VkPhysicalDevice device) {
         uint32_t extensionCount;
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
-        std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+        Vector<VkExtensionProperties> availableExtensions(extensionCount);
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
         return availableExtensions;
-    }
-
-    SwapChainSupportDetails::SwapChainSupportDetails(const VkSurfaceCapabilitiesKHR &capabilities,
-                                                     const std::vector<VkSurfaceFormatKHR> &formats,
-                                                     const std::vector<VkPresentModeKHR> &presentModes) : mCapabilities(
-                                                                                                              capabilities), mFormats(formats), mPresentModes(presentModes) {
     }
 
     PhysicalDevice::PhysicalDevice(const VkPhysicalDevice handle) : VulkanObject(handle) {
@@ -53,7 +48,7 @@ VULKAN_NS
         mAvailableExtensions = getDeviceExtensions(mHandle);
     }
 
-    bool PhysicalDevice::checkExtensions(const std::vector<std::string> &extensions) const {
+    bool PhysicalDevice::checkExtensions(const Vector<std::string> &extensions) const {
         for (const auto &extension: extensions) {
             bool has = false;
             for (const auto &[extensionName, specVersion]: mAvailableExtensions) {
@@ -72,7 +67,7 @@ VULKAN_NS
     //     return !mSwapChainDetails.formats().empty() && !mSwapChainDetails.presentModes().empty();
     // }
 
-    std::vector<VkExtensionProperties> PhysicalDevice::getAvailableExtensions() const {
+    Vector<VkExtensionProperties> PhysicalDevice::getAvailableExtensions() const {
         return mAvailableExtensions;
     }
 
@@ -100,17 +95,17 @@ VULKAN_NS
         throw std::runtime_error("failed to find suitable memory type!");
     }
 
-    std::vector<PhysicalDevice> PhysicalDevice::pickDevices(const VkInstance instance, const std::vector<std::string> &neededExtensions) {
+    Vector<PhysicalDevice> PhysicalDevice::pickDevices(const VkInstance instance, const Vector<std::string> &neededExtensions) {
         uint32_t deviceCount = 0;
         vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 
         VOX_CHECK(deviceCount != 0, "Failed to find GPUs with Vulkan support!");
 
 
-        std::vector<VkPhysicalDevice> devices(deviceCount);
+        Vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
-        std::vector<PhysicalDevice> physicalDevices;
+        Vector<PhysicalDevice> physicalDevices;
         for (const auto &device: devices) {
             PhysicalDevice d(device);
             if (!d.checkExtensions(neededExtensions)) continue;

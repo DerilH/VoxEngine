@@ -6,7 +6,7 @@
 
 #include "VoxCore/Define.h"
 #include "VoxEngine/render/Enums.h"
-#include "xxhash.h"
+#include <xxh3.h>
 
 RENDER_NS
 class RasterizerState {
@@ -19,9 +19,11 @@ class RasterizerState {
     bool mDepthClampEnable;
     bool mDiscardEnable;
     bool mDepthBiasEnable;
+    float mDepthBiasConstantFactor;
+    float mDepthBiasClamp;
+    float mDepthBiasSlopeFactor;
 
-    RasterizerState(PolygonMode mPolygonMode, float mLineWidth, CullMode mCullMode, FrontFace mFrontFace, bool mDepthClampEnable, bool mDiscardEnable, bool mDepthBiasEnable) : mPolygonMode(mPolygonMode), mLineWidth(mLineWidth), mCullMode(mCullMode), mFrontFace(mFrontFace), mDepthClampEnable(mDepthClampEnable), mDiscardEnable(mDiscardEnable), mDepthBiasEnable(mDepthBiasEnable) {}
-
+    RasterizerState(PolygonMode mPolygonMode, float mLineWidth, CullMode mCullMode, FrontFace mFrontFace, bool mDepthClampEnable, bool mDiscardEnable, bool mDepthBiasEnable, float mDepthBiasConstantFactor, float mDepthBiasClamp, float mDepthBiasSlopeFactor) : mPolygonMode(mPolygonMode), mLineWidth(mLineWidth), mCullMode(mCullMode), mFrontFace(mFrontFace), mDepthClampEnable(mDepthClampEnable), mDiscardEnable(mDiscardEnable), mDepthBiasEnable(mDepthBiasEnable), mDepthBiasConstantFactor(mDepthBiasConstantFactor), mDepthBiasClamp(mDepthBiasClamp), mDepthBiasSlopeFactor(mDepthBiasSlopeFactor) {}
 
 public:
 
@@ -32,18 +34,28 @@ public:
     inline bool getDepthClampEnable() const {return mDepthClampEnable;}
     inline bool getDiscardEnabled() const {return mDiscardEnable;}
     inline bool getDepthBiasEnabled() const {return mDepthBiasEnable;}
+    inline float getDepthBiasConstantFactor() const {return mDepthBiasConstantFactor;}
+    inline float getDepthBiasClamp() const {return mDepthBiasClamp;}
+    inline float getDepthBiasSlopeFactor() const {return mDepthBiasSlopeFactor;}
+
+    inline bool operator==(const RasterizerState& other) const{
+        return mPolygonMode == other.mPolygonMode && mLineWidth == other.mLineWidth && mCullMode == other.mCullMode && mFrontFace == other.mFrontFace && mDepthClampEnable == other.mDepthClampEnable && mDiscardEnable == other.mDiscardEnable && mDepthBiasEnable == other.mDepthBiasEnable && mDepthBiasConstantFactor == other.mDepthBiasConstantFactor && mDepthBiasClamp == other.mDepthBiasClamp && mDepthBiasSlopeFactor == other.mDepthBiasSlopeFactor;
+    }
 
     class Builder;
     static Builder GetBuilder();
 
     class Builder {
-        PolygonMode mPolygonMode;
-        float mLineWidth;
-        CullMode mCullMode;
-        FrontFace mFrontFace;
-        bool mDepthClampEnable;
-        bool mDiscardEnable;
+        PolygonMode mPolygonMode = PolygonMode::FILL;
+        float mLineWidth = 1;
+        CullMode mCullMode = CullMode::BACK;
+        FrontFace mFrontFace = FrontFace::CLOCKWISE;
+        bool mDepthClampEnable = false;
+        bool mDiscardEnable = false;
         bool mDepthBiasEnable;
+        float mDepthBiasConstantFactor;
+        float mDepthBiasClamp;
+        float mDepthBiasSlopeFactor;
     public:
 
         BUILDER_ENTRY(Builder, polygonMode, PolygonMode, mPolygonMode)

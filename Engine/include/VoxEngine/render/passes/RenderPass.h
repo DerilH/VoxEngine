@@ -28,7 +28,7 @@ RENDER_NS
         HashSet<RenderPassRef> mNext;
         HashSet<RenderPassRef> mPrev;
 
-        virtual void execute(Render::CommandBufferRef cmdBuffer) = 0;
+        virtual void execute(RenderContext context) = 0;
 
         RenderPassType getType() const;
 

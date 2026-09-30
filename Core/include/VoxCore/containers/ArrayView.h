@@ -4,21 +4,43 @@
 
 #pragma once
 #include "xxhash.h"
+#include "VoxCore/containers/Containers.h"
 
 VOX_NS
 template<typename PointerType>
 class ArrayView {
     size_t mSize;
 public:
-    PointerType* pData;
+    PointerType* pData = nullptr;
     ArrayView(PointerType* ptr, size_t size) : pData(ptr), mSize(size) {
         VOX_ASSERT_PTR(ptr, "Buffer pointer is nullptr")
     }
 
-    ArrayView(std::initializer_list<PointerType>&& list) : mSize(list.size()), pData((PointerType*) data(list))
+    ArrayView(std::initializer_list<PointerType>&& list) : mSize(list.size())
     {
+        auto dataPtr = data(list);
+        if(dataPtr == nullptr) return;
+        pData = static_cast<PointerType*>(::operator new(mSize * sizeof(PointerType)));
+        memcpy(pData, dataPtr, mSize * sizeof(PointerType));
     }
 
+    ArrayView(std::initializer_list<PointerType>& list) : mSize(list.size())
+    {
+        auto dataPtr = data(list);
+        if(dataPtr == nullptr) return;
+        pData = static_cast<PointerType*>(::operator new(mSize * sizeof(PointerType)));
+        memcpy(pData, dataPtr, mSize * sizeof(PointerType));
+    }
+
+
+    static ArrayView Copy(Vector<PointerType>& list)
+    {
+        auto dataPtr = data(list);
+        if(dataPtr == nullptr) Empty();
+        PointerType* pData = reinterpret_cast<PointerType*>(::operator new(list.size() * sizeof(PointerType)));
+        memcpy(pData, dataPtr, list.size() * sizeof(PointerType));
+        return ArrayView(pData, list.size());
+    }
 
     PointerType& operator[](size_t pos) {
         return pData[pos];

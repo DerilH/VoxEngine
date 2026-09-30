@@ -4,16 +4,16 @@
 
 #include "VoxEngine/render/vulkan/VulkanTexture.h"
 #include "VoxEngine/render/vulkan/VulkanDevice.h"
-#include "VoxEngine/render/vulkan/VulkanEnums.h"
+#include "VoxEngine/render/vulkan/VulkanUtil.h"
 
 VULKAN_NS
 
 
-    VulkanTexture::VulkanTexture(Format format, Extent extent, VkImage image, VkImageView view, VmaAllocation allocation) : VulkanAllocated<VkImage>(image, allocation), Texture(format, extent), mView(view) {
+    VulkanTexture::VulkanTexture(Format format, Extent extent, VkImage image, VkImageView view, VmaAllocation allocation, VmaAllocationInfo allocInfo) : VulkanAllocated<VkImage>(image, allocation, allocInfo), Texture(format, extent), mView(view) {
 
     }
 
-    VulkanTexture VulkanTexture::Create(Format format, Extent extent, const VulkanDevice& device , VkImageUsageFlags usage) {
+    VulkanTexture VulkanTexture::Create(const VulkanDevice& device, Format format, Extent extent, VkImageUsageFlags usage) {
         auto allocator = device.getAllocator();
         VkImageCreateInfo imageInfo{};
         imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -34,7 +34,8 @@ VULKAN_NS
 
         VmaAllocation allocation{};
         VkImage image{};
-        VK_CHECK(vmaCreateImage(allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr), "Cannot create VkImage");
+        VmaAllocationInfo info{};
+        VK_CHECK(vmaCreateImage(allocator, &imageInfo, &allocInfo, &image, &allocation, &info), "Cannot create VkImage");
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = image;
@@ -52,10 +53,18 @@ VULKAN_NS
 
         VkImageView view;
         VK_CHECK(vkCreateImageView(device.getHandle(), &createInfo, nullptr, &view), "Cannot create VkImageView");
-        return VulkanTexture(format, extent, image, view, allocation);
+        return VulkanTexture(format, extent, image, view, allocation, info);
     }
 
     VkImageView VulkanTexture::getView() const {
         return mView;
+    }
+
+    VulkanTexture VulkanTexture::Create(const VulkanDevice& device, Format format, Extent extent, VkImage image, VkImageView view) {
+        return VulkanTexture(format, extent, image, view, nullptr, {});
+    }
+
+    VulkanTexture::~VulkanTexture() {
+
     }
 NS_END

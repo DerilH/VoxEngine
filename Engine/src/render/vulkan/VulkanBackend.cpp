@@ -5,6 +5,8 @@
 #include "VoxEngine/render/vulkan/VulkanBackend.h"
 #include "VoxEngine/render/vulkan/Debug.h"
 #include "VoxEngine/render/vulkan/VulkanDevice.h"
+#include "VoxEngine/render/vulkan/VulkanResourceCast.h"
+#include "VoxEngine/render/vulkan/VulkanUtil.h"
 #include <vulkan/vulkan.h>
 
 VULKAN_NS
@@ -62,16 +64,17 @@ VULKAN_NS
         mCurrentDevice = VulkanDevice::Create(physicalDevices[0], deviceExtensions, VALIDATION_LAYERS);
     }
 
-    void VulkanBackend::beginFrame() {
-
+    int32_t VulkanBackend::beginFrame() {
+        return 0;
     }
 
     void VulkanBackend::endFrame() {
-
     }
 
     RenderTargetRef VulkanBackend::createWindowTarget(Extent extent, void* windowHandle) {
-        return nullptr;
+        Surface* surface = Surface::Create(extent, mInstance, windowHandle);
+        surface->setDevice(ResourceCast(mCurrentDevice));
+        return surface;
     }
 
     VmaAllocator VulkanBackend::createAllocator(const VulkanDevice& device) {
@@ -92,6 +95,60 @@ VULKAN_NS
         return allocator;
     }
 
+    CommandPoolRef VulkanBackend::createCommandPool() {
+        VOX_ASSERT(Initialized(), "Render backend not initialized");
+        auto device = ResourceCast(mCurrentDevice);
+        auto queue = device->getQueue(QueueType::GRAPHICS_QUEUE);
+        return device->createHeap<VulkanCommandPool>(queue.getFamily());
+    }
+
+    TextureRef VulkanBackend::createTexture(Format format, Extent extent) {
+        VOX_ASSERT(Initialized(), "Render backend not initialized");
+        const VulkanDevice* device = ResourceCast(mCurrentDevice);
+        return device->createHeap<VulkanTexture>(format, extent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+    }
+
+    PipelineStateRef VulkanBackend::createPSO(const PipelineStateDesc& desc) {
+        VOX_ASSERT(Initialized(), "Render backend not initialized");
+        const VulkanDevice* device = ResourceCast(mCurrentDevice);
+        return device->createHeap<VulkanPipelineState>(desc);
+    }
+
+    IndexBufferRef VulkanBackend::createIndexBuffer(const void* data, uint32_t size, IndexType type) {
+        const VulkanDevice* device = ResourceCast(mCurrentDevice);
+        auto staging = device->create<VulkanTransferBuffer>(size);
+
+        const Queue& queue = device->getQueue(TRANSFER_QUEUE);
+        CommandPool& pool = device->getCmdPool(TRANSFER_QUEUE);
+
+        auto buffer = device->createHeap<VulkanIndexBuffer>(size, type);
+
+        VulkanCommandBuffer* cmdBuffer = ResourceCast(pool.allocBuffer());
+        cmdBuffer->begin();
+        staging.write(data, size);
+        staging.copy(cmdBuffer, buffer, size);
+        cmdBuffer->end();
+        queue.submit({*cmdBuffer}, true);
+        return buffer;
+    }
+
+    VertexBufferRef VulkanBackend::createVertexBuffer(const void* data, uint32_t size, BufferUsage usage) {
+        VulkanDevice* device = ResourceCast(mCurrentDevice);
+        auto staging = device->create<VulkanTransferBuffer>(size);
+
+        const Queue& queue = device->getQueue(TRANSFER_QUEUE);
+        CommandPool& pool = device->getCmdPool(TRANSFER_QUEUE);
+
+        auto buffer = device->createHeap<VulkanVertexBuffer>(size);
+
+        VulkanCommandBuffer* cmdBuffer = ResourceCast(pool.allocBuffer());
+        cmdBuffer->begin();
+        staging.write(data, size);
+        staging.copy(cmdBuffer, buffer, size);
+        cmdBuffer->end();
+        queue.submit({*cmdBuffer}, true);
+        return buffer;
+    }
 
 NS_END
 

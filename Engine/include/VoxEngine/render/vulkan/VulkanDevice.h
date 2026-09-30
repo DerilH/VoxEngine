@@ -1,15 +1,14 @@
 #pragma once
 
 #include "VulkanCommandPool.h"
-#include "Fence.h"
-#include "FrameSync.h"
 #include "VoxEngine/render/vulkan/pipeline/GraphicsPipeline.h"
 #include "PhysicalDevice.h"
 #include "Queue.h"
-#include "Semaphore.h"
 #include <vk_mem_alloc.h>
+
+#include "VulkanDescriptorPool.h"
 #include "VulkanObject.h"
-#include "VoxCore/math/Extent.h"
+#include "VulkanTypes.h"
 #include "VoxEngine/render/Device.h"
 
 VULKAN_NS
@@ -17,37 +16,46 @@ VULKAN_NS
         VmaAllocator mAllocator;
 
         PhysicalDevice mPhysicalDevice;
-        std::unordered_map<QueueType, Queue> mQueues;
-        std::unordered_map<QueueType, VulkanCommandPool&> mCmdPools;
+        HashMap<QueueType, Queue> mQueues;
+        HashMap<QueueType, VulkanCommandPool&> mCmdPools;
+        VulkanDescriptorPoolRef mGlobalDescriptorPool = nullptr;
+        VulkanDescriptorSetRef mGlobalDescriptors = nullptr;
 
-        VulkanDevice(VkDevice handle, const PhysicalDevice &physicalDevice, std::unordered_map<QueueType, Queue> queues);
+        VulkanDevice(VkDevice handle, const PhysicalDevice &physicalDevice, HashMap<QueueType, Queue> queues);
+
+        void initGlobalDescriptors();
+
     public:
 
         PhysicalDevice getPhysicalDevice() const;
-        const std::unordered_map<QueueType, Queue>& getQueues() const;
-        const std::unordered_map<QueueType, VulkanCommandPool&>& getCmdPools() const;
+        const HashMap<QueueType, Queue>& getQueues() const;
+        const HashMap<QueueType, VulkanCommandPool&>& getCmdPools() const;
 
         const Queue &getQueue(QueueType type) const;
         VulkanCommandPool& getCmdPool(QueueType type) const;
         VmaAllocator getAllocator() const;
+        const VulkanDescriptorSetRef& getGlobalDescriptorSet() const;
 
         void waitIdle() const;
 
         static VulkanDevice* Create(const PhysicalDevice &physDevice, std::vector<const char *> extensions, std::vector<const char *> validationLayers);
 
         template<typename T, typename... Args>
-        T create(Args&&... args) const {
+        T create(Args &&... args) const {
             return T::Create(*this, std::forward<Args>(args)...);
         }
 
         template<typename T, typename... Args>
-        T* createHeap(Args&&... args) const {
+        T *createHeap(Args &&... args) const {
             return new T(T::Create(*this, std::forward<Args>(args)...));
         }
 
         template<typename T, typename... Args>
-        auto builder(Args&&... args) const {
+        auto builder(Args &&... args) const {
             return T::Builder(*this, std::forward<Args>(args)...);
         }
+
+        VkBuffer allocateBuffer(VkBufferCreateInfo &bufferCreateInfo, const VmaAllocationCreateInfo &allocInfo, const bool exclusive, VmaAllocation &allocation, VmaAllocationInfo &info) const;
     };
+
 NS_END

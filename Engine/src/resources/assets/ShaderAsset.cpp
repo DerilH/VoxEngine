@@ -3,12 +3,13 @@
 //
 
 #include "VoxEngine/resources/assets/ShaderAsset.h"
+#include "VoxEngine/render/shaders/CompiledShader.h"
 
 RESOURCES_NS
-    ShaderAsset::ShaderAsset(std::string path, const ArrayView<uint32_t> *mCompiled) : Asset(std::move(path)), mCompiled(mCompiled) {}
+    ShaderAsset::ShaderAsset(std::string path, Render::Shaders::CompiledShader mCompiled) : Asset(std::move(path)), mCompiled(std::move(mCompiled)) {}
 
-    const ArrayView<uint32_t>& ShaderAsset::getCompiled() const {
-        return *mCompiled;
+    const Render::Shaders::CompiledShader& ShaderAsset::getCompiled() const {
+        return mCompiled;
     }
 
     AssetType ShaderAsset::type() {

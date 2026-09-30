@@ -14,8 +14,11 @@ class VulkanTexture : public Texture, public VulkanAllocated<VkImage> {
     friend class VulkanDevice;
     VkImageView mView;
 
-    explicit VulkanTexture(Format format, Extent extent, VkImage image, VkImageView view, VmaAllocation allocation);
-    static VulkanTexture Create(Format format, Extent extent, const VulkanDevice& device , VkImageUsageFlags usage);
+    explicit VulkanTexture(Format format, Extent extent, VkImage image, VkImageView view, VmaAllocation allocation, VmaAllocationInfo allocInfo);
+    static VulkanTexture Create(const VulkanDevice& device, Format format, Extent extent , VkImageUsageFlags usage);
+    static VulkanTexture Create(const VulkanDevice& device, Format format, Extent extent, VkImage image, VkImageView view);
+
+    ~VulkanTexture() override;
 public:
     VkImageView getView() const;
 };

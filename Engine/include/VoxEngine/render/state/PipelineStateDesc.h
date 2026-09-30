@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <functional>
 #include <type_traits>
+#include <utility>
 #include "VoxCore/Define.h"
 #include "ShaderState.h"
 #include "BlendState.h"
@@ -17,22 +18,22 @@
 RENDER_NS
     class PipelineStateDesc {
         ShaderState mShader;
-        BlendState mBlend;
         RasterizerState mRasterizer;
         PrimitiveTopology mTopology;
         MSAAState mMsaa;
         RenderingState mRenderingState;
+        mutable size_t mCachedHash = 0;
+        ArrayView<BlendState> mBlend;
 
-        int mCachedHash = 0;
     public:
         PipelineStateDesc() = delete;
 
-        explicit PipelineStateDesc(ShaderState shader, BlendState blend, RasterizerState rasterizer, PrimitiveTopology topology, MSAAState msaa, RenderingState rendering) : mShader(shader), mBlend(blend), mRasterizer(rasterizer), mTopology(topology), mMsaa(msaa), mRenderingState(rendering) {
+        explicit PipelineStateDesc(ShaderState shader, ArrayView<BlendState> blend, RasterizerState rasterizer, PrimitiveTopology topology, MSAAState msaa, RenderingState rendering) : mShader(std::move(shader)), mBlend(blend), mRasterizer(rasterizer), mTopology(topology), mMsaa(msaa), mRenderingState(rendering) {
         }
 
         inline const ShaderState& getShader() const { return mShader; }
 
-        inline const BlendState& getBlend() const { return mBlend; }
+        inline const ArrayView<BlendState> getBlend() const { return mBlend; }
 
         inline const RasterizerState& getRasterizer() const { return mRasterizer; }
 
@@ -43,6 +44,10 @@ RENDER_NS
         inline const RenderingState& getRenderingState() const { return mRenderingState; }
 
         size_t hash() const;
+
+        bool operator==(const PipelineStateDesc& other) const;
+
+        PipelineStateDesc(const PipelineStateDesc& desc);
     };
 NS_END
 

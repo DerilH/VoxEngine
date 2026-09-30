@@ -12,7 +12,8 @@
 
 VULKAN_NS
 class VulkanDevice;
-class VulkanTextureRenderTarget : public VulkanRenderTarget, public VulkanTexture {
+class
+VulkanTextureRenderTarget : public VulkanRenderTarget, public VulkanTexture {
     friend class VulkanDevice;
 protected:
     explicit VulkanTextureRenderTarget(const VulkanDevice* device, TextureHandle handle, VkImage image, VkFormat format, VkImageView view, VmaAllocation allocation, VkExtent2D extent);

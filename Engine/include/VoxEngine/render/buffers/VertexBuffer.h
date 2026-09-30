@@ -8,11 +8,11 @@
 #include "RenderBuffer.h"
 
 RENDER_NS
-    class VertexBuffer : public RenderBuffer {
+    class VertexBuffer : virtual public RenderBuffer {
+    protected:
+        explicit VertexBuffer() {}
     public:
-        explicit VertexBuffer(BufferUsage usage) : RenderBuffer(usage) {}
-
-        inline void bind(CommandBufferRef cmdBuffer) override {
+        inline void bind(CommandBufferRef cmdBuffer) {
             cmdBuffer->bindVertexBuffer(this);
         }
     };

@@ -23,6 +23,13 @@ find_package(glfw3 REQUIRED)
 find_package(VulkanMemoryAllocator CONFIG REQUIRED)
 find_package(assimp REQUIRED)
 
+FetchContent_Declare(
+        spirv_cross
+        GIT_REPOSITORY https://github.com/KhronosGroup/SPIRV-Cross.git
+        GIT_TAG main
+)
+FetchContent_MakeAvailable(spirv_cross)
+
 file(GLOB_RECURSE VOX_SOURCES CONFIGURE_DEPENDS
         src/*.cpp
         include/*.cpp
@@ -32,6 +39,8 @@ file(GLOB_RECURSE VOX_SOURCES CONFIGURE_DEPENDS
 add_library(VoxEngine ${VOX_SOURCES})
 
 target_link_libraries(VoxEngine
+        PUBLIC
+        spirv-cross-core
         Vulkan::Vulkan
         glfw
         shaderc_shared

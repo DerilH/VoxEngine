@@ -9,6 +9,7 @@
 
 RENDER_NS
 class CommandPool {
+public:
     virtual CommandBufferRef allocBuffer() = 0;
 };
 NS_END

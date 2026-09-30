@@ -10,13 +10,16 @@
 
 RENDER_NS
     class RenderBuffer : public RenderResource {
+    protected:
         BufferUsage mUsage;
-    public:
-        RenderBuffer(BufferUsage usage) : mUsage(usage) {}
 
-        virtual void bind(CommandBufferRef cmdBuffer) = 0;
+        explicit RenderBuffer(const BufferUsage usage) : mUsage(usage) {
+        }
+
+    public:
+        virtual uint32_t sizeInBytes() = 0;
 
         inline BufferUsage getUsage() const { return mUsage; }
     };
-NS_END
 
+NS_END

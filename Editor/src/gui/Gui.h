@@ -4,7 +4,7 @@
 
 #pragma once
 #include <VoxEngine/render/FpsCounter.h>
-#include <VoxEngine/render/vulkan/FrameSync.h>
+#include <VoxEngine/render/vulkan/VulkanFrameSync.h>
 #include <VoxEngine/render/windowing/Window.h>
 
 namespace Vox::Editor {
@@ -16,6 +16,6 @@ namespace Vox::Editor {
 
 
         void init(Render::Windowing::Window& window);
-        void render(Render::CommandBufferRef cmd);
+        void render(Render::RenderContext cmd);
     };
 }

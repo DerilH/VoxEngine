@@ -6,6 +6,7 @@
 
 #include "VoxCore/Define.h"
 #include "VoxEngine/render/Enums.h"
+#include <xxh3.h>
 
 RENDER_NS
 class MSAAState {
@@ -14,9 +15,12 @@ class MSAAState {
     MSAASamples mSamples = MSAASamples::COUNT_1;
     bool mEnableSampleShading = false;
 public:
-    explicit MSAAState(MSAASamples samples, bool enableSampleShading) : mSamples(samples), mEnableSampleShading(enableSampleShading) {}
+    explicit MSAAState(MSAASamples samples = MSAASamples::COUNT_1, bool enableSampleShading = false) : mSamples(samples), mEnableSampleShading(enableSampleShading) {}
     inline MSAASamples getSamples() const { return mSamples; }
     inline bool isSampleShading() const { return mEnableSampleShading; }
+    inline bool operator==(const MSAAState& other) const {
+        return mSamples == other.mSamples && mEnableSampleShading == other.mEnableSampleShading;
+    }
 };
 NS_END
 namespace std {

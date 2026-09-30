@@ -1,15 +1,18 @@
 #pragma once
 #include <fstream>
+#include <VoxCore/containers/Containers.h>
 
 namespace Vox::Render::Shaders {
     class ShaderSrc {
     public:
-        const ShaderType type;
-        std::string src;
-        std::string name;
+        const ShaderStage type;
+        InternedString src;
+        InternedString name;
 
-        ShaderSrc(const ShaderType type, std::string src, std::string name) : type(type), src(std::move(src)), name(std::move(name))
+        ShaderSrc(const ShaderStage type, InternedString src, InternedString name) : type(type), src(std::move(src)), name(std::move(name))
         {}
+
+        ShaderSrc() = delete;
 
         static ShaderSrc load(const std::filesystem::path& path) {
             const std::ifstream file(path);

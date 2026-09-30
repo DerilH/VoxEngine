@@ -8,31 +8,40 @@
 #include "VoxEngine/render/Enums.h"
 #include "VoxCore/containers/Containers.h"
 #include "VoxEngine/render/Types.h"
-#include "xxhash.h"
+#include <xxh3.h>
 
 RENDER_NS
-class ShaderState {
-    friend struct std::hash<Vox::Render::ShaderState>;
-    Vector<ShaderRef> mShaders;
-    explicit ShaderState() = default;
+    class ShaderState {
+        friend struct std::hash<Vox::Render::ShaderState>;
+        Vector<ShaderRef> mShaders;
 
-public:
-    class Builder {
-        Vector<ShaderRef> mShaders{};
+        explicit ShaderState() = default;
+
     public:
-        Builder();
+        class Builder {
+            Vector<ShaderRef> mShaders{};
+        public:
+            Builder();
 
-        Builder &shader(ShaderRef shader) &;
+            Builder& shader(ShaderRef shader);
 
-        Builder &shaders(const Vector<ShaderRef> &shaders) &;
+            Builder& shaders(const Vector<ShaderRef>& shaders);
 
-        ShaderState build() const &;
+            ShaderState build() const&;
+        };
+
+        static Builder GetBuilder();
+
+        inline const Vector<ShaderRef>& shaders() const { return mShaders; }
+
+        inline bool operator==(const ShaderState& other) const {
+            bool same = mShaders.size() == other.mShaders.size();
+            for (int i = 0; i < mShaders.size(); ++i) {
+//                same = same && mShaders[i] == other.mShaders[i];
+            }
+            return same;
+        }
     };
-
-    static Builder GetBuilder();
-
-    inline const Vector<ShaderRef> &shaders() const {return mShaders;}
-};
 
 NS_END
 
@@ -42,10 +51,11 @@ namespace std {
         inline size_t operator()(const Vox::Render::ShaderState& s) const noexcept {
             XXH64_state_t* state = XXH64_createState();
             XXH64_reset(state, 0);
-            for (auto* shader: s.shaders()) {
-                uint64_t ptr = (uint64_t)shader;
-                XXH64_update(state, &ptr, sizeof(uint64_t));
-            }
+//            for (auto* shader: s.shaders()) {
+//                uint64_t ptr = (uint64_t)shader;
+//                XXH64_update(state, &ptr, sizeof(uint64_t));
+//            }
+//            XXH64_update(state, , sizeof(uint64_t));
             uint64_t h = XXH64_digest(state);
             XXH64_freeState(state);
             return h;

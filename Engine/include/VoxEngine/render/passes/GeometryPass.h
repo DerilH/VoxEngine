@@ -14,6 +14,6 @@ class GeometryPass : public RenderPass {
 public:
     explicit GeometryPass(RenderPassType mType, const ArrayView<AttachmentDesc>& reads, const ArrayView<AttachmentDesc>& writes);
 
-    void execute(Render::CommandBufferRef cmdBuffer) override;
+    void execute(RenderContext context) override;
 };
 NS_END

@@ -12,6 +12,8 @@ class RenderResource {
 protected:
     explicit RenderResource() = default;
 public:
+    virtual ~RenderResource() = default;
+
     NO_COPY_MOVE(RenderResource)
 };
 NS_END

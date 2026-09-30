@@ -210,7 +210,7 @@ static void SetupVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface
     const VkFormat requestSurfaceImageFormat[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
     const VkColorSpaceKHR requestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
     wd->Surface = surface;
-    wd->SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(g_PhysicalDevice, wd->Surface, requestSurfaceImageFormat, (size_t)IM_COUNTOF(requestSurfaceImageFormat), requestSurfaceColorSpace);
+    wd->SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(Extent(), nullptr, g_PhysicalDevice, wd->Surface);
 
     // Select Present Mode
 #ifdef APP_USE_UNLIMITED_FRAME_RATE
@@ -218,7 +218,7 @@ static void SetupVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface
 #else
     VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_FIFO_KHR };
 #endif
-    wd->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(g_PhysicalDevice, wd->Surface, &present_modes[0], IM_COUNTOF(present_modes));
+    wd->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(Extent(), nullptr, g_PhysicalDevice, wd->Surface);
     //printf("[vulkan] Selected PresentMode = %d\n", wd->PresentMode);
 
     // Create SwapChain, RenderPass, Framebuffer, etc.
@@ -243,7 +243,7 @@ static void CleanupVulkan()
 static void CleanupVulkanWindow(ImGui_ImplVulkanH_Window* wd)
 {
     ImGui_ImplVulkanH_DestroyWindow(g_Instance, g_Device, wd, g_Allocator);
-    vkDestroySurfaceKHR(g_Instance, wd->Surface, g_Allocator);
+    vkDestroySurfaceKHR(Extent(), nullptr, g_Instance, wd->Surface);
 }
 
 static void FrameRender(ImGui_ImplVulkanH_Window* wd, ImDrawData* draw_data)

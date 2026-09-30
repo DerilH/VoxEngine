@@ -15,6 +15,7 @@ VULKAN_NS
 
     class VulkanCommandPool : public CommandPool, public VulkanObject<VkCommandPool > {
         friend class VulkanDevice;
+
         const VulkanDevice& mDevice;
         CommandBuffer* mOneTimeBuffer = nullptr;
 

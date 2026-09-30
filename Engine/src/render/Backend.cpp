@@ -6,5 +6,4 @@
 
 RENDER_NS
     RenderBackend* RenderBackend::sInstance = nullptr;
-
 NS_END

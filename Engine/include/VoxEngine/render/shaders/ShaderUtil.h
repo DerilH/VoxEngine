@@ -3,33 +3,25 @@
 #include <stdexcept>
 #include <string>
 #include <shaderc/shaderc.h>
+#include <VoxEngine/render/Enums.h>
 
 namespace Vox::Render::Shaders {
-    enum class ShaderType {
-        VERTEX,
-        FRAGMENT,
-        GEOMETRY
-    };
-
-    inline shaderc_shader_kind vox2shaderc(ShaderType type) {
+    inline shaderc_shader_kind vox2shaderc(ShaderStage type) {
         switch (type) {
-            case ShaderType::VERTEX:
+            case ShaderStage::VERTEX_SHADER:
                 return shaderc_vertex_shader;
-            case ShaderType::FRAGMENT:
+            case ShaderStage::FRAGMENT_SAHDER:
                 return shaderc_fragment_shader;
-            case ShaderType::GEOMETRY:
-                return shaderc_geometry_shader;
             default: throw std::invalid_argument("Unknown shader type");
         }
     }
-    inline ShaderType shaderTypeFrom(std::string path) {
-        if (path.ends_with(".vert")) return ShaderType::VERTEX;
-        if (path.ends_with(".frag")) return ShaderType::FRAGMENT;
-        if (path.ends_with(".geom")) return ShaderType::GEOMETRY;
+    inline ShaderStage shaderTypeFrom(std::string path) {
+        if (path.ends_with(".vert")) return ShaderStage::VERTEX_SHADER;
+        if (path.ends_with(".frag")) return ShaderStage::FRAGMENT_SAHDER;
         throw std::invalid_argument("Unknown shader type");
     }
 
-    inline ShaderType shaderTypeFrom(const std::filesystem::path &path) {
+    inline ShaderStage shaderTypeFrom(const std::filesystem::path &path) {
         return shaderTypeFrom(path.extension().string());
     }
 

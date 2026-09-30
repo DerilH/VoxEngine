@@ -5,12 +5,13 @@
 #pragma once
 
 
+#include <cstdint>
 #include "VoxCore/Define.h"
 #include "VoxEngine/render/Types.h"
 
 RENDER_NS
 class GraphTexture {
-    TextureRef mTexture;
+    TextureRef mTexture = nullptr;
 public:
     const uint32_t id;
     GraphTexture(uint32_t id) : id(id) {}

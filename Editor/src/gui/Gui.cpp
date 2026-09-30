@@ -6,15 +6,13 @@
 #include "VoxEngine/render/RenderBackend.h"
 #include "VoxEngine/render/vulkan/VulkanBackend.h"
 
-#include <imgui/imgui.h>
-#include <imnodes/imnodes.h>
-#include <imgui/backend/imgui_impl_glfw.h>
-#include <imgui/backend/imgui_impl_vulkan.h>
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_vulkan.h>
 #include <VoxCore/Time.h>
 #include <VoxEngine/render/vulkan/VulkanState.h>
 #include <VoxEngine/render/windowing/Window.h>
-#include <VoxEngine/render/vulkan/VulkanTypes.h>
-#include <VoxEngine/render/vulkan/VulkanCommandBuffer.h>
+#include <VoxEngine/render/vulkan/VulkanResourceCast.h>
 #include <VoxEngine/render/vulkan/VulkanDevice.h>
 
 namespace Vox::Editor {
@@ -84,7 +82,7 @@ namespace Vox::Editor {
         mInitialized = true;
     }
 
-    void Gui::render(Render::CommandBufferRef cmd) {
+    void Gui::render(Render::RenderContext cmd) {
         mFpsCounter.update(Time::Delta());
         VOX_CHECK(mInitialized, "Gui not initialized");
         ImGui_ImplVulkan_NewFrame();
@@ -110,6 +108,6 @@ namespace Vox::Editor {
         ImGui::Render();
         ImDrawData *draw_data = ImGui::GetDrawData();
 
-        ImGui_ImplVulkan_RenderDrawData(draw_data, Render::Vulkan::ResourceCast(cmd)->getHandle(),  nullptr);
+        ImGui_ImplVulkan_RenderDrawData(draw_data, *Render::Vulkan::ResourceCast(cmd.cmdBuffer),  nullptr);
     }
 }

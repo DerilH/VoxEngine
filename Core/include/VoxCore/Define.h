@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>;
+#include <string>
 
 constexpr int BYTE_SIZE = 1;
 constexpr int KILOBYTE_SIZE = BYTE_SIZE * 1024;
@@ -9,6 +9,7 @@ constexpr int GIGABYTE_SIZE = MEGABYTE_SIZE * 1024;
 
 #define VOX_NS namespace Vox {
 #define RENDER_NS namespace Vox::Render {
+#define SHADERS_NS namespace Vox::Render::Shaders {
 #define VULKAN_NS namespace Vox::Render::Vulkan {
 #define RESOURCES_NS namespace Vox::Resources {
 #define PLATFORM_NS namespace Vox::Platform {

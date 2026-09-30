@@ -16,6 +16,7 @@ public:
     inline operator const VkPipelineColorBlendStateCreateInfo& () const { return mState; }
     inline const VkPipelineColorBlendStateCreateInfo& getState() const { return mState; }
 
+
 };
 
 class BlendStateBuilder {

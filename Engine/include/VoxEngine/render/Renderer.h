@@ -5,9 +5,11 @@
 #pragma once
 
 #include "RenderTarget.h"
-#include "vulkan/VulkanWindowRenderTarget.h"
 #include "RenderCore.h"
 #include "VoxEngine/render/graph/RenderGraph.h"
+#include "DrawItem.h"
+#include "VoxEngine/resources/assets/MeshAsset.h"
+#include "VoxEngine/resources/assets/ShaderAsset.h"
 
 RENDER_NS
     class Renderer {
@@ -18,6 +20,10 @@ RENDER_NS
         bool mShouldStop = false;
         RenderAPI mBackendApi;
         RenderGraph* mGraph = nullptr;
+        GraphTextureRef color;
+        HashMap<PipelineStateDesc, Vector<DrawItem>> mDrawListByStateHash;
+        HashMap<PipelineStateDesc, PipelineStateRef > mPipelineStateByHash;
+        HashMap<InternedString, RenderMesh*> mMeshes;
 
         explicit Renderer(RenderAPI api) : mBackendApi(api) {
         }
@@ -37,6 +43,12 @@ RENDER_NS
         void stop();
 
         void createGraph();
+
+        const HashMap<PipelineStateDesc, Vector<DrawItem>>& getDrawLists() const;
+        const Vector<DrawItem>& getDrawList(const PipelineStateDesc& state) const;
+        void clearDrawList(const PipelineStateDesc& state);
+        void draw(Resources::ShaderAsset* vertexShader, Resources::ShaderAsset* fragmentShader, Resources::MeshAsset* asset);
+        PipelineStateRef getPipelineState(PipelineStateDesc desc);
 
         NO_COPY_MOVE_DEFAULT(Renderer);
     };

@@ -110,11 +110,13 @@ VULKAN_NS
     class VulkanAllocated : public VulkanObject<T> {
     protected:
         VmaAllocation mAlloc = nullptr;
+        VmaAllocationInfo mAllocInfo;
 
-        VulkanAllocated(T handle, VmaAllocation alloc) : VulkanObject<T>(handle), mAlloc(alloc) {
+        VulkanAllocated(T handle, VmaAllocation alloc, VmaAllocationInfo info) : VulkanObject<T>(handle), mAlloc(alloc), mAllocInfo(info) {
         }
 
     public:
         inline VmaAllocation getAllocation() const { return mAlloc; }
+        inline VmaAllocationInfo getAllocationInfo() const { return mAllocInfo; }
     };
 NS_END

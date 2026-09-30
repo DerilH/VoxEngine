@@ -4,17 +4,18 @@ RENDER_NS
 
 ShaderState::Builder::Builder() = default;
 
-ShaderState::Builder &ShaderState::Builder::shader(ShaderRef shader) & {
+ShaderState::Builder &ShaderState::Builder::shader(ShaderRef shader) {
     mShaders.push_back(shader);
     return *this;
 }
 
-ShaderState::Builder &ShaderState::Builder::shaders(const Vector<ShaderRef> &shaders) & {
+ShaderState::Builder &ShaderState::Builder::shaders(const Vector<ShaderRef> &shaders) {
     mShaders.insert(mShaders.end(), shaders.begin(), shaders.end());
     return *this;
 }
 
 ShaderState ShaderState::Builder::build() const & {
+    VOX_CHECK(mShaders.size() >= 2, "ShaderState must vertex and fragment shader")
     ShaderState state;
     state.mShaders = mShaders;
     return state;

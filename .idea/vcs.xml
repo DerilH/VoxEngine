@@ -3,5 +3,9 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/ThirdParty/quill" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/imgui-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/spirv_cross-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release/_deps/imgui-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/cmake-build-release/_deps/spirv_cross-src" vcs="Git" />
   </component>
 </project>

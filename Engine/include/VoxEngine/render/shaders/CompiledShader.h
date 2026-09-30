@@ -2,26 +2,30 @@
 #include <fstream>
 #include <utility>
 #include <vector>
-#include "ShaderType.h"
+#include "ShaderUtil.h"
+#include "ShaderAttribute.h"
+#include "ShaderUniform.h"
 
-namespace Vox::Render::Shaders {
-    class CompiledShader {
+SHADERS_NS
+    struct CompiledShader {
     public:
-        const ShaderType type;
+        const ShaderStage stage;
+        const Vector<ShaderAttribute> inputs;
+        const Vector<ShaderAttribute> outputs;
+        const Vector<ShaderUniform> uniforms;
+
         const std::vector<uint32_t> bin;
         const std::string name;
-        explicit CompiledShader(const ShaderType type, std::string name, std::vector<uint32_t> bin) : type(type), bin(std::move(bin)), name(std::move(name)) {
+        explicit CompiledShader(const ShaderStage stage, Vector<ShaderAttribute> inputs, Vector<ShaderAttribute> outputs, Vector<ShaderUniform> uniforms, std::string name, std::vector<uint32_t> bin) : inputs(std::move(inputs)), outputs(std::move(outputs)), uniforms(std::move(uniforms)), stage(stage), bin(std::move(bin)), name(std::move(name)) {
         }
 
         void save(const std::filesystem::path &path) const {
             std::ofstream file(path);
-            if (!file.is_open()) {
-                throw std::runtime_error("Cannot save shader code");
-            }
+            VOX_CHECK(file.is_open(), "Cannot save shader code")
 
             file.write(reinterpret_cast<const std::ostream::char_type *>(bin.data()), bin.size() * sizeof(std::ostream::char_type));
             file.flush();
             file.close();
         }
     };
-}
+NS_END

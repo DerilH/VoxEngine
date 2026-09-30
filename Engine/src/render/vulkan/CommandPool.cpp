@@ -23,16 +23,16 @@ VULKAN_NS
     }
 
     CommandBufferRef VulkanCommandPool::allocBuffer() {
-//        VkCommandBufferAllocateInfo allocInfo{};
-//        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-//        allocInfo.commandPool = mHandle;
-//        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-//        allocInfo.commandBufferCount = 1;
-//
-//        VkCommandBuffer commandBuffer;
-//        VK_CHECK(vkAllocateCommandBuffers(mDevice.getHandle(), &allocInfo, &commandBuffer), "failed to allocate command buffers!");
-//        return CommandBuffer(commandBuffer);
-        return nullptr;
+
+        VkCommandBufferAllocateInfo allocInfo{};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.commandPool = mHandle;
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        VK_CHECK(vkAllocateCommandBuffers(mDevice.getHandle(), &allocInfo, &commandBuffer), "failed to allocate command buffers!");
+        return new VulkanCommandBuffer(commandBuffer);
     }
 
 //    const CommandBuffer &VulkanCommandPool::startTemp() {

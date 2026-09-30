@@ -1,33 +1,34 @@
 #pragma once
 
 #include <optional>
-#include <vulkan/vulkan_core.h>
 
 #include "Fence.h"
-#include "Queue.h"
 #include "Semaphore.h"
 #include "SwapChain.h"
 #include "VulkanCommandBuffer.h"
+#include "VulkanDescriptorPool.h"
+#include "VulkanResourceCast.h"
 
 VULKAN_NS
     class VulkanDevice;
 
-    class FrameSync {
+    class VulkanFrameSync {
         friend class VulkanDevice;
 
         const VulkanDevice &mDevice;
         Fence mFence;
         Semaphore mImageWaitSemaphore;
         CommandBufferRef mCommandBuffer;
+        VulkanDescriptorPoolRef mDescriptorPool = nullptr;
 
         bool mStarted = false;
         uint32_t mCurrentImageIndex = 0;
 
         std::optional<Semaphore> mRenderWaitSemaphore;
 
-        FrameSync(const VulkanDevice &device, Fence fence, Semaphore imageSemaphore, CommandBufferRef buffer);
+        VulkanFrameSync(const VulkanDevice &device, Fence fence, Semaphore imageSemaphore, CommandBufferRef buffer, VulkanDescriptorPoolRef pool);
 
-        static FrameSync Create(const VulkanDevice &device);
+        static VulkanFrameSync Create(const VulkanDevice &device);
 
     public:
         uint32_t begin(std::optional<std::reference_wrapper<SwapChain>> swapChain);

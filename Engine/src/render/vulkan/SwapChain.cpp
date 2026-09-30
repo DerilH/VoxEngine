@@ -6,10 +6,11 @@
 #include "VoxEngine/render/passes/RenderPass.h"
 #include <VoxEngine/render/vulkan/Surface.h>
 #include <VoxEngine/render/vulkan/VulkanDevice.h>
+#include <VoxEngine/render/vulkan/VulkanUtil.h>
 
-namespace Vox::Render::Vulkan {
-    VkPresentModeKHR SwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes) {
-        for (const auto &availablePresentMode: availablePresentModes) {
+VULKAN_NS
+    VkPresentModeKHR SwapChain::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) {
+        for (const auto& availablePresentMode: availablePresentModes) {
             if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
                 return availablePresentMode;
             }
@@ -18,13 +19,13 @@ namespace Vox::Render::Vulkan {
         return VK_PRESENT_MODE_FIFO_KHR;
     }
 
-    VkExtent2D SwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities, const int width, const int height) {
+    Extent SwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, const int width, const int height) {
         if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
-            return capabilities.currentExtent;
+            return fromVk(capabilities.currentExtent);
         } else {
             VkExtent2D actualExtent = {
-                static_cast<uint32_t>(width),
-                static_cast<uint32_t>(height)
+                    static_cast<uint32_t>(width),
+                    static_cast<uint32_t>(height)
             };
 
             actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width,
@@ -32,23 +33,21 @@ namespace Vox::Render::Vulkan {
             actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height,
                                              capabilities.maxImageExtent.height);
 
-            return actualExtent;
+            return fromVk(actualExtent);
         }
     }
 
-    SwapChain::SwapChain(const VulkanDevice &device, const VkSwapchainKHR mHandle,
-                         std::vector<VkImage> images,
-                         std::vector<VkImageView> imageViews,
-                         const VkExtent2D extent) : VulkanObject(mHandle), mImages(std::move(images)),
-                                                                       mImageViews(std::move(imageViews)), mDevice(device), mExtent(extent) {
+    SwapChain::SwapChain(const VulkanDevice& device, const VkSwapchainKHR mHandle,
+                         Vector<VulkanTexture*>& textures,
+                         const Extent extent) : VulkanObject(mHandle), mTextures(std::move(textures)), mDevice(device), mExtent(extent) {
     }
 
-    VkImageView createImageView(const VulkanDevice &device, const VkImage image, const VkFormat format) {
+    VkImageView createImageView(const VulkanDevice& device, const VkImage image, const Format format) {
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = image;
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = format;
+        createInfo.format = toVk(format);
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -64,13 +63,13 @@ namespace Vox::Render::Vulkan {
         return view;
     }
 
-    SwapChain *SwapChain::Create(const Surface &surface, VkSwapchainKHR old) {
-        VOX_CHECK(surface.getCurrentDevice() != nullptr, "Cant create swapchain, set surface device first");
-        vkDeviceWaitIdle(surface.getCurrentDevice()->getHandle());
+    SwapChain* SwapChain::Create(const Surface& surface, VkSwapchainKHR old) {
+        VOX_CHECK(surface.getDevice() != nullptr, "Cant create swapchain, set surface device first");
+        vkDeviceWaitIdle(*surface.getDevice());
 
         SwapChainSupportDetails swapChainSupport = surface.querySwapChainSupport();
         VkPresentModeKHR presentMode = SwapChain::chooseSwapPresentMode(swapChainSupport.presentModes());
-        VkExtent2D extent = SwapChain::chooseSwapExtent(swapChainSupport.capabilities(), surface.mWindow.getWidth(),surface.mWindow.getHeight());
+        Extent extent = SwapChain::chooseSwapExtent(swapChainSupport.capabilities(), surface.getSize().width, surface.getSize().height);
 
         uint32_t imageCount = swapChainSupport.capabilities().minImageCount + 1;
         if (swapChainSupport.capabilities().maxImageCount > 0 && imageCount > swapChainSupport.capabilities().maxImageCount) {
@@ -81,16 +80,16 @@ namespace Vox::Render::Vulkan {
         createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         createInfo.surface = surface.mHandle;
         createInfo.minImageCount = imageCount;
-        createInfo.imageFormat = surface.getCurrentFormat().format;
-        createInfo.imageColorSpace = surface.getCurrentFormat().colorSpace;
-        createInfo.imageExtent = extent;
+        createInfo.imageFormat = surface.getSurfaceFormat().format;
+        createInfo.imageColorSpace = surface.getSurfaceFormat().colorSpace;
+        createInfo.imageExtent = toVk(extent);
         createInfo.imageArrayLayers = 1;
-        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
-        const QueueFamilyRepository families = surface.mCurrentDevice->getPhysicalDevice().getQueueFamilies();
+        const QueueFamilyRepository families = surface.mDevice->getPhysicalDevice().getQueueFamilies();
         const uint32_t queueFamilyIndices[] = {
-            static_cast<uint32_t>(families[GRAPHICS_QUEUE].index()),
-            static_cast<uint32_t>(surface.mPresentQueue->getFamily().index())
+                static_cast<uint32_t>(families[GRAPHICS_QUEUE].index()),
+                static_cast<uint32_t>(surface.mPresentQueue->getFamily().index())
         };
         if (queueFamilyIndices[0] != queueFamilyIndices[1]) {
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
@@ -107,43 +106,42 @@ namespace Vox::Render::Vulkan {
         createInfo.oldSwapchain = old;
 
         VkSwapchainKHR handle = VK_NULL_HANDLE;
-        VK_CHECK(vkCreateSwapchainKHR(surface.mCurrentDevice->getHandle(), &createInfo, nullptr, &handle), "failed to create swap chain!");
+        VK_CHECK(vkCreateSwapchainKHR(*surface.mDevice, &createInfo, nullptr, &handle), "failed to create swap chain!");
 
 
-        vkGetSwapchainImagesKHR(surface.mCurrentDevice->getHandle(), handle, &imageCount, nullptr);
-        std::vector<VkImage> images(imageCount);
-        vkGetSwapchainImagesKHR(surface.mCurrentDevice->getHandle(), handle, &imageCount, images.data());
+        vkGetSwapchainImagesKHR(*surface.mDevice, handle, &imageCount, nullptr);
+        Vector<VkImage> images(imageCount);
+        vkGetSwapchainImagesKHR(*surface.mDevice, handle, &imageCount, images.data());
 
-        std::vector<VkImageView> imageViews(imageCount);
-        for (auto const &[index, image]: std::views::enumerate(images)) {
-            VkImageView view = createImageView(*surface.mCurrentDevice, image, surface.getCurrentFormat().format);
-            imageViews[index] = view;
+        Vector<VulkanTexture*> textures(imageCount);
+
+        for (uint32_t index = 0; index < images.size(); index++) {
+            VkImage image = images[index];
+            VkImageView view = createImageView(*surface.mDevice, image, surface.getImageFormat());
+            auto t = surface.mDevice->createHeap<VulkanTexture>(surface.getImageFormat(), surface.getSize(), image, view);
+            textures[index] = t;
         }
 
-        return new SwapChain(*surface.mCurrentDevice, handle, std::move(images), std::move(imageViews), extent);
+        return new SwapChain(*surface.mDevice, handle, textures, extent);
     }
 
-    VkResult SwapChain::acquireNextImage(const Semaphore &semaphore, uint32_t* imageIndex) const {
+    VkResult SwapChain::acquireNextImage(const Semaphore& semaphore, uint32_t* imageIndex) const {
         return vkAcquireNextImageKHR(mDevice.getHandle(), this->getHandle(), UINT64_MAX, semaphore.getHandle(), VK_NULL_HANDLE, imageIndex);
     }
 
     SwapChain::~SwapChain() {
-        for (const auto &view: mImageViews) {
-            vkDestroyImageView(mDevice.getHandle(), view, nullptr);
+        for (const auto& view: mTextures) {
+//            vkDestroyImageView(mDevice.getHandle(), view, nullptr);
         }
         vkDestroySwapchainKHR(mDevice.getHandle(), mHandle, nullptr);
     }
 
-    VkImageView SwapChain::operator[](const int index) const {
-        return mImageViews.at(index);
-    }
-
-    VkExtent2D SwapChain::getExtent() const {
+    Extent SwapChain::getExtent() const {
         return mExtent;
     }
 
     int SwapChain::getImageCount() const {
-        return mImages.size();
+        return mTextures.size();
     }
 
     bool SwapChain::needsRebuild() const {
@@ -154,7 +152,7 @@ namespace Vox::Render::Vulkan {
         mNeedsRebuild = true;
     }
 
-    VkImage SwapChain::getImage(int index) const {
-        return mImages.at(index);
+    VulkanTexture* SwapChain::getTexture(uint32_t index) const {
+        return mTextures[index];
     }
-}
+NS_END

@@ -7,6 +7,7 @@
 #include "VoxCore/Define.h"
 #include "VoxCore/containers/ArrayView.h"
 #include "VoxEngine/render/Enums.h"
+#include <xxh3.h>
 
 RENDER_NS
     class RenderingState {
@@ -27,7 +28,13 @@ RENDER_NS
         inline Format getDepthFormat() const { return mDepthFormat; }
 
         inline Format getStencilFormat() const { return mStencilFormat; }
-
+        inline bool operator==(const RenderingState& other) const {
+            bool same = mDepthFormat == other.mDepthFormat && mStencilFormat == other.mStencilFormat;
+            for(int i = 0; i < mColorFormats.size(); ++i) {
+                same = same && mColorFormats[i] == other.mColorFormats[i];
+            }
+            return same;
+        }
     };
 NS_END
 
