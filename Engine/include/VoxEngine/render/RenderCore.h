@@ -5,9 +5,6 @@
 #pragma once
 
 #include "VoxCore/Define.h"
-#include "RenderBackend.h"
-#include "VoxEngine/render/vulkan/VulkanBackend.h"
-
 RENDER_NS
     typedef enum {
         VULKAN_API,
@@ -16,5 +13,6 @@ RENDER_NS
         DX12_API
     } RenderAPI;
 
-    void InitRenderBackend(RenderAPI api);
+class RenderBackend;
+RenderBackend* CreateRenderBackend(RenderAPI api);
 NS_END

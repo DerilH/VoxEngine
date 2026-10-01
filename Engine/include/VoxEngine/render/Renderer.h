@@ -4,12 +4,20 @@
 
 #pragma once
 
+#include <VoxCore/Pointers.h>
+#include <VoxEngine/resources/assets/ModelAsset.h>
+#include <VoxEngine/scene/Scene.h>
+
 #include "RenderTarget.h"
 #include "RenderCore.h"
 #include "VoxEngine/render/graph/RenderGraph.h"
 #include "DrawItem.h"
 #include "VoxEngine/resources/assets/MeshAsset.h"
 #include "VoxEngine/resources/assets/ShaderAsset.h"
+
+namespace Vox::Scene {
+    class RenderableMeshComponent;
+}
 
 RENDER_NS
     class Renderer {
@@ -18,23 +26,22 @@ RENDER_NS
         Vector<RenderTargetRef > mRenderTargets;
         int mBufferingLevel = 0;
         bool mShouldStop = false;
-        RenderAPI mBackendApi;
         RenderGraph* mGraph = nullptr;
         GraphTextureRef color;
         HashMap<PipelineStateDesc, Vector<DrawItem>> mDrawListByStateHash;
         HashMap<PipelineStateDesc, PipelineStateRef > mPipelineStateByHash;
         HashMap<InternedString, RenderMesh*> mMeshes;
+        RenderBackend* mBackend;
 
-        explicit Renderer(RenderAPI api) : mBackendApi(api) {
-        }
+        explicit Renderer(RenderBackend* backend);
 
-    protected:
         void drawFrame(RenderTargetRef target);
         void executeGraph(RenderTargetRef viewport, CommandBufferRef cmdBuffer);
     public:
-        void init();
-
-        void renderLoop();
+        const RenderAPI backendApi;
+    void init();
+        void render(HashSet<Ref<Scene::RenderableComponent>> renderable);
+        void render(Ref<Scene::RenderableComponent> el);
 
         void setBuffering(char buffers);
 
@@ -47,8 +54,17 @@ RENDER_NS
         const HashMap<PipelineStateDesc, Vector<DrawItem>>& getDrawLists() const;
         const Vector<DrawItem>& getDrawList(const PipelineStateDesc& state) const;
         void clearDrawList(const PipelineStateDesc& state);
-        void draw(Resources::ShaderAsset* vertexShader, Resources::ShaderAsset* fragmentShader, Resources::MeshAsset* asset);
+        void draw(Ref<Scene::RenderableMeshComponent> component);
+
+        void draw(Ref<Resources::ShaderAsset> vertexShaderAsset, Ref<Resources::ShaderAsset> fragmentShaderAsset, Resources::ModelAsset *model);
+
         PipelineStateRef getPipelineState(PipelineStateDesc desc);
+
+        RenderBackend *getBackend() const;
+        const Vector<RenderTargetRef>& getRenderTargets() const { return mRenderTargets; }
+        const HashMap<InternedString, RenderMesh*>& getMeshes() const { return mMeshes; }
+
+        RenderGraph& getGraph();
 
         NO_COPY_MOVE_DEFAULT(Renderer);
     };

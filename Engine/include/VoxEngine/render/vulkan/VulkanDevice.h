@@ -12,6 +12,8 @@
 #include "VoxEngine/render/Device.h"
 
 VULKAN_NS
+    class VulkanBackend;
+
     class VulkanDevice : public Device, public VulkanObject<VkDevice> {
         VmaAllocator mAllocator;
 
@@ -22,11 +24,12 @@ VULKAN_NS
         VulkanDescriptorSetRef mGlobalDescriptors = nullptr;
         VkDescriptorSetLayout mModelDescriptorSetLayout = VK_NULL_HANDLE;
         class VulkanUniformBuffer* mGlobalUniformBuffer = nullptr;
+        VkInstance mVkInstance;
 
-        VulkanDevice(VkDevice handle, const PhysicalDevice &physicalDevice, HashMap<QueueType, Queue> queues);
+        VulkanDevice(VkDevice handle, const PhysicalDevice &physicalDevice, HashMap<QueueType, Queue> queues, VkInstance backend);
 
         void initGlobalDescriptors();
-
+        VmaAllocator createAllocator();
     public:
 
         PhysicalDevice getPhysicalDevice() const;
@@ -42,7 +45,7 @@ VULKAN_NS
 
         void waitIdle() const;
 
-        static VulkanDevice* Create(const PhysicalDevice &physDevice, std::vector<const char *> extensions, std::vector<const char *> validationLayers);
+        static VulkanDevice* Create(VkInstance vkInstance, const PhysicalDevice &physDevice, std::vector<const char *> extensions, std::vector<const char *> validationLayers);
 
         template<typename T, typename... Args>
         T create(Args &&... args) const {

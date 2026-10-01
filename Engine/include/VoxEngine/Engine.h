@@ -10,10 +10,11 @@
 #include "VoxEngine/render/RenderCore.h"
 
 VOX_NS
+
 class Engine {
     std::unordered_map<std::string, Render::Windowing::Window*> mWindows;
-    Render::Renderer* mRenderer;
-    Vox::Resources::ResourcesManager* mResourceManager;
+    Ref<Render::Renderer> mRenderer = nullptr;
+    Ref<Resources::ResourcesManager> mResourceManager = nullptr;
 
     bool mInitialized = false;
     std::string mTitle;
@@ -21,7 +22,7 @@ class Engine {
 
     NO_COPY_MOVE_DEFAULT(Engine)
 public:
-
+    Ref<Scene::Scene> scene;
     explicit Engine(std::string mTitle, Render::RenderAPI renderApi);
     ~Engine();
     void init();

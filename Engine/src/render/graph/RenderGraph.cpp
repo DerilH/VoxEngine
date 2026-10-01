@@ -108,7 +108,8 @@ RENDER_NS
             attachments.emplace_back(pass->getWrites()[i]);
         }
 
-        context.cmdBuffer->beginRenderPass(ArrayView(data(attachments), attachments.size()), {viewport->getSize()});
+        bool clear = pass->getReads().empty();
+        context.cmdBuffer->beginRenderPass(ArrayView(data(attachments), attachments.size()), {viewport->getSize()}, clear);
         for(int i = 0; i < pass->getReads().size(); i++) {
             AttachmentDesc attachment = pass->getReads()[i];
             context.cmdBuffer->setBarriers({attachment.transition}, {attachment.texture->getExact()});
@@ -127,10 +128,31 @@ RENDER_NS
 
     void RenderGraph::execute(RenderContext context, const RenderTargetRef target) {
         auto entryPasses = compile(target);
-        for (auto  entry: entryPasses) {
-            Execute(context, entry, target);
-            for (const auto pass: entry->mNext) {
-                Execute(context, pass, target);
+        HashMap<RenderPass*, bool> executed;
+        for (auto entry : entryPasses) {
+            std::vector<RenderPass*> stack;
+            stack.push_back(entry);
+            while (!stack.empty()) {
+                RenderPass* pass = stack.back();
+                stack.pop_back();
+                
+                if (executed[pass]) continue;
+
+                bool canExecute = true;
+                for (auto prev : pass->mPrev) {
+                    if (!executed[prev]) {
+                        canExecute = false;
+                        break;
+                    }
+                }
+
+                if (canExecute) {
+                    Execute(context, pass, target);
+                    executed[pass] = true;
+                    for (auto next : pass->mNext) {
+                        stack.push_back(next);
+                    }
+                }
             }
         }
     }

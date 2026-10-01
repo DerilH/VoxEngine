@@ -34,24 +34,22 @@ namespace Vox::Render::Vulkan {
         std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
         vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
-        int i = 0;
-        for (const auto &queueFamily: queueFamilies) {
+        for (int i = 0; i < queueFamilies.size(); i++) {
+            const auto &queueFamily = queueFamilies[i];
+            
             for (auto it = neededQueues.begin(); it != neededQueues.end(); ) {
                 if (queueFamily.queueFlags & *it) {
                     auto queueType = *it;
-                    it = neededQueues.erase(it);
                     indices.mData.emplace(queueType, QueueFamily(i, queueType));
-                    break;
+                    it = neededQueues.erase(it);
                 } else {
                     ++it;
                 }
             }
 
-            if (indices.isComplete()) {
+            if (neededQueues.empty()) {
                 break;
             }
-
-            i++;
         }
 
         return indices;

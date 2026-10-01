@@ -71,9 +71,11 @@ VULKAN_NS
         VkPresentModeKHR presentMode = SwapChain::chooseSwapPresentMode(swapChainSupport.presentModes());
         Extent extent = SwapChain::chooseSwapExtent(swapChainSupport.capabilities(), surface.getSize().width, surface.getSize().height);
 
-        uint32_t imageCount = swapChainSupport.capabilities().minImageCount + 1;
-        if (swapChainSupport.capabilities().maxImageCount > 0 && imageCount > swapChainSupport.capabilities().maxImageCount) {
-            imageCount = swapChainSupport.capabilities().maxImageCount;
+        uint32_t minImageCount = swapChainSupport.capabilities().minImageCount;
+        uint32_t maxImageCount = swapChainSupport.capabilities().maxImageCount;
+        uint32_t imageCount = minImageCount + 1;
+        if (maxImageCount > 0 && imageCount > maxImageCount) {
+            imageCount = maxImageCount;
         }
 
         VkSwapchainCreateInfoKHR createInfo{};
@@ -84,14 +86,18 @@ VULKAN_NS
         createInfo.imageColorSpace = surface.getSurfaceFormat().colorSpace;
         createInfo.imageExtent = toVk(extent);
         createInfo.imageArrayLayers = 1;
-        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
         const QueueFamilyRepository families = surface.mDevice->getPhysicalDevice().getQueueFamilies();
-        const uint32_t queueFamilyIndices[] = {
-                static_cast<uint32_t>(families[GRAPHICS_QUEUE].index()),
-                static_cast<uint32_t>(surface.mPresentQueue->getFamily().index())
+        uint32_t graphicsIndex = families[GRAPHICS_QUEUE].index();
+        uint32_t presentIndex = surface.mPresentQueue->getFamily().index();
+        
+        uint32_t queueFamilyIndices[] = {
+                graphicsIndex,
+                presentIndex
         };
-        if (queueFamilyIndices[0] != queueFamilyIndices[1]) {
+
+        if (graphicsIndex != presentIndex) {
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
             createInfo.queueFamilyIndexCount = 2;
             createInfo.pQueueFamilyIndices = queueFamilyIndices;

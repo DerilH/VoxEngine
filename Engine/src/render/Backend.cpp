@@ -5,5 +5,4 @@
 #include "VoxEngine/render/RenderBackend.h"
 
 RENDER_NS
-    RenderBackend* RenderBackend::sInstance = nullptr;
 NS_END

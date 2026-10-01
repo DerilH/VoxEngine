@@ -43,6 +43,9 @@
     M(PolygonMode, POINT,   VK_POLYGON_MODE_POINT,      NO, NO)\
 
 #define PRIMITIVE_TOPOLOGY_LIST(M)\
+    M(PrimitiveTopology, POINT_LIST,    VK_PRIMITIVE_TOPOLOGY_POINT_LIST,       NO, NO)\
+    M(PrimitiveTopology, LINE_LIST,     VK_PRIMITIVE_TOPOLOGY_LINE_LIST,        NO, NO)\
+    M(PrimitiveTopology, LINE_STRIP,    VK_PRIMITIVE_TOPOLOGY_LINE_STRIP,       NO, NO)\
     M(PrimitiveTopology, TRIANGLE_LIST,    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,       NO, NO)\
     M(PrimitiveTopology, TRIANGLE_STRIP,   VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP,      NO, NO)\
     M(PrimitiveTopology, TRIANGLE_FAN,   VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN,      NO, NO)\

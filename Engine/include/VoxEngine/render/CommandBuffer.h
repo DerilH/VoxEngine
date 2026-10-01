@@ -39,7 +39,7 @@ RENDER_NS
         //COMMON
         virtual void setBarriers(ArrayView<PassTransition> transitions, ArrayView<TextureRef> textures) = 0;
 
-        virtual void beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size) = 0;
+        virtual void beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size, bool clear = true) = 0;
 
         virtual void endRenderPass() = 0;
 

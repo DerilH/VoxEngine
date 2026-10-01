@@ -15,7 +15,10 @@ namespace Vox::Render::Vulkan {
 
         VkPhysicalDevice device = mDevice->getPhysicalDevice().getHandle();
         VkSurfaceKHR surface = mHandle;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &capabilities);
+        VkResult res = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &capabilities);
+        if (res != VK_SUCCESS) {
+            LOG_ERROR("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed: {}", (int)res);
+        }
 
         uint32_t formatCount;
         vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
@@ -50,7 +53,7 @@ namespace Vox::Render::Vulkan {
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
         for (const auto& availableFormat: availableFormats) {
-            if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 return availableFormat;
             }
         }
@@ -97,7 +100,8 @@ namespace Vox::Render::Vulkan {
         if (mCurrentSwapChain != nullptr) {
             old = mCurrentSwapChain;
         }
-        mCurrentSwapChain = SwapChain::Create(*this, old == nullptr ? nullptr : old->getHandle());
+        VkSwapchainKHR oldHandle = old == nullptr ? VK_NULL_HANDLE : old->getHandle();
+        mCurrentSwapChain = SwapChain::Create(*this, oldHandle);
         createFrames(mCurrentSwapChain->getImageCount());
     }
 

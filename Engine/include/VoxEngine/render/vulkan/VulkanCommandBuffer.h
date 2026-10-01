@@ -34,7 +34,7 @@ VULKAN_NS
 
         void setBarriers(ArrayView<PassTransition> transitions, ArrayView<TextureRef> textures) override;
 
-        void beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size) override;
+        void beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size, bool clear = true) override;
 
         void endRenderPass() override;
 

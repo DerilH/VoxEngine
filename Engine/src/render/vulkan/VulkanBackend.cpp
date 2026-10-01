@@ -14,7 +14,7 @@ VULKAN_NS
     const std::vector<const char *> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-        "VK_KHR_synchronization2"
+        VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME
     };
 
     void VulkanBackend::createInstance() {
@@ -31,7 +31,7 @@ VULKAN_NS
         appInfo.pEngineName = "N";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
         //TODO: Add version choice
-        appInfo.apiVersion = VK_API_VERSION_1_4;
+        appInfo.apiVersion = VK_API_VERSION_1_3;
 
         VkInstanceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -58,11 +58,21 @@ VULKAN_NS
     }
 
     void VulkanBackend::init() {
+        VOX_CHECK(mInstance == nullptr, "Attempt to reinitialize render backend")
         createInstance();
 
         setupDebugMessenger(mInstance, mDebugMessenger);
-        auto physicalDevices = PhysicalDevice::pickDevices(mInstance);
-        mCurrentDevice = VulkanDevice::Create(physicalDevices[0], deviceExtensions, VALIDATION_LAYERS);
+
+        std::vector<std::string> extensions;
+        for (const char* ext : deviceExtensions) {
+            extensions.emplace_back(ext);
+        }
+
+        auto physicalDevices = PhysicalDevice::pickDevices(mInstance, extensions);
+        mCurrentDevice = VulkanDevice::Create(mInstance, physicalDevices[0], deviceExtensions, VALIDATION_LAYERS);
+    }
+
+    VulkanBackend::VulkanBackend(RenderAPI api) : RenderBackend(api) {
     }
 
     int32_t VulkanBackend::beginFrame() {
@@ -72,45 +82,27 @@ VULKAN_NS
     void VulkanBackend::endFrame() {
     }
 
-    RenderTargetRef VulkanBackend::createWindowTarget(Extent extent, void* windowHandle) {
+    RenderTargetRef VulkanBackend::createWindowTarget(Extent extent, void* windowHandle) const {
         Surface* surface = Surface::Create(extent, mInstance, windowHandle);
         surface->setDevice(ResourceCast(mCurrentDevice));
         return surface;
     }
 
-    VmaAllocator VulkanBackend::createAllocator(const VulkanDevice& device) {
-        VmaVulkanFunctions vulkanFunctions = {};
-        vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
-        vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
-
-        VmaAllocatorCreateInfo allocatorCreateInfo = {};
-        allocatorCreateInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
-        allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_2;
-        allocatorCreateInfo.physicalDevice = device.getPhysicalDevice().getHandle();
-        allocatorCreateInfo.device = device.getHandle();
-        allocatorCreateInfo.instance = mInstance;
-        allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
-
-        VmaAllocator allocator;
-        vmaCreateAllocator(&allocatorCreateInfo, &allocator);
-        return allocator;
-    }
-
     CommandPoolRef VulkanBackend::createCommandPool() {
-        VOX_ASSERT(Initialized(), "Render backend not initialized");
+        VOX_ASSERT(isInitialized(), "Render backend not initialized");
         auto device = ResourceCast(mCurrentDevice);
         auto queue = device->getQueue(QueueType::GRAPHICS_QUEUE);
         return device->createHeap<VulkanCommandPool>(queue.getFamily());
     }
 
     TextureRef VulkanBackend::createTexture(Format format, Extent extent) {
-        VOX_ASSERT(Initialized(), "Render backend not initialized");
+        VOX_ASSERT(isInitialized(), "Render backend not initialized");
         const VulkanDevice* device = ResourceCast(mCurrentDevice);
         return device->createHeap<VulkanTexture>(format, extent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
     }
 
     PipelineStateRef VulkanBackend::createPSO(const PipelineStateDesc& desc) {
-        VOX_ASSERT(Initialized(), "Render backend not initialized");
+        VOX_ASSERT(isInitialized(), "Render backend not initialized");
         const VulkanDevice* device = ResourceCast(mCurrentDevice);
         return device->createHeap<VulkanPipelineState>(desc);
     }
@@ -155,6 +147,8 @@ VULKAN_NS
         VulkanDevice* device = ResourceCast(mCurrentDevice);
         return device->createHeap<VulkanUniformBuffer>(size);
     }
+
+
 
 NS_END
 

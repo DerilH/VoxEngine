@@ -5,7 +5,8 @@
 #include "VoxEngine/render/RenderMesh.h"
 
 RENDER_NS
-    RenderMesh::RenderMesh(const VertexBufferRef mVBuffer, const IndexBufferRef mIBuffer) : mVBuffer(mVBuffer), mIBuffer(mIBuffer) {}
+    RenderMesh::RenderMesh(const VertexBufferRef mVBuffer, const IndexBufferRef mIBuffer) : mVBuffer(mVBuffer), mIBuffer(mIBuffer) {
+    }
 
     void RenderMesh::use(const CommandBufferRef cmdBuffer) const {
         mVBuffer->bind(cmdBuffer);
@@ -15,9 +16,8 @@ RENDER_NS
         }
     }
 
-    uint32_t RenderMesh::getIndexCount() const{
+    uint32_t RenderMesh::getIndexCount() const {
         return mIBuffer->getCount();
-}
+    }
 
 NS_END
-

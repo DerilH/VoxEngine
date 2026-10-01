@@ -7,11 +7,12 @@
 
 VULKAN_NS
     VulkanDescriptorPool VulkanDescriptorPool::Create(const VulkanDevice& device, const uint32_t maxSets, const ArrayView<VkDescriptorPoolSize> sizes) {
-        VkDescriptorPoolCreateInfo createInfo;
+        VkDescriptorPoolCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         createInfo.maxSets = maxSets;
         createInfo.poolSizeCount = sizes.size();
         createInfo.pPoolSizes = sizes.pData;
+        createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
         VkDescriptorPool pool;
         VK_CHECK(vkCreateDescriptorPool(device, &createInfo, nullptr, &pool), "Cannot create descriptor pool");

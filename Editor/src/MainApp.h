@@ -21,15 +21,14 @@ public:
         mEngine = new Vox::Engine("Vox", Vox::Render::VULKAN_API);
         mEngine->init();
 
-        // gui = new Vox::Editor::Gui();
-        // gui->init(*mEngine->getWindow("Vox"));
-
+        gui = new Vox::Editor::Gui();
+        gui->init(*mEngine->getWindow("Vox"), *mEngine);
         mEngine->run();
-
         cleanup();
     }
 
     void cleanup() const {
         delete mEngine;
+        delete gui;
     }
 };

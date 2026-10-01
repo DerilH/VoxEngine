@@ -3,11 +3,7 @@
 //
 
 #pragma once
-
-
 #include "VoxCore/Define.h"
-#include "Texture.h"
-#include "VoxCore/containers/Containers.h"
 
 RENDER_NS
 class Renderer;

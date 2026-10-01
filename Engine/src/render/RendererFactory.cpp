@@ -5,7 +5,7 @@
 #include <VoxEngine/render/RendererFactory.h>
 
 RENDER_NS
-    Renderer* RendererFactory::Create(const RenderAPI api) {
-        return new Renderer(api);
+    Renderer* RendererFactory::Create(RenderBackend *backend) {
+        return new Renderer(backend);
     }
 NS_END

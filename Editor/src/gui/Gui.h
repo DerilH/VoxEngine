@@ -7,15 +7,22 @@
 #include <VoxEngine/render/vulkan/VulkanFrameSync.h>
 #include <VoxEngine/render/windowing/Window.h>
 
+#include <glm/glm.hpp>
+#include <VoxEngine/Engine.h>
+
 namespace Vox::Editor {
     class Gui : SingletonBase<Gui>{
-        Render::Windowing::Window* mWindow;
+        Render::Windowing::Window* mWindow = nullptr;
+        Engine* mEngine = nullptr;
+        Render::Renderer* mRenderer = nullptr;
         bool mInitialized = false;
         Render::FpsCounter mFpsCounter;
+        glm::vec3 mMeshPosition = glm::vec3(0, 0, -4);
+        glm::vec3 mMeshRotation = glm::vec3(0, 0, 0);
     public:
 
-
-        void init(Render::Windowing::Window& window);
+        void init(Render::Windowing::Window& window, Engine& engine);
         void render(Render::RenderContext cmd);
+        void renderTreePanel();
     };
 }

@@ -16,21 +16,19 @@ namespace Vox::Render::Vulkan {
         return queue;
     }
 
-    VulkanDevice::VulkanDevice(const VkDevice handle, const PhysicalDevice &physicalDevice, std::unordered_map<QueueType, Queue> queues) : VulkanObject(handle),
+    VulkanDevice::VulkanDevice(const VkDevice handle, const PhysicalDevice &physicalDevice, std::unordered_map<QueueType, Queue> queues, VkInstance vkInstance) : VulkanObject(handle),
                                                                                                                                            mPhysicalDevice(physicalDevice),
-                                                                                                                                           mQueues(std::move(queues)) {
+                                                                                                                                           mQueues(std::move(queues)), mVkInstance(vkInstance) {
         for (const auto [type, queue]: mQueues) {
             mCmdPools.emplace(type, *this->createHeap<VulkanCommandPool>(queue.getFamily()));
         }
-        mAllocator = VulkanBackend::Get()->createAllocator(*this);
-
+        mAllocator = createAllocator();
         initGlobalDescriptors();
     }
 
     void VulkanDevice::initGlobalDescriptors() {
         mGlobalDescriptorPool = this->createHeap<VulkanDescriptorPool>(100, ArrayView<VkDescriptorPoolSize>({{toVk(ShaderResourceType::UNIFORM_BUFFER), 100}}));
 
-        // Layout для set = 0 (GlobalData)
         {
             VkDescriptorSetLayoutCreateInfo createInfo{};
             createInfo.bindingCount = 1;
@@ -45,7 +43,6 @@ namespace Vox::Render::Vulkan {
             mGlobalDescriptors = this->createHeap<VulkanDescriptorSet>(mGlobalDescriptorPool, layout);
         }
 
-        // Layout для set = 1 (ModelData)
         {
             VkDescriptorSetLayoutCreateInfo createInfo{};
             createInfo.bindingCount = 1;
@@ -59,7 +56,6 @@ namespace Vox::Render::Vulkan {
             vkCreateDescriptorSetLayout(*this, &createInfo, nullptr, &mModelDescriptorSetLayout);
         }
 
-        // Инициализация Uniform Buffer с 2-мя identity матрицами (view, proj)
         struct GlobalData {
             glm::mat4 view;
             glm::mat4 proj;
@@ -76,9 +72,9 @@ namespace Vox::Render::Vulkan {
 
         data.view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 
-        // 2. Матрица перспективной проекции (FOV 45 градусов, соотношение сторон 16:9)
+        // 2. Матрица перспективной проекции (FOV 45 градусов, соотношение сторон 920/480)
         float fov    = glm::radians(45.0f);
-        float aspect = 16.0f / 9.0f; // В реальном коде подставляйте actualWidth / actualHeight из Swapchain
+        float aspect = 920.0f / 480.0f; 
         float zNear  = 0.1f;
         float zFar   = 100.0f;
 
@@ -135,8 +131,8 @@ namespace Vox::Render::Vulkan {
         vkDeviceWaitIdle(mHandle);
     }
 
-    VulkanDevice *VulkanDevice::Create(const PhysicalDevice &physDevice, std::vector<const char *> extensions,
-                                       std::vector<const char *> validationLayers) {
+    VulkanDevice *VulkanDevice::Create(VkInstance vkInstance, const PhysicalDevice &physDevice,
+                                       std::vector<const char *> extensions, std::vector<const char *> validationLayers) {
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         QueueFamilyRepository queueFamilies = physDevice.getQueueFamilies();
 
@@ -197,12 +193,7 @@ namespace Vox::Render::Vulkan {
             queues.emplace(queueFamily.type(), Queue{queue, queueFamily});
         }
 
-        for (const auto &queueFamily: queueFamilies.getUniqueFamilies()) {
-            VkQueue queue = acquireQueue(device, queueFamilies, queueFamily.type());
-            queues.emplace(queueFamily.type(), Queue{queue, queueFamily});
-        }
-
-        return new VulkanDevice{device, physDevice, std::move(queues)};
+        return new VulkanDevice{device, physDevice, std::move(queues), vkInstance};
     }
 
     VkBuffer VulkanDevice::allocateBuffer(VkBufferCreateInfo &bufferCreateInfo, const VmaAllocationCreateInfo &allocInfo, const bool exclusive, VmaAllocation &allocation, VmaAllocationInfo &info) const {
@@ -211,5 +202,23 @@ namespace Vox::Render::Vulkan {
         VkBuffer buffer = VK_NULL_HANDLE;
         VK_CHECK(vmaCreateBuffer(getAllocator(), &bufferCreateInfo, &allocInfo, &buffer, &allocation, &info), "failed to allocate buffers");
         return buffer;
+    }
+
+    VmaAllocator VulkanDevice::createAllocator() {
+        VmaVulkanFunctions vulkanFunctions = {};
+        vulkanFunctions.vkGetInstanceProcAddr = &vkGetInstanceProcAddr;
+        vulkanFunctions.vkGetDeviceProcAddr = &vkGetDeviceProcAddr;
+
+        VmaAllocatorCreateInfo allocatorCreateInfo = {};
+        allocatorCreateInfo.flags = VMA_ALLOCATOR_CREATE_EXT_MEMORY_BUDGET_BIT;
+        allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_3;
+        allocatorCreateInfo.physicalDevice = mPhysicalDevice.getHandle();
+        allocatorCreateInfo.device = mHandle;
+        allocatorCreateInfo.instance = mVkInstance;
+        allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
+
+        VmaAllocator allocator;
+        vmaCreateAllocator(&allocatorCreateInfo, &allocator);
+        return allocator;
     }
 }

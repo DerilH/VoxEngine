@@ -95,7 +95,7 @@ VULKAN_NS
         vkCmdPipelineBarrier2(*this, &depInfo);
     }
 
-    void VulkanCommandBuffer::beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size) {
+    void VulkanCommandBuffer::beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size, bool clear) {
         VOX_ASSERT(mStarted, "Command buffer not started")
         VkRenderingAttachmentInfo attachmentInfo[attachments.size()];
 
@@ -104,7 +104,7 @@ VULKAN_NS
             attachmentInfo[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             attachmentInfo[i].imageView = ResourceCast(attachments[i].texture->getExact())->getView();
             attachmentInfo[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            attachmentInfo[i].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            attachmentInfo[i].loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
             attachmentInfo[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
             attachmentInfo[i].clearValue = {{0, 0.0f, 0.0f, 0.0f}};
         }
@@ -157,13 +157,7 @@ VULKAN_NS
 
     void VulkanCommandBuffer::bindUniformBuffer(UniformBufferRef buffer) {
         VOX_ASSERT(mStarted, "Command buffer not started")
-        auto vkDevice = ResourceCast(VulkanBackend::Get()->getDevice());
 
-        // Биндим глобальный дескриптор сет (set = 0)
-        VkDescriptorSet globalSet = vkDevice->getGlobalDescriptorSet()->getHandle();
-        vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, 0, 1, &globalSet, 0, nullptr);
-
-        // Биндим дескриптор сет меша (set = 1), если он есть
         if (auto internalSet = (VulkanDescriptorSet*)buffer->getInternalDescriptorSet()) {
             VkDescriptorSet meshSet = internalSet->getHandle();
             vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, 1, 1, &meshSet, 0, nullptr);

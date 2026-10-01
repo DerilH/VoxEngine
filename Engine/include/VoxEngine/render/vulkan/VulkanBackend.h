@@ -18,7 +18,9 @@ VULKAN_NS
 
         void init() override;
 
-        explicit VulkanBackend() = default;
+        explicit VulkanBackend(RenderAPI api);
+
+        explicit VulkanBackend() = delete;
 
     public:
         virtual ~VulkanBackend() = default;
@@ -27,7 +29,7 @@ VULKAN_NS
 
         void endFrame() override;
 
-        RenderTargetRef createWindowTarget(Extent extent, void* windowHandle) override;
+        RenderTargetRef createWindowTarget(Extent extent, void* windowHandle) const override;
         CommandPoolRef createCommandPool() override;
 
         TextureRef createTexture(Format format, Extent extent) override;
@@ -43,13 +45,12 @@ VULKAN_NS
 
         inline VkInstance getVkInstance() const { return mInstance; }
 
-        inline static VulkanBackend* Get() {
-            VOX_ASSERT(Initialized(), "Render backend not initialized");
-            return (VulkanBackend*) RenderBackend::Get();
+        static RenderBackend* Create() {
+            return new VulkanBackend(RenderAPI::VULKAN_API);
         }
 
-        static RenderBackend* Create() {
-            return new VulkanBackend();
+        inline bool isInitialized() const {
+            return mInstance != nullptr;
         }
     };
 

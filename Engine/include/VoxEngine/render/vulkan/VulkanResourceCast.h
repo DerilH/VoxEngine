@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include <VoxEngine/render/RenderBackend.h>
+
+#include "VulkanBackend.h"
 #include "VoxCore/Define.h"
 #include "VoxEngine/render/vulkan/VulkanCommandBuffer.h"
 #include "VoxEngine/render/vulkan/buffers/VulkanVertexBuffer.h"
@@ -26,7 +29,7 @@ VULKAN_NS
     CAST_TRAIT(TransferBuffer, VulkanTransferBuffer)
     CAST_TRAIT(RenderBuffer, VulkanRenderBuffer)
     CAST_TRAIT(PipelineState, VulkanPipelineState)
-
+    CAST_TRAIT(RenderBackend, VulkanBackend)
 #undef CAST_TRAIT
 
     template<typename Type>
