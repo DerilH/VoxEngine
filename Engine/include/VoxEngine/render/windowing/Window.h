@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 #include "VoxCore/math/Extent.h"
 
-namespace Vox::Render::Windowing {
+namespace Vox::Render {
     class Window {
         static bool sGlfwInitialized;
 
@@ -24,7 +24,7 @@ namespace Vox::Render::Windowing {
 
         void resize(int width, int height);
 
-        GLFWwindow* getHandle() const;
+        void* getHandle() const;
 
         bool shouldClose() const;
 

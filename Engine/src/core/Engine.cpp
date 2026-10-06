@@ -32,14 +32,14 @@ VOX_NS
         mResourceManager = &Resources::ResourcesManager::Get();
         Resources::ResourcesManager::Get().loadAll();
 
-        auto window = new Render::Windowing::Window(mTitle, 1400, 900);
+        auto window = new Render::Window(mTitle, 1400, 900);
         mWindows.emplace(mTitle,window);
 
         auto renderBackend = Render::CreateRenderBackend(Render::RenderAPI::VULKAN_API);
         mRenderer = Render::RendererFactory::Create(renderBackend);
         mRenderer->init();
 
-        mRenderer->addRenderTarget(mRenderer->getBackend()->createWindowTarget(window->getExtent(), window->getHandle()));
+        mRenderer->addRenderTarget(mRenderer->getBackend()->createWindowTarget(window));
     }
 
     void Engine::run() {
@@ -69,11 +69,11 @@ VOX_NS
             mResourceManager->processDirty();
             const auto renderable = scene->getAllRenderables();
             mRenderer->render(renderable);
-            Render::Windowing::Window::pollEvents();
+            Render::Window::pollEvents();
         }
     }
 
-    Render::Windowing::Window * Engine::getWindow(std::string name) const {
+    Render::Window * Engine::getWindow(std::string name) const {
         const auto res = mWindows.find(name);
         return res != mWindows.end() ? res->second : nullptr;
     }

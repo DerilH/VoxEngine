@@ -49,23 +49,21 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="395dc881-2005-4485-bc1e-6c1807e45dee" name="Changes" comment="Added AssetEditor that can be opened by double click on asset in explorer">
+    <list default="true" id="395dc881-2005-4485-bc1e-6c1807e45dee" name="Changes" comment="Added compile option for strict Vulkan validation">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/include/VoxCore/Assert.h" beforeDir="false" afterPath="$PROJECT_DIR$/Core/include/VoxCore/Assert.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Editor/src/gui/Gui.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/Gui.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/gui/Gui.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/Gui.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/Engine.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/Engine.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderBackend.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderBackend.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderTarget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderTarget.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/WindowRenderTarget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/WindowRenderTarget.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/Surface.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/Surface.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanBackend.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanBackend.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/Asset.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/Asset.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/windowing/Window.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/windowing/Window.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/core/Engine.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/core/Engine.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/Surface.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/Surface.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanBackend.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanBackend.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/src/render/window/Window.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/window/Window.cpp" afterDir="false" />
     </list>
     <list id="e81bb849-25f8-4208-9cee-a6de65d0101f" name="NonProjectChanges" comment="">
       <change beforePath="$PROJECT_DIR$/ThirdParty/quill/.github/ISSUE_TEMPLATE/bug-report.md" beforeDir="false" />
@@ -537,7 +535,7 @@
       <workItem from="1791225103214" duration="8093000" />
       <workItem from="1791233415410" duration="13612000" />
       <workItem from="1791288763424" duration="17099000" />
-      <workItem from="1791312771005" duration="5477000" />
+      <workItem from="1791312771005" duration="7909000" />
     </task>
     <task id="LOCAL-00001" summary="first">
       <option name="closed" value="true" />
@@ -707,7 +705,23 @@
       <option name="project" value="LOCAL" />
       <updated>1791316111000</updated>
     </task>
-    <option name="localTasksCounter" value="22" />
+    <task id="LOCAL-00022" summary="Added nested expandable nested asset in explorer">
+      <option name="closed" value="true" />
+      <created>1791319230804</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1791319230804</updated>
+    </task>
+    <task id="LOCAL-00023" summary="Added compile option for strict Vulkan validation">
+      <option name="closed" value="true" />
+      <created>1791319250005</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1791319250005</updated>
+    </task>
+    <option name="localTasksCounter" value="24" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -753,7 +767,9 @@
     <MESSAGE value="Added minimal asset explorer with dragndrop support" />
     <MESSAGE value="Added --enable-sandbox and implemented sandboxing&#10;Added --resources for manual resources root setting" />
     <MESSAGE value="Added AssetEditor that can be opened by double click on asset in explorer" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added AssetEditor that can be opened by double click on asset in explorer" />
+    <MESSAGE value="Added nested expandable nested asset in explorer" />
+    <MESSAGE value="Added compile option for strict Vulkan validation" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added compile option for strict Vulkan validation" />
     <option name="LAST_CHUNK_COMMIT_MESSAGE" value="Removed scene" />
   </component>
   <component name="XDebuggerManager">

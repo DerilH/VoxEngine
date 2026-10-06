@@ -10,8 +10,10 @@
 #include "VoxEngine/render/WindowRenderTarget.h"
 #include "VoxCore/containers/Containers.h"
 #include "VoxCore/render/Enums.h"
+#include "VoxCore/Pointers.h"
 #include "VoxEngine/render/vulkan/Semaphore.h"
 
+class Window;
 VULKAN_NS
     class VulkanDevice;
     class QueueFamily;
@@ -47,19 +49,17 @@ VULKAN_NS
         friend class VulkanDevice;
         friend class SwapChain;
 
-        void* mWindow;
         VulkanDevice* mDevice = nullptr;
         const Queue* mPresentQueue = nullptr;
         SwapChain* mCurrentSwapChain = nullptr;
         VkSurfaceFormatKHR mSurfaceFormat;
         Format mImageFormat;
-        Extent mExtent;
 
         Vector<VulkanFrameSync*> mFrames{};
         Vector<Semaphore*> mRenderFinishedSemaphores;
         uint8_t mCurrentFrame = 0;
 
-        explicit Surface(Extent extent, VkSurfaceKHR handle, void* windowHandle);
+        explicit Surface(Ref<Window> window, VkSurfaceKHR handle);
 
         SwapChainSupportDetails querySwapChainSupport() const;
         std::optional<QueueFamily> findPresentFamily() const;
@@ -69,7 +69,7 @@ VULKAN_NS
     public:
         Surface() = delete;
 
-        static Surface *Create(Extent extent, VkInstance instance, void* windowHandle);
+        static Surface *Create(Ref<Window> extent, VkInstance instance);
 
         int32_t beginFrame() override;
         void endFrame() override;

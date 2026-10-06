@@ -29,7 +29,7 @@ VULKAN_NS
 
         void endFrame() override;
 
-        RenderTargetRef createWindowTarget(Extent extent, void* windowHandle) const override;
+        RenderTargetRef createWindowTarget(Ref<Window> window) const override;
         CommandPoolRef createCommandPool() override;
 
         TextureRef createTexture(Format format, Extent extent) override;

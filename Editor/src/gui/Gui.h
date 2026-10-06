@@ -13,7 +13,7 @@
 
 namespace Vox::Editor {
     class Gui : SingletonBase<Gui>{
-        Render::Windowing::Window* mWindow = nullptr;
+        Render::Window* mWindow = nullptr;
         Engine* mEngine = nullptr;
         Render::Renderer* mRenderer = nullptr;
         bool mInitialized = false;
@@ -23,7 +23,7 @@ namespace Vox::Editor {
         AssetExplorer mExplorer;
     public:
 
-        void init(Render::Windowing::Window& window, Engine& engine);
+        void init(Render::Window& window, Engine& engine);
         void render(Render::RenderContext cmd);
         void renderTreePanel();
         void renderSelectedOptions();

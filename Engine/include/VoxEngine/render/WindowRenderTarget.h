@@ -5,13 +5,18 @@
 #pragma once
 
 #include "VoxCore/Define.h"
+#include "VoxCore/Pointers.h"
 #include "RenderTarget.h"
+#include "VoxEngine/render/windowing/Window.h"
 
 RENDER_NS
     class WindowRenderTarget : public RenderTarget {
-        void* mNativeWindow;
-    public:
-        WindowRenderTarget(Extent extent, void* nativeWindow) : RenderTarget(extent), mNativeWindow(nativeWindow) {}
-    };
-NS_END
+    protected:
+        Ref<Window> mWindow;
 
+    public:
+        WindowRenderTarget(Ref<Window> mWindow) : RenderTarget(mWindow->getExtent()), mWindow(mWindow) {
+        }
+    };
+
+NS_END

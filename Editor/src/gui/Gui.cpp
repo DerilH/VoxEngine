@@ -19,12 +19,12 @@
 #include <VoxEngine/render/vulkan/VulkanUtil.h>
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/scene/components/Transform.h>
-
+#include <GLFW/glfw3.h>
 #include "GuiRenderPass.h"
 #include "VoxEngine/scene/components/MeshRendererComponent.h"
 
 namespace Vox::Editor {
-    void Gui::init(Render::Windowing::Window &window, Engine &engine) {
+    void Gui::init(Render::Window &window, Engine &engine) {
         mWindow = &window;
         mEngine = &engine;
         mRenderer = engine.getRenderer();
@@ -41,7 +41,7 @@ namespace Vox::Editor {
         (void) io;
         ImGui::StyleColorsDark();
 
-        ImGui_ImplGlfw_InitForVulkan(mWindow->getHandle(), true);
+        ImGui_ImplGlfw_InitForVulkan((GLFWwindow*)mWindow->getHandle(), true);
         auto device = Render::Vulkan::ResourceCast(mRenderer->getBackend()->getDevice());
 
         VkDescriptorPool pool; {
@@ -92,7 +92,7 @@ namespace Vox::Editor {
             _swapchainImageFormat = Render::Vulkan::toVk(targets[0]->getBackBuffer()->getFormat());
         } else {
             // Fallback if no target yet
-            auto tempTarget = mRenderer->getBackend()->createWindowTarget(window.getExtent(), window.getHandle());
+            auto tempTarget = mRenderer->getBackend()->createWindowTarget(&window);
             _swapchainImageFormat = Render::Vulkan::toVk(tempTarget->getBackBuffer()->getFormat());
         }
         init_info.PipelineInfoMain.PipelineRenderingCreateInfo.pColorAttachmentFormats = &_swapchainImageFormat;

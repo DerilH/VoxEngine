@@ -8,6 +8,7 @@
 #include <VoxEngine/render/vulkan/VulkanFrameSync.h>
 #include <VoxEngine/render/vulkan/SwapChain.h>
 #include "VoxEngine/render/vulkan/VulkanUtil.h"
+#include "VoxEngine/render/windowing/Window.h"
 
 namespace Vox::Render::Vulkan {
     SwapChainSupportDetails Surface::querySwapChainSupport() const {
@@ -78,20 +79,22 @@ namespace Vox::Render::Vulkan {
             capabilities), mFormats(formats), mPresentModes(presentModes) {
     }
 
-    Surface::Surface(Extent extent, VkSurfaceKHR handle, void* windowHandle) : WindowRenderTarget(extent, windowHandle), mWindow(windowHandle), VulkanObject(handle) {
+    Surface::Surface(Ref<Window> window, VkSurfaceKHR handle) : WindowRenderTarget(window), VulkanObject(handle) {
     }
 
-    Surface* Surface::Create(Extent extent, VkInstance instance, void* window) {
+    Surface* Surface::Create(Ref<Window> window, VkInstance instance) {
         VkSurfaceKHR s = nullptr;
 
-        VK_CHECK(glfwCreateWindowSurface(instance, (GLFWwindow*) window, nullptr, &s),
+        VK_CHECK(glfwCreateWindowSurface(instance, (GLFWwindow*) window->getHandle(), nullptr, &s),
                  "failed to create window surface!");
-        return new Surface{extent, s, window};
+        return new Surface{window, s};
     }
 
     void Surface::update() {
         if (mCurrentSwapChain == nullptr || mCurrentSwapChain->needsRebuild()) {
+            mExtent = {mWindow->getWidth(), mWindow->getHeight()};
             createSwapChain();
+            mExtent = mCurrentSwapChain->getExtent();
         }
     }
 
@@ -103,13 +106,6 @@ namespace Vox::Render::Vulkan {
         VkSwapchainKHR oldHandle = old == nullptr ? VK_NULL_HANDLE : old->getHandle();
         mCurrentSwapChain = SwapChain::Create(*this, oldHandle);
         createFrames(mCurrentSwapChain->getImageCount());
-        // auto pool = mDevice->getCmdPool(QueueType::GRAPHICS_QUEUE);
-        // auto& buff = pool.startTemp();
-
-        // auto t = ArrayView<TextureRef>(reinterpret_cast<TextureRef *>(data(mCurrentSwapChain->mTextures)), mCurrentSwapChain->mTextures.size());
-        // std::vector<PassTransition> flags(t.size(), PassTransition::NONE_PRESENT);
-        // buff.setBarriers(ArrayView<PassTransition>(data(flags),t.size()), t);
-        // pool.submitTemp(mDevice->getQueue(QueueType::GRAPHICS_QUEUE));
     }
 
     SwapChain& Surface::getSwapChain() const {
@@ -136,7 +132,6 @@ namespace Vox::Render::Vulkan {
         VOX_ASSERT(mPresentQueue != nullptr, "No queue provided for present")
         VOX_ASSERT(mCurrentSwapChain != nullptr, "No swapchain provided for present")
 
-
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 
@@ -151,17 +146,19 @@ namespace Vox::Render::Vulkan {
         const uint32_t index = frame.getCurrentImageIndex();
         presentInfo.pImageIndices = &index;
 
-        VK_CHECK(vkQueuePresentKHR(mPresentQueue->getHandle(), &presentInfo), "Cannot present frame");
+        auto res = vkQueuePresentKHR(mPresentQueue->getHandle(), &presentInfo);
+
+        if (res == VK_ERROR_OUT_OF_DATE_KHR) return;
+        VK_CHECK(res, "Cannot present frame")
     }
 
     int32_t Surface::beginFrame() {
         this->update();
         auto& e = this->getSwapChain();
-        mExtent = {e.getExtent().width, e.getExtent().height};
 
         auto frame = mFrames[mCurrentFrame];
         const uint32_t index = frame->begin(e);
-        if (index == -1) {
+        if (index == -1 || mCurrentSwapChain->needsRebuild()) {
             LOG_VERBOSE("Swapchain rebuild needed");
             return -1;
         }

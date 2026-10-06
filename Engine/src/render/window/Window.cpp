@@ -5,7 +5,7 @@
 #include <GLFW/glfw3.h>
 #include <VoxEngine/render/windowing/Window.h>
 
-namespace Vox::Render::Windowing {
+namespace Vox::Render {
     bool Window::sGlfwInitialized = false;
 
     Window::Window(std::string title, const int width, const int height) : mTitle(std::move(title)), mExtent(Extent(width,height)){
@@ -41,7 +41,7 @@ namespace Vox::Render::Windowing {
         glfwSetWindowSize(mHandle, mExtent.width, mExtent.height);
     }
 
-    GLFWwindow *Window::getHandle() const {
+    void *Window::getHandle() const {
         return mHandle;
     }
 
@@ -76,10 +76,10 @@ namespace Vox::Render::Windowing {
     }
 
     uint32_t Window::getHeight() const {
-        return mExtent.width;
+        return mExtent.height;
     }
 
     uint32_t Window::getWidth() const {
-        return mExtent.height;
+        return mExtent.width;
     }
 }

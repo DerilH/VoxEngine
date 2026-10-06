@@ -5,7 +5,7 @@
 #pragma once
 
 #include "VoxCore/Define.h"
-#include "VoxCore/Assert.h"
+#include "VoxCore/Pointers.h"
 #include "WindowRenderTarget.h"
 #include "Device.h"
 #include "VoxCore/render/Enums.h"
@@ -14,6 +14,8 @@
 #include "VoxEngine/render/state/PipelineStateDesc.h"
 
 RENDER_NS
+    class Window;
+
     class RenderBackend {
     protected:
         DeviceRef mCurrentDevice = nullptr;
@@ -28,7 +30,7 @@ RENDER_NS
         virtual void init() = 0;
         virtual int32_t beginFrame() = 0;
         virtual void endFrame() = 0;
-        virtual RenderTargetRef createWindowTarget(Extent extent, void* windowHandle) const = 0;
+        virtual RenderTargetRef createWindowTarget(Ref<Window> window) const = 0;
         virtual CommandPoolRef createCommandPool() = 0;
         virtual TextureRef createTexture(Format format, Extent extent) = 0;
         virtual PipelineStateRef createPSO(const PipelineStateDesc& desc) = 0;

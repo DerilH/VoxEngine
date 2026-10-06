@@ -12,7 +12,7 @@
 VOX_NS
 
 class Engine {
-    std::unordered_map<std::string, Render::Windowing::Window*> mWindows;
+    std::unordered_map<std::string, Render::Window*> mWindows;
     Ref<Render::Renderer> mRenderer = nullptr;
     Ref<Resources::ResourcesManager> mResourceManager = nullptr;
 
@@ -27,7 +27,7 @@ public:
     ~Engine();
     void init();
     void run();
-    Render::Windowing::Window* getWindow(std::string name) const;
+    Render::Window* getWindow(std::string name) const;
     Render::Renderer* getRenderer() const;
 };
 NS_END

@@ -82,8 +82,8 @@ VULKAN_NS
     void VulkanBackend::endFrame() {
     }
 
-    RenderTargetRef VulkanBackend::createWindowTarget(Extent extent, void* windowHandle) const {
-        Surface* surface = Surface::Create(extent, mInstance, windowHandle);
+    RenderTargetRef VulkanBackend::createWindowTarget(Ref<Window> window) const {
+        Surface* surface = Surface::Create(window, mInstance);
         surface->setDevice(ResourceCast(mCurrentDevice));
         return surface;
     }
