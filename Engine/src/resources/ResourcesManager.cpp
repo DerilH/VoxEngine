@@ -4,31 +4,48 @@
 
 #include <filesystem>
 #include "VoxEngine/resources/ResourcesManager.h"
+
+#include <magic_enum/magic_enum.hpp>
+#include <VoxEngine/resources/assets/MaterialLoader.h>
+#include <VoxEngine/resources/assets/MaterialWriter.h>
+
 #include "VoxEngine/resources/assets/FbxLoader.h"
 #include "VoxEngine/resources/assets/ShaderLoader.h"
 
 RESOURCES_NS
-    const RegularFileLoader ResourcesManager::sRegularLoader{};
-    const std::unordered_map<std::string, AssetLoader *> ResourcesManager::sLoaderByExtension = {
-            {".fbx", new FbxLoader()},
-            {".vert", new ShaderLoader()},
-            {".frag", new ShaderLoader()}
+    class AssetWriter;
 
-    };
+    inline void checkRoot() {
+    }
+
+    const UPtr<RegularFileLoader> ResourcesManager::sRegularLoader = makeUPtr<RegularFileLoader>();
+    const HashMap<InternedString, UPtr<AssetLoader> > ResourcesManager::sLoaderByExtension = []() {
+        HashMap<InternedString, UPtr<AssetLoader> > map;
+        map.emplace(".fbx", makeUPtr<FbxLoader>());
+        map.emplace(".vert", makeUPtr<ShaderLoader>());
+        map.emplace(".frag", makeUPtr<ShaderLoader>());
+        map.emplace(".vmat", makeUPtr<MaterialLoader>());
+        return map;
+    }();
+
+    const HashMap<AssetType, UPtr<AssetWriter> > ResourcesManager::sWriterByType = []() {
+        HashMap<AssetType, UPtr<AssetWriter> > map;
+        map.emplace(AssetType::MATERIAL, makeUPtr<MaterialWriter>());
+        return map;
+    }();
 
     void ResourcesManager::loadAll() {
         VOX_CHECK(!mResourcesRoot.empty(), "Resource root path not set");
-        VOX_CHECK(is_directory(mResourcesRoot), "Resource root path must be a directory");
-        VOX_CHECK(exists(mResourcesRoot), "Resource root not exists");
 
         for (const auto &entry: std::filesystem::recursive_directory_iterator(mResourcesRoot)) {
             if (!entry.is_regular_file()) continue;
             const auto &path = entry.path();
             auto it = sLoaderByExtension.find(path.extension());
-            AssetLoader *loader = it == sLoaderByExtension.end() ? (AssetLoader *) &sRegularLoader : it->second;
+            const auto loader = it == sLoaderByExtension.end() ? sRegularLoader.get() : it->second.get();
             try {
-                Asset *asset = loader->fromFile(path.string());
                 auto rel = relative(path, mResourcesRoot);
+                auto view = readFile(path);
+                Asset *asset = loader->load(rel, view);
                 mAssets.emplace(rel.string(), asset);
             } catch (std::exception &e) {
                 LOG_ERROR("Error while loading asset: {} {}", path.string(), e.what())
@@ -36,9 +53,54 @@ RESOURCES_NS
         }
     }
 
+    void ResourcesManager::processDirty() {
+        VOX_CHECK(!mResourcesRoot.empty(), "Resource root path not set");
+
+        for (const auto &key: mDirty) {
+            auto& asset = mAssets[key];
+            const auto& writer = sWriterByType.find(asset->type());
+            if (writer == sWriterByType.end()) {
+                LOG_WARN("No writer provided for asset: {} of type: {}. Skipped", asset->getPath(), magic_enum::enum_name<>(asset->type()));
+            }
+            else if (asset) {
+                writer->second->writeToFile(asset->getPath(), asset.get());
+            }
+        }
+        mDirty.clear();
+    }
+
+    ArrayView<void> ResourcesManager::readFile(std::filesystem::path path) const {
+        std::ifstream file(path, std::ios::binary | std::ios::ate);
+        if (!file)
+            return ArrayView<void>(nullptr, 0);
+
+        std::streamsize size =  std::filesystem::file_size(path);
+        if (size <= 0)
+            return ArrayView<void>(nullptr, 0);
+
+        file.seekg(0, std::ios::beg);
+
+        void* buffer = malloc(size);
+        if (!buffer)
+            return ArrayView<void>(nullptr, 0);
+
+
+        if (!file.read(static_cast<char*>(buffer), size))
+        {
+            free(buffer);
+            return ArrayView<void>(nullptr, 0);
+        }
+
+        const auto outSize = static_cast<size_t>(size);
+        return ArrayView(buffer, outSize);
+    }
+
+
     void ResourcesManager::SetRoot(std::filesystem::path path) {
+        VOX_CHECK(is_directory(path), "Resource root path must be a directory");
+        VOX_CHECK(exists(path), "Resource root not exists");
         Get().mResourcesRoot = std::move(path);
         LOG_INFO("Resource manager root: {}", absolute(Get().mResourcesRoot).lexically_normal().string());
     }
-NS_END
 
+NS_END

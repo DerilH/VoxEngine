@@ -10,7 +10,6 @@
 #include "quill/LogMacros.h"
 #include "quill/Logger.h"
 #include "quill/sinks/ConsoleSink.h"
-#include <string_view>
 
 #include "Backward.h"
 #include "Severity.h"

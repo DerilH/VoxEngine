@@ -20,6 +20,7 @@ VULKAN_NS
     public:
         void reset() override;
 
+        void begin(int flags);
         void begin() override;
 
         void end() override;

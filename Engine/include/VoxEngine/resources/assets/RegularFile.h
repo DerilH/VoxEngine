@@ -3,19 +3,27 @@
 //
 
 #pragma once
+#include <VoxCore/containers/ArrayView.h>
+
 #include "Asset.h"
 RESOURCES_NS
 class RegularFile : public Asset{
-    void* const mData;
-    size_t mDataSize;
+    ArrayView<void> mData;
 public:
-    RegularFile(std::string path, void* data, size_t dataSize);
+    RegularFile(std::string path, ArrayView<void> data);
 
-    size_t getDataSize() const;
-    void* getData() const;
+    ArrayView<void> getData() const {
+        return mData;
+    }
     ~RegularFile() override;
 
-    AssetType type() override;
+    AssetType type() const override {
+        return StaticType();
+    }
+
+    static AssetType StaticType() {
+        return AssetType::REGULAR;
+    }
 };
 NS_END
 

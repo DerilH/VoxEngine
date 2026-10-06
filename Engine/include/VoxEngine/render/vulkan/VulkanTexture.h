@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include <VoxEngine/render/passes/PassTransition.h>
+
 #include "VoxEngine/render/Texture.h"
 #include "VoxEngine/render/vulkan/VulkanObject.h"
-#include "VoxEngine/render/Enums.h"
+#include "VoxCore/render/Enums.h"
 
 VULKAN_NS
 class VulkanDevice;
@@ -20,6 +22,8 @@ class VulkanTexture : public Texture, public VulkanAllocated<VkImage> {
 
     ~VulkanTexture() override;
 public:
+    PassTransition currentTransition;
+
     VkImageView getView() const;
 };
 NS_END

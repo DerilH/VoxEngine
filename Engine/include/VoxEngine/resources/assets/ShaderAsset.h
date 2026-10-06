@@ -16,6 +16,12 @@ public:
     explicit ShaderAsset(std::string path, const Render::Shaders::CompiledShader mCompiled);
     const Render::Shaders::CompiledShader& getCompiled() const;
 
-    AssetType type() override;
+    AssetType type() const override {
+        return StaticType();
+    }
+
+    static AssetType StaticType() {
+        return AssetType::SHADER;
+    }
 };
 NS_END

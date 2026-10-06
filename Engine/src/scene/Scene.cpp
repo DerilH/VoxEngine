@@ -24,14 +24,14 @@ const Vox::Vector<Vox::Scene::GameObject *> &Vox::Scene::Scene::getRootObjects()
     return mRootObjects;
 }
 
-void Vox::Scene::Scene::addRenderable(Ref<RenderableComponent> renderable) {
+void Vox::Scene::Scene::addRenderable(Ref<RendererComponent> renderable) {
     mRenderables.emplace(renderable);
 }
 
-void Vox::Scene::Scene::removeRenderable(Ref<RenderableComponent> renderable) {
+void Vox::Scene::Scene::removeRenderable(Ref<RendererComponent> renderable) {
     mRenderables.erase(renderable);
 }
 
-Vox::HashSet<Vox::Scene::RenderableComponent *> Vox::Scene::Scene::getAllRenderables() {
+Vox::HashSet<Vox::Scene::RendererComponent *> Vox::Scene::Scene::getAllRenderables() {
     return mRenderables;
 }

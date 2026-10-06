@@ -9,7 +9,7 @@
 #include <VoxEngine/render/RendererFactory.h>
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/scene/Scene.h>
-#include <VoxEngine/scene/components/RenderableMeshComponent.h>
+#include <VoxEngine/scene/components/MeshRendererComponent.h>
 
 #include "VoxEngine/render/RenderCore.h"
 #include "VoxEngine/resources/assets/ModelAsset.h"
@@ -33,7 +33,7 @@ VOX_NS
         Resources::ResourcesManager::SetRoot("./resources");
         Resources::ResourcesManager::Get().loadAll();
 
-        auto window = new Render::Windowing::Window(mTitle, 920, 480);
+        auto window = new Render::Windowing::Window(mTitle, 1400, 900);
         mWindows.emplace(mTitle,window);
 
         auto renderBackend = Render::CreateRenderBackend(Render::RenderAPI::VULKAN_API);
@@ -45,29 +45,29 @@ VOX_NS
 
     void Engine::run() {
         scene = new Scene::Scene("Test");
+
+        auto mat = mResourceManager->get<Resources::MaterialAsset>("materials/test.vmat");
+
         auto obj = scene->createObject("TestTeapot");
-        auto meshComp = Scene::RenderableMeshComponent(obj);
+        auto meshComp = Scene::MeshRendererComponent(obj);
         obj->attachComponent(&meshComp);
         meshComp.setMeshProvider([this]() {
             const auto t = mResourceManager->get<Resources::ModelAsset>("teapot.fbx");
             return t->getNested<Resources::MeshAsset>(0);
         });
-
-        meshComp.setVertexShader(mResourceManager->get<Resources::ShaderAsset>("shaders/baseShader.vert"));
-        meshComp.setFragmentShader(mResourceManager->get<Resources::ShaderAsset>("shaders/baseShader.frag"));
+        meshComp.setMaterial(mat);
 
         auto obj1 = scene->createObject("TestTeapot1");
-        auto meshComp1 = Scene::RenderableMeshComponent(obj1);
+        auto meshComp1 = Scene::MeshRendererComponent(obj1);
         obj1->attachComponent(&meshComp1);
         meshComp1.setMeshProvider([this]() {
             const auto t = mResourceManager->get<Resources::ModelAsset>("teapot1.fbx");
             return t->getNested<Resources::MeshAsset>(0);
         });
-
-        meshComp1.setVertexShader(mResourceManager->get<Resources::ShaderAsset>("shaders/baseShader.vert"));
-        meshComp1.setFragmentShader(mResourceManager->get<Resources::ShaderAsset>("shaders/baseShader.frag"));
+        meshComp1.setMaterial(mat);
 
         while (!mWindows[mTitle]->shouldClose()) {
+            mResourceManager->processDirty();
             const auto renderable = scene->getAllRenderables();
             mRenderer->render(renderable);
             Render::Windowing::Window::pollEvents();

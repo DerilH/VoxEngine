@@ -18,15 +18,15 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <VoxEngine/scene/GameObject.h>
-#include <VoxEngine/scene/components/RenderableMeshComponent.h>
+#include <VoxEngine/scene/components/MeshRendererComponent.h>
 #include <VoxEngine/scene/components/Transform.h>
 
 namespace Vox::Scene {
-    class RenderableComponent;
+    class RendererComponent;
 }
 
 RENDER_NS
-    Renderer::Renderer(RenderBackend *backend) : mBackend(backend), backendApi(backend->api) {
+    Renderer::Renderer(Ref<RenderBackend> backend) : mBackend(backend), mRenderResourceManager(new RenderResourceManager(backend)), backendApi(backend->api) {
     }
 
     void Renderer::init() {
@@ -34,15 +34,15 @@ RENDER_NS
         createGraph();
     }
 
-    void Renderer::render(Ref<Scene::RenderableComponent> el) {
+    void Renderer::render(Ref<Scene::RendererComponent> el) {
         switch (el->type) {
             case Scene::RenderableType::MESH:
-                draw(static_cast<Ref<Scene::RenderableMeshComponent>>(el));
+                draw(static_cast<Ref<Scene::MeshRendererComponent>>(el));
                 break;
         }
     }
 
-    void Renderer::render(HashSet<Ref<Scene::RenderableComponent> > renderable) {
+    void Renderer::render(HashSet<Ref<Scene::RendererComponent> > renderable) {
         Time::Update();
         for (const auto el: renderable) {
             render(el);
@@ -69,8 +69,9 @@ RENDER_NS
     void Renderer::createGraph() {
         mGraph = new RenderGraph();
         color = mGraph->createTexture("Color");
-        auto geometry = new GeometryPass(RenderPassType::GBUFFER_PASS, {{}}, {{color, PassTransition::NONE_W_ATTACHMENT}});
+        auto geometry = new GeometryPass(GBUFFER_PASS, {{}}, {{color, DISCARD_W_ATTACHMENT}});
         mGraph->addPass(geometry);
+
     }
 
     void Renderer::addRenderTarget(RenderTargetRef viewport) {
@@ -81,12 +82,7 @@ RENDER_NS
         color->setExact(target->getBackBuffer());
 
         auto cmdBuffer = ((Vulkan::Surface *) target)->getCurrentFrame().getCmdBuffer();
-        cmdBuffer->reset();
-        cmdBuffer->begin();
-
         executeGraph(target, cmdBuffer);
-
-        cmdBuffer->end();
     }
 
     void Renderer::executeGraph(RenderTargetRef target, CommandBufferRef cmdBuffer) {
@@ -108,40 +104,26 @@ RENDER_NS
         return mDrawListByStateHash.at(state);
     }
 
-    void Renderer::draw(Ref<Scene::RenderableMeshComponent> component) {
-        auto vertexShader = new Shader(&component->getVertexShader()->getCompiled());
-        auto fragmentShader = new Shader(&component->getFragmentShader()->getCompiled());
+    void Renderer::draw(Ref<Scene::MeshRendererComponent> component) {
+        auto mesh = mRenderResourceManager->getMesh(component->getMesh());
+        glm::mat4 identity(1.0f);
+
+        auto mat = component->getMaterial();
+        auto vertPath = mat->shaders.at(ShaderStage::VERTEX);
+        auto fragPath = mat->shaders.at(ShaderStage::FRAGMENT);
+        auto vert = Resources::ResourcesManager::Get().get<Resources::ShaderAsset>(vertPath);
+        auto frag = Resources::ResourcesManager::Get().get<Resources::ShaderAsset>(fragPath);
+
+        auto vertexShader = new Shader(&vert->getCompiled());
+        auto fragmentShader = new Shader(&frag->getCompiled());
 
         ShaderState shaderState = ShaderState::GetBuilder().shaders({vertexShader, fragmentShader}).build();
         Vector<BlendState> blendState = BlendState::GetBuilder().startAttachment().endAttachment().build();
-        RasterizerState rasterizerState = RasterizerState::GetBuilder().cullMode(CullMode::NONE).polygonMode(PolygonMode::FILL).build();
-        PrimitiveTopology topology = PrimitiveTopology::TRIANGLE_LIST;
-        MSAAState msaaState;
+        RasterizerState rasterizerState = RasterizerState::GetBuilder().cullMode(mat->cullMode).polygonMode(mat->polygonMode).build();
+        MSAAState msaaState = MSAAState(MSAASamples::COUNT_1);
         RenderingState renderingState = RenderingState({mRenderTargets[0]->getBackBuffer()->getFormat()}, Format::UNDEFINED, Format::UNDEFINED);
         auto blend = ArrayView<BlendState>::Copy(blendState);
-        PipelineStateDesc desc(shaderState, blend, rasterizerState, topology, msaaState, renderingState);
-
-        auto asset = component->getMesh();
-        auto it = mMeshes.find(component->getMesh()->getPath());
-        RenderMesh *mesh;
-        if (it == mMeshes.end()) {
-            VertexBufferRef vBuff = mBackend->createVertexBuffer(data(asset->getVertices()), sizeof(glm::vec3) * asset->getVertices().size(), BufferUsage::VERTEX);
-            IndexBufferRef iBuff = mBackend->createIndexBuffer(data(asset->getIndices()), sizeof(uint32_t) * asset->getIndices().size(), IndexType::UINT32);
-            mesh = mMeshes[asset->getPath()] = new RenderMesh(vBuff, iBuff);
-
-            auto ubo = mBackend->createUniformBuffer(sizeof(glm::mat4));
-
-            mesh->setModelUbo(ubo);
-
-            auto vkDevice = Vulkan::ResourceCast(mBackend->getDevice());
-            auto layout = vkDevice->getModelDescriptorSetLayout();
-            auto set = vkDevice->createDescriptorSet(layout);
-            set->update(*vkDevice, 0, *dynamic_cast<Vulkan::VulkanUniformBuffer *>(ubo));
-            mesh->setDescriptorSet(set);
-            dynamic_cast<Vulkan::VulkanUniformBuffer *>(ubo)->setDescriptorSet(set);
-        } else mesh = it->second;
-
-        glm::mat4 identity(1.0f);
+        PipelineStateDesc desc(shaderState, blend, rasterizerState, mat->topology, msaaState, renderingState);
 
         auto t = component->gameObject;
         identity = glm::translate(identity, t->transform->getPos());
@@ -159,18 +141,12 @@ RENDER_NS
         }
     }
 
-    PipelineStateRef Renderer::getPipelineState(PipelineStateDesc desc) {
-        auto it = mPipelineStateByHash.find(desc);
-        if (it != mPipelineStateByHash.end()) return it->second;;
-
-        PipelineStateRef pso = mBackend->createPSO(desc);
-        mPipelineStateByHash[desc] = pso;
-        mDrawListByStateHash[desc] = Vector<DrawItem>();
-        return pso;
-    }
-
     RenderBackend *Renderer::getBackend() const {
         return mBackend;
+    }
+
+    Ref<RenderResourceManager> Renderer::getRenderResourceManager() const {
+        return mRenderResourceManager;
     }
 
     RenderGraph &Renderer::getGraph() {

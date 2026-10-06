@@ -4,12 +4,12 @@
 #include <VoxCore/containers/Containers.h>
 
 #include "Types.h"
-#include "components/RenderableComponent.h"
+#include "components/RendererComponent.h"
 SCENE_NS
     class Scene {
         Vector<GameObjectRef> mRootObjects;
         InternedString mName;
-        HashSet<Ref<RenderableComponent> > mRenderables;
+        HashSet<Ref<RendererComponent> > mRenderables;
 
     public:
         explicit Scene(InternedString name);
@@ -20,11 +20,11 @@ SCENE_NS
 
         const Vector<GameObjectRef> &getRootObjects();
 
-        void addRenderable(Ref<RenderableComponent> renderable);
+        void addRenderable(Ref<RendererComponent> renderable);
 
-        void removeRenderable(Ref<RenderableComponent> renderable);
+        void removeRenderable(Ref<RendererComponent> renderable);
 
-        HashSet<Ref<RenderableComponent> > getAllRenderables();
+        HashSet<Ref<RendererComponent> > getAllRenderables();
 
         NO_COPY_MOVE(Scene)
     };

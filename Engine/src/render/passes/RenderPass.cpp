@@ -11,7 +11,7 @@ RENDER_NS
         return mType;
     }
 
-    RenderPass::RenderPass(RenderPassType mType, ArrayView<AttachmentDesc> reads, ArrayView<AttachmentDesc> writes) : mType(mType), mReads(reads), mWrites(writes) {
+    RenderPass::RenderPass(RenderPassType mType, ArrayView<AttachmentDesc> reads, ArrayView<AttachmentDesc> writes, bool isControlPass) : mType(mType), mReads(reads), mWrites(writes), isControlPass(isControlPass) {
     }
 
     ArrayView<AttachmentDesc>& RenderPass::getWrites() {

@@ -6,15 +6,11 @@
 #include "VoxEngine/render/shaders/CompiledShader.h"
 
 RESOURCES_NS
-    ShaderAsset::ShaderAsset(std::string path, Render::Shaders::CompiledShader mCompiled) : Asset(std::move(path)), mCompiled(std::move(mCompiled)) {}
+    ShaderAsset::ShaderAsset(std::string path, Render::Shaders::CompiledShader mCompiled) : Asset(std::move(path)), mCompiled(std::move(mCompiled)) {
+    }
 
-    const Render::Shaders::CompiledShader& ShaderAsset::getCompiled() const {
+    const Render::Shaders::CompiledShader &ShaderAsset::getCompiled() const {
         return mCompiled;
     }
 
-    AssetType ShaderAsset::type() {
-        return AssetType::SHADER;
-    }
 NS_END
-
-

@@ -2,16 +2,15 @@
 // Created by deril on 2/19/26.
 //
 
-#include <utility>
-
 #include "VoxEngine/resources/assets/Asset.h"
 
-RESOURCES_NS
-    Asset::Asset(std::string path, Asset **nested, uint32_t nestedCount) : mPath(std::move(path)), mNestedAssets(nested), mNestedAssetsCount(nestedCount) {
+#include <VoxCore/containers/Containers.h>
 
+RESOURCES_NS
+    Asset::Asset(InternedString path, Asset **nested, uint32_t nestedCount) : mPath(path), mNestedAssets(nested), mNestedAssetsCount(nestedCount) {
     }
 
-    std::string Asset::getPath() const {
+    InternedString Asset::getPath() const {
         return mPath;
     }
 
@@ -22,6 +21,14 @@ RESOURCES_NS
 
     uint32_t Asset::getNestedCount() const {
         return mNestedAssetsCount;
+    }
+
+    UPtr<Asset> Asset::clone() const {
+        VOX_CHECK_FMT(false, "{} asset cannot be clone", +type())
+    }
+
+    void Asset::cloneTo(void *ptr) const {
+        VOX_CHECK_FMT(false, "{} asset cannot be clone", +type())
     }
 
     void Asset::serialize(FILE *file) {
@@ -36,5 +43,5 @@ RESOURCES_NS
     }
 
     Asset::~Asset() = default;
-NS_END
 
+NS_END

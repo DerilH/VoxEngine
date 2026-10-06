@@ -8,16 +8,14 @@
 #include "VoxCore/containers/ArrayView.h"
 #include "AttachmentDesc.h"
 #include "VoxCore/math/Extent.h"
-#include "VoxEngine/render/state/PipelineStateDesc.h"
 #include "RenderResource.h"
 #include "Texture.h"
-#include "VoxEngine/render/buffers/RenderBuffer.h"
-#include "VoxEngine/render/state/PipelineState.h"
 
 RENDER_NS
     class CommandBuffer : RenderResource {
     protected:
         bool mStarted = false;
+
     public:
         //STATE
         virtual void reset() = 0;
@@ -54,6 +52,61 @@ RENDER_NS
         virtual void bindIndexBuffer(IndexBufferRef buffer) = 0;
 
         virtual void bindVertexBuffer(VertexBufferRef buffer) = 0;
+
         virtual void bindUniformBuffer(UniformBufferRef buffer) = 0;
+
+
+        static PassTransition deduceNextTransition(PassTransition lastTransition, TargetUsage nextTarget) {
+            switch (nextTarget) {
+                case TargetUsage::W_ATTACHMENT: {
+                    switch (lastTransition) {
+                        case DISCARD_W_ATTACHMENT:
+                        case NONE_W_ATTACHMENT:
+                        case PRESENT_W_ATTACHMENT:
+                            return NONE_W_ATTACHMENT;
+
+                        case W_ATTACHMENT_PRESENT:
+                        case NONE_PRESENT:
+                            return PRESENT_W_ATTACHMENT;
+
+                        default:
+                            return DISCARD_W_ATTACHMENT;
+                    }
+                }
+
+                case TargetUsage::R_COPY: {
+                    switch (lastTransition) {
+                        case NONE_W_ATTACHMENT:
+                        case DISCARD_W_ATTACHMENT:
+                        case PRESENT_W_ATTACHMENT:
+                            return W_ATTACHMENT_R_COPY;
+
+                        default:
+                            VOX_ASSERT(false, "Invalid state transition for R_COPY!");
+                            return NONE_W_ATTACHMENT;
+                    }
+                }
+
+                case TargetUsage::W_COPY: {
+                    return NONE_W_COPY;
+                }
+
+                case TargetUsage::PRESENT: {
+                    switch (lastTransition) {
+                        case NONE_W_ATTACHMENT:
+                        case DISCARD_W_ATTACHMENT:
+                        case PRESENT_W_ATTACHMENT:
+                            return W_ATTACHMENT_PRESENT;
+
+                        case NONE_W_COPY:
+                        default:
+                            return NONE_PRESENT;
+                    }
+                }
+            }
+
+            return NONE_W_ATTACHMENT;
+        }
     };
+
 NS_END

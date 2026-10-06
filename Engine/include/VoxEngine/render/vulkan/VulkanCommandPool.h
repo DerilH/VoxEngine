@@ -17,11 +17,15 @@ VULKAN_NS
         friend class VulkanDevice;
 
         const VulkanDevice& mDevice;
-        CommandBuffer* mOneTimeBuffer = nullptr;
+        Ref<VulkanCommandBuffer> mOneTimeBuffer = nullptr;
 
         VulkanCommandPool(VkCommandPool handle, const VulkanDevice &device);
         static VulkanCommandPool Create(const VulkanDevice &device, const QueueFamily &family);
     public:
         CommandBufferRef allocBuffer() override;
+
+        CommandBuffer & startTemp();
+
+        void submitTemp(const Queue& queue);
     };
 NS_END

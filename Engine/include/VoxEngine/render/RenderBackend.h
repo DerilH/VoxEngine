@@ -8,7 +8,7 @@
 #include "VoxCore/Assert.h"
 #include "WindowRenderTarget.h"
 #include "Device.h"
-#include "Enums.h"
+#include "VoxCore/render/Enums.h"
 #include "RenderCore.h"
 #include "RenderCore.h"
 #include "VoxEngine/render/state/PipelineStateDesc.h"

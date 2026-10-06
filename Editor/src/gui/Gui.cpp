@@ -21,6 +21,7 @@
 #include <VoxEngine/scene/components/Transform.h>
 
 #include "GuiRenderPass.h"
+#include "VoxEngine/scene/components/MeshRendererComponent.h"
 
 namespace Vox::Editor {
     void Gui::init(Render::Windowing::Window &window, Engine &engine) {
@@ -99,7 +100,7 @@ namespace Vox::Editor {
         ImGui_ImplVulkan_Init(&init_info);
 
         auto &graph = mEngine->getRenderer()->getGraph();
-        auto guiPass = new GuiRenderPass(Vox::Render::RenderPassType::UI_PASS, {{graph.getTexture("Color"), Vox::Render::PassTransition::NONE_W_ATTACHMENT}}, {}, this);
+        auto guiPass = new GuiRenderPass(Vox::Render::RenderPassType::UI_PASS, {{graph.getTexture("Color"), Vox::Render::PassTransition::W_ATTACHMENT_W_ATTACHMENT}}, {}, this);
         graph.addPass(guiPass);
 
         mInitialized = true;
@@ -112,11 +113,10 @@ namespace Vox::Editor {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::Begin("Mesh Control");
-
-        ImGui::Text(std::format("FPS: {}", static_cast<int>(mFpsCounter.getFps())).c_str());
         renderTreePanel();
-        ImGui::End();
+
+        renderSelectedOptions();
+
 
         ImGui::Render();
         ImDrawData *draw_data = ImGui::GetDrawData();
@@ -126,32 +126,148 @@ namespace Vox::Editor {
     }
 
     void Gui::renderTreePanel() {
-        ImGui::Begin("Scene");
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos, ImGuiCond_Always);
+        ImGui::SetNextWindowSize(ImVec2(200.0f, viewport->WorkSize.y * 0.5f), ImGuiCond_Always);
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+
+        ImGui::Begin("Scene", nullptr, windowFlags);
 
         auto objs = mEngine->scene->getRootObjects();
         for (const auto el: objs) {
             ImGui::PushID(el);
 
-            if (ImGui::TreeNode(el->getName().c_str())) {
-                auto pos = el->transform->getPos();
-                if (ImGui::DragFloat3("Position", &pos.x, 0.1f)) {
-                    el->transform->setPos(pos);
-                }
+            ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
-                auto rot = el->transform->getRotation();
-                glm::vec3 angles =  glm::eulerAngles(rot) * 57.2958f;
-                if (ImGui::DragFloat3("Rotation", &angles.x, 1.0f)) {
-                    el->transform->setRotation(glm::quat(angles / 57.2958f));
-                }
+            if (mSelected == el) {
+                flags |= ImGuiTreeNodeFlags_Selected;
+            }
 
-                auto scale = el->transform->getScale();
-                if (ImGui::DragFloat3("Scale", &scale.x, 0.05f)) {
-                    el->transform->setScale(scale);
-                }
+            auto isOpen = ImGui::TreeNodeEx(el->getName().c_str(), flags);
+            if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen()) {
+                mSelected = el;
+                mMeshRotation = glm::degrees(glm::eulerAngles(mSelected->transform->getRotation()));
+            }
+
+            if (isOpen) {
                 ImGui::TreePop();
             }
             ImGui::PopID();
         }
+
         ImGui::End();
+    }
+
+    void Gui::renderSelectedOptions() {
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
+        ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x - 300, viewport->WorkPos.y);
+        ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+
+        ImVec2 size = ImVec2(300.0f, viewport->WorkSize.y);
+        ImGui::SetNextWindowSize(size, ImGuiCond_Always);
+
+        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+
+        ImGui::Begin("Object options", nullptr, windowFlags);
+
+        renderTransformOptions();
+
+        renderComponents();
+
+        ImGui::End();
+    }
+
+    void Gui::renderTransformOptions() {
+        ImGui::Text("Tranform");
+        if (auto el = mSelected) {
+            auto pos = el->transform->getPos();
+            if (ImGui::DragFloat3("Position", &pos.x, 0.05f)) {
+                el->transform->setPos(pos);
+            }
+
+            if (ImGui::DragFloat3("Rotation", &mMeshRotation.x, 1.0f)) {
+                el->transform->setRotation(glm::quat(glm::radians(mMeshRotation)));
+            }
+
+            auto scale = el->transform->getScale();
+            if (ImGui::DragFloat3("Scale", &scale.x, 0.05f)) {
+                el->transform->setScale(scale);
+            }
+        }
+    }
+
+    template<typename EnumType>
+    bool RenderEnumCombo(const char *label, EnumType &currentVal) {
+        bool changed = false;
+        constexpr auto entries = magic_enum::enum_entries<EnumType>();
+
+        std::string_view currentName = magic_enum::enum_name(currentVal);
+
+        if (ImGui::BeginCombo(label, currentName.data())) {
+            for (const auto &[value, name]: entries) {
+                bool isSelected = (currentVal == value);
+                if (ImGui::Selectable(name.data(), isSelected)) {
+                    currentVal = value;
+                    changed = true;
+                }
+                if (isSelected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
+        }
+        return changed;
+    }
+
+    void Gui::renderComponents() {
+        if (!mSelected) return;
+
+        auto renderer = mSelected->findComponent<Scene::MeshRendererComponent>();
+        if (!renderer) return;
+
+        auto mat = renderer->getMaterial()->cloneTyped();
+        if (!mat) return;
+        bool changed = false;
+        if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen)) {
+            auto polyMode = mat->polygonMode;
+            if (RenderEnumCombo("Polygon Mode", polyMode)) {
+                mat->polygonMode = polyMode;
+                changed = true;
+            }
+
+            auto cullMode = mat->cullMode;
+            if (RenderEnumCombo("Cull Mode", cullMode)) {
+                mat->cullMode = cullMode;
+                changed = true;
+            }
+
+            auto topology = mat->topology;
+            if (RenderEnumCombo("Topology", topology)) {
+                mat->topology = topology;
+                changed = true;
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Shaders");
+
+            for (auto &[stage, shaderPath]: mat->shaders) {
+                std::string stageName = std::string(magic_enum::enum_name(stage));
+                ImGui::PushID(static_cast<int>(stage));
+
+                char buffer[256];
+                strncpy(buffer, shaderPath.c_str(), sizeof(buffer));
+
+                if (ImGui::InputText(stageName.c_str(), buffer, sizeof(buffer))) {
+                    shaderPath = InternedString(buffer);
+                    changed = true;
+                }
+
+                ImGui::PopID();
+            }
+        }
+        if (changed) {
+            auto path = mat->getPath();
+            Resources::ResourcesManager::Get().update(path, std::move(mat));
+        }
     }
 }

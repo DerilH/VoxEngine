@@ -5,14 +5,13 @@
 #pragma once
 
 #include "VoxCore/Define.h"
-#include "VoxEngine/render/Enums.h"
 #include "VoxCore/containers/Containers.h"
 #include "VoxEngine/render/Types.h"
 #include <xxh3.h>
 
 RENDER_NS
     class ShaderState {
-        friend struct std::hash<Vox::Render::ShaderState>;
+        friend struct std::hash<ShaderState>;
         Vector<ShaderRef> mShaders;
 
         explicit ShaderState() = default;

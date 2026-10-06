@@ -12,13 +12,13 @@ SCENE_NS
     class Transform : Component {
         friend GameObject;
 
-        Vec3 mPosition;
-        Vec3 mScale;
-        Quat mRotation;
+        Vec3 mPosition = Vec3(0);
+        Vec3 mScale = Vec3(1);
+        Quat mRotation = Quat(1,0,0,0);
 
-        Vec3 mLocalPosition;
-        Vec3 mLocalScale;
-        Quat mLocalRotation;
+        Vec3 mLocalPosition = Vec3(0);
+        Vec3 mLocalScale = Vec3(1);
+        Quat mLocalRotation = Quat(1,0,0,0);
 
         Ref<GameObject> parent = nullptr;
         Ref<GameObjectStorage> childs;
@@ -51,5 +51,13 @@ SCENE_NS
         }
 
         NO_COPY_MOVE_DEFAULT(Transform);
+
+        ComponentType type() override {
+            return StaticType();
+        }
+
+        static ComponentType StaticType() {
+            return ComponentType::TRANSFORM;
+        }
     };
 NS_END;

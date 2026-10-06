@@ -5,12 +5,15 @@
 #pragma once
 #include "VoxCore/Define.h"
 #include "Asset.h"
-#include <filesystem>
+#include <VoxCore/Pointers.h>
+#include <VoxCore/containers/ArrayView.h>
 
 RESOURCES_NS
-class AssetLoader {
+    class AssetLoader {
 public:
-    virtual Asset *load(std::string path, void *data, size_t dataSize) = 0;
-    Asset* fromFile(const std::filesystem::path& path);
+    AssetLoader() = default;
+    NO_COPY_MOVE(AssetLoader)
+    virtual ~AssetLoader() = default;
+    virtual Ref<Asset> load(InternedString path, ArrayView<void> data) = 0;
 };
 NS_END

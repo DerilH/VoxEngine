@@ -6,34 +6,32 @@
 #include "VoxEngine/render/vulkan/VulkanUtil.h"
 #include "VoxEngine/render/buffers/IndexBuffer.h"
 #include "VoxEngine/render/buffers/VertexBuffer.h"
-#include "VoxEngine/render/vulkan/VulkanBackend.h"
-#include "VoxEngine/render/vulkan/VulkanDescriptorSet.h"
-#include "VoxEngine/render/vulkan/buffers/VulkanUniformBuffer.h"
 #include "VoxEngine/render/vulkan/VulkanResourceCast.h"
 #include "VoxEngine/render/state/PipelineState.h"
+#include "VoxEngine/render/buffers/UniformBuffer.h"
+#include "VoxEngine/render/vulkan/VulkanDescriptorSet.h"
 
 VULKAN_NS
+    //    VulkanCommandBuffer::CommandBuffer(VkCommandBuffer handle) : VulkanObject(handle) {
+    //        VOX_ASSERT_PTR(handle, "Command buffer is nullptr")
+    //    }
+    //
+    //    void VulkanCommandBuffer::reset(VkCommandBufferResetFlags flags) {
+    //        VK_CHECK(vkResetCommandBuffer(mHandle, flags), "Cannot reset command buffer");
+    //    }
+    //
+    //    void VulkanCommandBuffer::begin(VkCommandBufferUsageFlags flags) {
+    //        VkCommandBufferBeginInfo beginInfo{};
+    //
+    //        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    //        VK_CHECK(vkBeginCommandBuffer(mHandle, &beginInfo), "Cannot begin command buffer");
+    //    }
+    //
+    //    void VulkanCommandBuffer::end() {
+    //        VK_CHECK(vkEndCommandBuffer(mHandle), "Cannot end command buffer");
+    //    }
 
-//    VulkanCommandBuffer::CommandBuffer(VkCommandBuffer handle) : VulkanObject(handle) {
-//        VOX_ASSERT_PTR(handle, "Command buffer is nullptr")
-//    }
-//
-//    void VulkanCommandBuffer::reset(VkCommandBufferResetFlags flags) {
-//        VK_CHECK(vkResetCommandBuffer(mHandle, flags), "Cannot reset command buffer");
-//    }
-//
-//    void VulkanCommandBuffer::begin(VkCommandBufferUsageFlags flags) {
-//        VkCommandBufferBeginInfo beginInfo{};
-//
-//        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-//        VK_CHECK(vkBeginCommandBuffer(mHandle, &beginInfo), "Cannot begin command buffer");
-//    }
-//
-//    void VulkanCommandBuffer::end() {
-//        VK_CHECK(vkEndCommandBuffer(mHandle), "Cannot end command buffer");
-//    }
-
-    VkImageMemoryBarrier2 createBarrier(PassTransition transition, TextureRef texture);
+    VkImageMemoryBarrier2 createBarrier(PassTransition transition, Ref<VulkanTexture> texture);
 
     void VulkanCommandBuffer::begin() {
         VkCommandBufferBeginInfo beginInfo{};
@@ -44,6 +42,14 @@ VULKAN_NS
 
     void VulkanCommandBuffer::reset() {
         VK_CHECK(vkResetCommandBuffer(mHandle, 0), "Cannot reset command buffer");
+    }
+
+    void VulkanCommandBuffer::begin(const int flags) {
+        VkCommandBufferBeginInfo beginInfo{};
+        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        beginInfo.flags = flags;
+        mStarted = true;
+        VK_CHECK(vkBeginCommandBuffer(mHandle, &beginInfo), "Cannot begin command buffer");
     }
 
     void VulkanCommandBuffer::setViewportState(float x, float y, Extent extent) {
@@ -77,7 +83,6 @@ VULKAN_NS
     }
 
     void VulkanCommandBuffer::endDrawingTarget(RenderTargetRef target) {
-
     }
 
     void VulkanCommandBuffer::setBarriers(ArrayView<PassTransition> transitions, ArrayView<TextureRef> textures) {
@@ -85,7 +90,7 @@ VULKAN_NS
         VOX_ASSERT(textures.size() == transitions.size(), "Texture and transition count mismatch");
         VkImageMemoryBarrier2 barriers[transitions.size()];
         for (int i = 0; i < transitions.size(); ++i) {
-            barriers[i] = createBarrier(transitions[i], textures[i]);
+            barriers[i] = createBarrier(transitions[i], ResourceCast(textures[i]));
         }
         VkDependencyInfo depInfo{};
         depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
@@ -103,6 +108,7 @@ VULKAN_NS
             attachmentInfo[i] = {};
             attachmentInfo[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
             attachmentInfo[i].imageView = ResourceCast(attachments[i].texture->getExact())->getView();
+            //TODO: change layout to currently used by image
             attachmentInfo[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             attachmentInfo[i].loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
             attachmentInfo[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -117,8 +123,6 @@ VULKAN_NS
         renderingInfo.colorAttachmentCount = attachments.size();
         renderingInfo.pColorAttachments = attachmentInfo;
         vkCmdBeginRendering(*this, &renderingInfo);
-
-
     }
 
     void VulkanCommandBuffer::endRenderPass() {
@@ -158,13 +162,13 @@ VULKAN_NS
     void VulkanCommandBuffer::bindUniformBuffer(UniformBufferRef buffer) {
         VOX_ASSERT(mStarted, "Command buffer not started")
 
-        if (auto internalSet = (VulkanDescriptorSet*)buffer->getInternalDescriptorSet()) {
+        if (auto internalSet = (VulkanDescriptorSet *) buffer->getInternalDescriptorSet()) {
             VkDescriptorSet meshSet = internalSet->getHandle();
             vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, 1, 1, &meshSet, 0, nullptr);
         }
     }
 
-    VkImageMemoryBarrier2 createBarrier(PassTransition transition, TextureRef texture) {
+    VkImageMemoryBarrier2 createBarrier(PassTransition transition, Ref<VulkanTexture> texture) {
         VkImageMemoryBarrier2 imageBarrier{};
 
         imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
@@ -178,7 +182,7 @@ VULKAN_NS
         imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-        imageBarrier.image = *ResourceCast(texture);
+        imageBarrier.image = (*texture);
         imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         imageBarrier.subresourceRange.baseMipLevel = 0;
         imageBarrier.subresourceRange.levelCount = 1;
@@ -208,7 +212,7 @@ VULKAN_NS
                 imageBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
                 break;
             case NONE_W_COPY:
-                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
                 imageBarrier.srcAccessMask = 0;
 
                 imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
@@ -216,7 +220,45 @@ VULKAN_NS
 
                 imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
                 imageBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+                break;
+            case W_ATTACHMENT_PRESENT:
+                imageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                imageBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
+
+                imageBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                imageBarrier.dstAccessMask = VK_ACCESS_2_NONE;
+                break;
+
+            case PRESENT_W_ATTACHMENT:
+                imageBarrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+                imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.srcAccessMask = VK_ACCESS_2_NONE;
+                imageBarrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT;
+                break;
+            case NONE_PRESENT:
+                imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                imageBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+                imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
+                imageBarrier.srcAccessMask = VK_ACCESS_2_NONE;
+                imageBarrier.dstAccessMask = VK_ACCESS_2_NONE;
+                break;
+            case DISCARD_W_ATTACHMENT:
+                imageBarrier.oldLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+                imageBarrier.newLayout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                imageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.srcAccessMask = VK_ACCESS_2_NONE;
+                imageBarrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                break;
         }
+        texture->currentTransition = transition;
         return imageBarrier;
     }
+
 NS_END

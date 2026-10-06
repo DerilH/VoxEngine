@@ -4,7 +4,6 @@
 
 #pragma once
 #include <VoxEngine/render/FpsCounter.h>
-#include <VoxEngine/render/vulkan/VulkanFrameSync.h>
 #include <VoxEngine/render/windowing/Window.h>
 
 #include <glm/glm.hpp>
@@ -17,12 +16,15 @@ namespace Vox::Editor {
         Render::Renderer* mRenderer = nullptr;
         bool mInitialized = false;
         Render::FpsCounter mFpsCounter;
-        glm::vec3 mMeshPosition = glm::vec3(0, 0, -4);
         glm::vec3 mMeshRotation = glm::vec3(0, 0, 0);
+        Ref<Scene::GameObject> mSelected = nullptr;
     public:
 
         void init(Render::Windowing::Window& window, Engine& engine);
         void render(Render::RenderContext cmd);
         void renderTreePanel();
+        void renderSelectedOptions();
+        void renderTransformOptions();
+        void renderComponents();
     };
 }

@@ -15,7 +15,6 @@ RENDER_NS
         RESOLVE_PASS,
         TRANSPARENCY_PASS,
         PRESENT_PASS
-
     } RenderPassType;
 
 NS_END

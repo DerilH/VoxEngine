@@ -12,7 +12,7 @@
 RENDER_NS
     void GeometryPass::execute(RenderContext context) {
         for (auto &entry: context.renderer->getDrawLists()) {
-            auto state = context.renderer->getPipelineState(entry.first);
+            auto state = context.renderer->getRenderResourceManager()->getPipeline(entry.first);
             state->bind(context.cmdBuffer);
             for (const auto &item: entry.second) {
 

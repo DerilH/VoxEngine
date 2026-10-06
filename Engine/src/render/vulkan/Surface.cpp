@@ -103,6 +103,13 @@ namespace Vox::Render::Vulkan {
         VkSwapchainKHR oldHandle = old == nullptr ? VK_NULL_HANDLE : old->getHandle();
         mCurrentSwapChain = SwapChain::Create(*this, oldHandle);
         createFrames(mCurrentSwapChain->getImageCount());
+        // auto pool = mDevice->getCmdPool(QueueType::GRAPHICS_QUEUE);
+        // auto& buff = pool.startTemp();
+
+        // auto t = ArrayView<TextureRef>(reinterpret_cast<TextureRef *>(data(mCurrentSwapChain->mTextures)), mCurrentSwapChain->mTextures.size());
+        // std::vector<PassTransition> flags(t.size(), PassTransition::NONE_PRESENT);
+        // buff.setBarriers(ArrayView<PassTransition>(data(flags),t.size()), t);
+        // pool.submitTemp(mDevice->getQueue(QueueType::GRAPHICS_QUEUE));
     }
 
     SwapChain& Surface::getSwapChain() const {
@@ -128,6 +135,7 @@ namespace Vox::Render::Vulkan {
     void Surface::presentFrame(const VulkanFrameSync& frame) const {
         VOX_ASSERT(mPresentQueue != nullptr, "No queue provided for present")
         VOX_ASSERT(mCurrentSwapChain != nullptr, "No swapchain provided for present")
+
 
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -158,11 +166,18 @@ namespace Vox::Render::Vulkan {
             return -1;
         }
         frame->setRenderWaitSemaphore(*mRenderFinishedSemaphores[index]);
+        frame->getCmdBuffer()->reset();
+        frame->getCmdBuffer()->begin();
         return 0;
     }
 
     void Surface::endFrame() {
-        mFrames[mCurrentFrame]->submit();
+        auto currentFrame = mFrames[mCurrentFrame];
+        auto texture = mCurrentSwapChain->getTexture(currentFrame->getCurrentImageIndex());
+        getCurrentFrame().getCmdBuffer()->setBarriers({CommandBuffer::deduceNextTransition(texture->currentTransition, TargetUsage::PRESENT)}, {texture});
+
+        currentFrame->getCmdBuffer()->end();
+        currentFrame->submit();
         presentFrame(*mFrames[mCurrentFrame]);
         mCurrentFrame = (mCurrentFrame + 1) % mFrames.size();
     }

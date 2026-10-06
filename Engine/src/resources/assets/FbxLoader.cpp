@@ -35,16 +35,16 @@ RESOURCES_NS
         for (int i = 0; i < count; ++i) {
             aiFace &face = faces[i];
             for (int j = 0; j < face.mNumIndices; ++j) {
-                vec.push_back(face.mIndices[j]);
+                vec.emplace_back(face.mIndices[j]);
             }
         }
         return vec;
     }
 
-    Asset *FbxLoader::load(std::string path, void *data, size_t dataSize) {
+    Asset *FbxLoader::load(std::string path, ArrayView<void> data) {
         Assimp::Importer importer{};
 
-        const aiScene *scene = importer.ReadFileFromMemory(data, dataSize, aiPostProcessSteps::aiProcess_Triangulate | aiPostProcessSteps::aiProcess_FlipUVs, "fbx");
+        const aiScene *scene = importer.ReadFileFromMemory(data.pData, data.size(), aiPostProcessSteps::aiProcess_Triangulate | aiPostProcessSteps::aiProcess_FlipUVs, "fbx");
         auto **nested = static_cast<Asset **>(malloc(scene->mNumMeshes * sizeof(MeshAsset)));
         LOG_VERBOSE("Loading model {}", path);
         LOG_VERBOSE("Loading {} meshes", scene->mNumMeshes);

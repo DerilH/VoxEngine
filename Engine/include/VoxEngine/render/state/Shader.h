@@ -7,7 +7,7 @@
 #include "VoxEngine/render/RenderResource.h"
 #include "VertexLayout.h"
 #include "UniformLayout.h"
-#include "VoxEngine/render/Enums.h"
+#include "VoxCore/render/Enums.h"
 #include "VoxCore/containers/Containers.h"
 #include "VoxEngine/render/shaders/CompiledShader.h"
 

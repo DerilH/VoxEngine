@@ -24,6 +24,18 @@ enum PassTransition {
     W_COPY_W_SHADER,
     R_COPY_R_SHADER,
     W_COPY_R_SHADER,
-    R_COPY_W_SHADER
+    R_COPY_W_SHADER,
+    W_ATTACHMENT_PRESENT,
+    W_COPY_PRESENT,
+    PRESENT_W_ATTACHMENT,
+    NONE_PRESENT,
+    DISCARD_W_ATTACHMENT
+};
+
+enum class TargetUsage {
+    W_ATTACHMENT,
+    R_COPY,
+    W_COPY,
+    PRESENT
 };
 NS_END

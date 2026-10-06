@@ -8,6 +8,6 @@
 
 RESOURCES_NS
 class FbxLoader : public AssetLoader {
-    Asset *load(std::string path, void *data, size_t dataSize) override;
+    Asset *load(std::string path, ArrayView<void> data) override;
 };
 NS_END

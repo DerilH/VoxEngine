@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <cstddef>
-#include <vulkan/vulkan_core.h>
-#include <functional>
 #include "VoxEngine/render/RenderPassType.h"
 
 #include "VoxEngine/render/RenderTarget.h"
@@ -22,9 +19,11 @@ RENDER_NS
         ArrayView<AttachmentDesc> mReads;
         Extent mExtent;
 
-        RenderPass(RenderPassType mType, ArrayView<AttachmentDesc> reads, ArrayView<AttachmentDesc> writes);
+        RenderPass(RenderPassType mType, ArrayView<AttachmentDesc> reads, ArrayView<AttachmentDesc> writes, bool isControlPass = false);
 
     public:
+        const bool isControlPass;
+
         HashSet<RenderPassRef> mNext;
         HashSet<RenderPassRef> mPrev;
 

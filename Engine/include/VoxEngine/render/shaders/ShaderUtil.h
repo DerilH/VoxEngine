@@ -3,21 +3,21 @@
 #include <stdexcept>
 #include <string>
 #include <shaderc/shaderc.h>
-#include <VoxEngine/render/Enums.h>
+#include "VoxCore/render/Enums.h"
 
 namespace Vox::Render::Shaders {
     inline shaderc_shader_kind vox2shaderc(ShaderStage type) {
         switch (type) {
-            case ShaderStage::VERTEX_SHADER:
+            case ShaderStage::VERTEX:
                 return shaderc_vertex_shader;
-            case ShaderStage::FRAGMENT_SAHDER:
+            case ShaderStage::FRAGMENT:
                 return shaderc_fragment_shader;
             default: throw std::invalid_argument("Unknown shader type");
         }
     }
     inline ShaderStage shaderTypeFrom(std::string path) {
-        if (path.ends_with(".vert")) return ShaderStage::VERTEX_SHADER;
-        if (path.ends_with(".frag")) return ShaderStage::FRAGMENT_SAHDER;
+        if (path.ends_with(".vert")) return ShaderStage::VERTEX;
+        if (path.ends_with(".frag")) return ShaderStage::FRAGMENT;
         throw std::invalid_argument("Unknown shader type");
     }
 

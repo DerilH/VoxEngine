@@ -9,10 +9,10 @@ SCENE_NS
         MESH
     };
 
-    class RenderableComponent : public Component {
+    class RendererComponent : public Component {
     public:
         const RenderableType type;
-        explicit RenderableComponent(const GameObjectRef gameObject, const RenderableType type) : Component(gameObject), type(type) {
+        explicit RendererComponent(const GameObjectRef gameObject, const RenderableType type) : Component(gameObject), type(type) {
         }
     };
 

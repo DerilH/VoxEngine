@@ -6,7 +6,7 @@
 
 #include <vk_mem_alloc.h>
 #include "VoxEngine/render/RenderBackend.h"
-#include "VoxEngine/render/Enums.h"
+#include "VoxCore/render/Enums.h"
 #include "VulkanDevice.h"
 
 VULKAN_NS

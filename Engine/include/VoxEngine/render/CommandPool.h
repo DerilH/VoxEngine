@@ -4,12 +4,15 @@
 
 #pragma once
 
+#include <VoxCore/Pointers.h>
+
 #include "VoxCore/Define.h"
 #include "Types.h"
 
 RENDER_NS
-class CommandPool {
-public:
-    virtual CommandBufferRef allocBuffer() = 0;
-};
+    class CommandPool {
+    public:
+        virtual CommandBufferRef allocBuffer() = 0;
+    };
+
 NS_END

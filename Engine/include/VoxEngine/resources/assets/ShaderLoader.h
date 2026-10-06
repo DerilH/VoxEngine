@@ -10,6 +10,6 @@
 RESOURCES_NS
 class ShaderLoader : public AssetLoader {
     static Vox::Render::Shaders::ShaderCompiler compiler;
-    Asset *load(std::string path, void *data, size_t dataSize) override;
+    Asset *load(std::string path, ArrayView<void> data) override;
 };
 NS_END

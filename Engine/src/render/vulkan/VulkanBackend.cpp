@@ -43,7 +43,7 @@ VULKAN_NS
 
         VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 
-#ifdef VK_ENABLE_VALIDATION_LAYERS
+#ifdef VK_ENABLE_VALIDATION
             createInfo.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
             createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
 

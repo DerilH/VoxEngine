@@ -26,8 +26,4 @@ RESOURCES_NS
     const std::vector<glm::vec2> &MeshAsset::getUVs() const {
         return mUVs;
     }
-
-    AssetType MeshAsset::type() {
-        return AssetType::MESH;
-    }
 NS_END

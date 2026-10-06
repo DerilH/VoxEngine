@@ -3,8 +3,7 @@
 //
 
 #include <VoxEngine/render/vulkan/VulkanUtil.h>
-#include <absl/strings/cord.h>
-#include "VulkanPipelineState.h"
+#include "VoxEngine/render/vulkan/state/VulkanPipelineState.h"
 
 #include <VoxEngine/render/vulkan/VulkanDescriptorSet.h>
 
@@ -12,7 +11,7 @@
 #include "VoxEngine/render/vulkan/VulkanResourceCast.h"
 
 VULKAN_NS
-    VkShaderModule createShaderModule(const VulkanDevice& device, const Vector<uint32_t>& code) {
+    VkShaderModule createShaderModule(const VulkanDevice &device, const Vector<uint32_t> &code) {
         VkShaderModuleCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
         createInfo.codeSize = sizeof(uint32_t) * code.size();
@@ -23,7 +22,7 @@ VULKAN_NS
         return shaderModule;
     }
 
-    VkFormat getFormatForAttrib(const Shaders::ShaderAttribute& attribute) {
+    VkFormat getFormatForAttrib(const Shaders::ShaderAttribute &attribute) {
         if (attribute.typeId == Shaders::ShaderDataType::FLOAT) {
             switch (attribute.components) {
                 case 1:
@@ -39,19 +38,19 @@ VULKAN_NS
         VOX_CHECK(false, "Unsupported attribute type!");
     }
 
-    Vector<VkDescriptorSetLayout> createDescriptorLayouts(const VulkanDevice& device, const Vector<ShaderRef>& shaders) {
-        Vector<HashMap<uint8_t, VkDescriptorSetLayoutBinding>> bindingsBySet;
+    Vector<VkDescriptorSetLayout> createDescriptorLayouts(const VulkanDevice &device, const Vector<ShaderRef> &shaders) {
+        Vector<HashMap<uint8_t, VkDescriptorSetLayoutBinding> > bindingsBySet;
         bindingsBySet.emplace_back();
 
         for (const auto shader: shaders) {
             auto compiledShader = shader->getCompiledShader();
 
-            for (const auto& uniform: compiledShader->uniforms) {
+            for (const auto &uniform: compiledShader->uniforms) {
                 if ((uniform.set + 1) > bindingsBySet.size())
                     bindingsBySet.resize((uniform.set + 1));
 
-                auto& bindings = bindingsBySet[uniform.set];
-                auto& binding = bindings[uniform.binding];
+                auto &bindings = bindingsBySet[uniform.set];
+                auto &binding = bindings[uniform.binding];
 
                 if (binding.stageFlags != 0) {
                     binding.stageFlags |= toVk(shader->getStage());
@@ -67,10 +66,10 @@ VULKAN_NS
 
         Vector<VkDescriptorSetLayout> layouts(bindingsBySet.size());
         for (int i = 0; i < bindingsBySet.size(); i++) {
-            auto& bindings = bindingsBySet[i];
+            auto &bindings = bindingsBySet[i];
 
             VkDescriptorSetLayoutBinding vkBindings[bindings.size()];
-            const VkDescriptorSetLayoutBinding* vkBindingsPtr = nullptr;
+            const VkDescriptorSetLayoutBinding *vkBindingsPtr = nullptr;
             if (!bindings.empty()) {
                 if (i == 0) {
                     layouts[i] = device.getGlobalDescriptorSet()->getLayouts();
@@ -95,12 +94,12 @@ VULKAN_NS
         return layouts;
     }
 
-    VulkanPipelineState VulkanPipelineState::Create(const VulkanDevice& device, const PipelineStateDesc& desc) {
+    VulkanPipelineState VulkanPipelineState::Create(const VulkanDevice &device, const PipelineStateDesc &desc) {
         VkGraphicsPipelineCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-        //BLEND STATE
 
-        auto& blend = desc.getBlend();
+        //BLEND STATE
+        auto &blend = desc.getBlend();
         VkPipelineColorBlendStateCreateInfo blendState = {};
         createInfo.pColorBlendState = &blendState;
 
@@ -108,7 +107,7 @@ VULKAN_NS
         VkPipelineColorBlendAttachmentState byAttachment[blend.size()];
         for (int i = 0; i < blend.size(); i++) {
             auto state = blend[i];
-            auto& attachment = byAttachment[i];
+            auto &attachment = byAttachment[i];
             attachment.blendEnable = state.isBlendEnable();
             attachment.srcColorBlendFactor = toVk(state.getSrcFactor());
             attachment.dstColorBlendFactor = toVk(state.getDstFactor());
@@ -123,7 +122,7 @@ VULKAN_NS
 
 
         //MSAA
-        auto& msaa = desc.getMSAA();
+        auto &msaa = desc.getMSAA();
         VkPipelineMultisampleStateCreateInfo msaaState = {};
         createInfo.pMultisampleState = &msaaState;
 
@@ -143,7 +142,7 @@ VULKAN_NS
         vkCreatePipelineLayout(device, &layoutInfo, nullptr, &createInfo.layout);
 
         //Rasterizer
-        auto& rasterizer = desc.getRasterizer();
+        auto &rasterizer = desc.getRasterizer();
         VkPipelineRasterizationStateCreateInfo rasterizerState = {};
         createInfo.pRasterizationState = &rasterizerState;
 
@@ -159,8 +158,8 @@ VULKAN_NS
         rasterizerState.depthBiasClamp = rasterizer.getDepthBiasClamp();
         rasterizerState.depthBiasSlopeFactor = rasterizer.getDepthBiasSlopeFactor();
 
-        //Rendering
-        auto& rendering = desc.getRenderingState();
+        //Dynamic Rendering
+        auto &rendering = desc.getRenderingState();
         VkPipelineRenderingCreateInfo renderingInfo = {};
         createInfo.pNext = &renderingInfo;
 
@@ -176,15 +175,15 @@ VULKAN_NS
         }
 
         //Shader
-        auto& shaderState = desc.getShader();
-        auto& shaders = shaderState.shaders();
+        auto &shaderState = desc.getShader();
+        auto &shaders = shaderState.shaders();
 
         VkPipelineShaderStageCreateInfo stages[shaders.size()];
         createInfo.stageCount = shaders.size();
         createInfo.pStages = stages;
 
         for (int i = 0; i < shaders.size(); i++) {
-            auto& stage = stages[i];
+            auto &stage = stages[i];
             auto shader = shaders[i];
 
             stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -197,8 +196,8 @@ VULKAN_NS
             stage.pNext = nullptr;
         }
 
-        auto vertexShader = std::find_if(shaders.begin(), shaders.end(), [&](const auto item) {
-            return item->getStage() == ShaderStage::VERTEX_SHADER;
+        auto vertexShader = std::ranges::find_if(shaders, [&](const auto item) {
+            return item->getStage() == ShaderStage::VERTEX;
         });
         VOX_CHECK(vertexShader != shaders.end(), "Vertex shader not provided!");
 
@@ -207,13 +206,13 @@ VULKAN_NS
 
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-        auto& inputs = (*vertexShader)->getCompiledShader()->inputs;
+        auto &inputs = (*vertexShader)->getCompiledShader()->inputs;
 
         VkVertexInputAttributeDescription attributes[inputs.size()];
 
         int offset = 0;
         for (int i = 0; i < inputs.size(); i++) {
-            auto& input = inputs[i];
+            auto &input = inputs[i];
             attributes[i].location = input.location;
             attributes[i].binding = 0;
             attributes[i].format = getFormatForAttrib(input);
@@ -228,7 +227,7 @@ VULKAN_NS
 
         vertexInputInfo.vertexBindingDescriptionCount = 1;
         vertexInputInfo.pVertexBindingDescriptions = binding;
-//
+        //
         vertexInputInfo.vertexAttributeDescriptionCount = inputs.size();
         vertexInputInfo.pVertexAttributeDescriptions = attributes;
 
@@ -244,24 +243,35 @@ VULKAN_NS
         createInfo.renderPass = VK_NULL_HANDLE;
         createInfo.subpass = 0;
 
-        //Dynamic State
+        //Dynamic state
         VkPipelineDynamicStateCreateInfo dynamicState{};
         createInfo.pDynamicState = &dynamicState;
         dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 
         VkDynamicState dynamicStates[] = {
-                VK_DYNAMIC_STATE_VIEWPORT,
-                VK_DYNAMIC_STATE_SCISSOR
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_SCISSOR
         };
         dynamicState.dynamicStateCount = 2;
         dynamicState.pDynamicStates = dynamicStates;
+
+
+        //Viewport
+        VkPipelineViewportStateCreateInfo viewportState{};
+        viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+        viewportState.viewportCount = 1;
+        viewportState.pViewports = nullptr;
+        viewportState.scissorCount = 1;
+        viewportState.pScissors = nullptr;
+
+        createInfo.pViewportState = &viewportState;
 
         VkPipeline pipeline{};
         vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &createInfo, nullptr, &pipeline);
         return VulkanPipelineState(desc, pipeline, createInfo.layout, descriptorLayouts);
     }
 
-    VulkanPipelineState::VulkanPipelineState(const PipelineStateDesc& desc, VkPipeline handle, VkPipelineLayout layout, Vector<VkDescriptorSetLayout>& descriptorLayouts) : PipelineState(desc), VulkanObject(handle), mLayout(layout), mDescriptorLayouts(std::move(descriptorLayouts)) {
-
+    VulkanPipelineState::VulkanPipelineState(const PipelineStateDesc &desc, VkPipeline handle, VkPipelineLayout layout, Vector<VkDescriptorSetLayout> &descriptorLayouts) : PipelineState(desc), VulkanObject(handle), mLayout(layout), mDescriptorLayouts(std::move(descriptorLayouts)) {
     }
+
 NS_END

@@ -11,8 +11,7 @@ RENDER_NS
     class WindowRenderTarget : public RenderTarget {
         void* mNativeWindow;
     public:
-        WindowRenderTarget(Extent extent, void* nativeWindow) : RenderTarget(extent), mNativeWindow(nativeWindow) {
-        }
+        WindowRenderTarget(Extent extent, void* nativeWindow) : RenderTarget(extent), mNativeWindow(nativeWindow) {}
     };
 NS_END
 

@@ -9,7 +9,7 @@
 #include <vulkan/vulkan_core.h>
 #include "VoxEngine/render/WindowRenderTarget.h"
 #include "VoxCore/containers/Containers.h"
-#include "VoxEngine/render/Enums.h"
+#include "VoxCore/render/Enums.h"
 #include "VoxEngine/render/vulkan/Semaphore.h"
 
 VULKAN_NS

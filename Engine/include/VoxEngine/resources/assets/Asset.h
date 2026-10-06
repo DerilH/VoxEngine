@@ -7,22 +7,26 @@
 #include "VoxEngine/resources/serialization/Serializable.h"
 #include "AssetType.h"
 #include <string>
+#include <VoxCore/Pointers.h>
+#include <VoxCore/containers/Containers.h>
 
 RESOURCES_NS
     class Asset : public Serialization::Serializable {
-        std::string mPath;
+    protected:
+        InternedString mPath;
 
         Asset **mNestedAssets = nullptr;
         uint32_t mNestedAssetsCount;
 
-        NO_COPY_MOVE_DEFAULT(Asset);
+        NO_MOVE_DEFAULT(Asset);
+        explicit Asset(const Asset& asset) = default;
+        Asset& operator=(const Asset& asset) = default;
     public:
-        explicit Asset(std::string path, Asset **nested = nullptr, uint32_t nestedCount = 0);
+        explicit Asset(InternedString path, Asset **nested = nullptr, uint32_t nestedCount = 0);
 
-        std::string getPath() const;
+        InternedString getPath() const;
 
         virtual ~Asset() = 0;
-
 
         template<typename AssetType, typename = std::enable_if_t<std::is_base_of_v<Asset, AssetType>>>
         AssetType *getNested(int id) const {
@@ -34,8 +38,10 @@ RESOURCES_NS
 
         uint32_t getNestedCount() const;
 
-        virtual AssetType type() = 0;
+        virtual AssetType type() const = 0;
 
+        virtual UPtr<Asset> clone() const;
+        virtual void cloneTo(void* ptr) const;
         void serialize(FILE *file) override;
 
     };

@@ -7,7 +7,7 @@
 #include "VoxCore/containers/Containers.h"
 #include "VoxEngine/render/Texture.h"
 #include "VoxCore/math/Extent3D.h"
-#include "VoxEngine/render/Enums.h"
+#include "VoxCore/render/Enums.h"
 #include "VoxEngine/render/CommandBuffer.h"
 #include "VoxEngine/render/passes/RenderPass.h"
 #include "GraphTexture.h"

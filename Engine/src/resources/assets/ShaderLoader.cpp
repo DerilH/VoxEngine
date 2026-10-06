@@ -9,8 +9,8 @@
 RESOURCES_NS
     Vox::Render::Shaders::ShaderCompiler ShaderLoader::compiler;
 
-Asset *ShaderLoader::load(std::string path, void *data, size_t dataSize) {
-    Render::Shaders::ShaderSrc src = Render::Shaders::ShaderSrc(Render::Shaders::shaderTypeFrom(path), InternedString((const char*)data, dataSize), path);
+Asset *ShaderLoader::load(std::string path, ArrayView<void> data) {
+    Render::Shaders::ShaderSrc src = Render::Shaders::ShaderSrc(Render::Shaders::shaderTypeFrom(path), InternedString(static_cast<const char *>(data.pData), data.size()), path);
     Render::Shaders::CompiledShader shader = compiler.compile(src);
     return new ShaderAsset(path, shader);
 }

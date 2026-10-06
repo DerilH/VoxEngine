@@ -5,7 +5,7 @@
 #pragma once
 
 #include "RenderResource.h"
-#include "VoxEngine/render/Enums.h"
+#include "VoxCore/render/Enums.h"
 #include "VoxCore/math/Extent.h"
 
 RENDER_NS

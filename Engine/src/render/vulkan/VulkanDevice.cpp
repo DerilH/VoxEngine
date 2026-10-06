@@ -31,6 +31,7 @@ namespace Vox::Render::Vulkan {
 
         {
             VkDescriptorSetLayoutCreateInfo createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             createInfo.bindingCount = 1;
             VkDescriptorSetLayoutBinding binding{};
             binding.descriptorCount = 1;
@@ -45,6 +46,7 @@ namespace Vox::Render::Vulkan {
 
         {
             VkDescriptorSetLayoutCreateInfo createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             createInfo.bindingCount = 1;
             VkDescriptorSetLayoutBinding binding{};
             binding.descriptorCount = 1;
@@ -65,29 +67,25 @@ namespace Vox::Render::Vulkan {
 
         GlobalData data{};
 
-        // 1. Матрица вида (Камера находится в точке (0, 0, 3) и смотрит в центр (0, 0, 0))
         glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 3.0f);
         glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
         glm::vec3 cameraUp     = glm::vec3(0.0f, 1.0f, 0.0f);
 
         data.view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 
-        // 2. Матрица перспективной проекции (FOV 45 градусов, соотношение сторон 920/480)
         float fov    = glm::radians(45.0f);
-        float aspect = 920.0f / 480.0f; 
+        float aspect = 1400.0f / 900.0f;
         float zNear  = 0.1f;
         float zFar   = 100.0f;
 
         data.proj = glm::perspective(fov, aspect, zNear, zFar);
 
-        // ВНИМАНИЕ: Инвертируем ось Y для Vulkan (GLM рассчитан на OpenGL, где Y направлен вверх)
         data.proj[1][1] *= -1.0f;
         void* mappedData = mGlobalUniformBuffer->getAllocationInfo().pMappedData;
         if (mappedData) {
             memcpy(mappedData, &data, sizeof(GlobalData));
         }
 
-        // Подключение буфера к дескриптор сету
         mGlobalDescriptors->update(*this, 0, *mGlobalUniformBuffer);
     }
 
@@ -134,6 +132,7 @@ namespace Vox::Render::Vulkan {
     VulkanDevice *VulkanDevice::Create(VkInstance vkInstance, const PhysicalDevice &physDevice,
                                        std::vector<const char *> extensions, std::vector<const char *> validationLayers) {
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+        std::vector<int> usedFamilies;
         QueueFamilyRepository queueFamilies = physDevice.getQueueFamilies();
 
         float queuePriority = 1.0f;
@@ -143,7 +142,10 @@ namespace Vox::Render::Vulkan {
             queueCreateInfo.queueFamilyIndex = queueFamily.index();
             queueCreateInfo.queueCount = 1;
             queueCreateInfo.pQueuePriorities = &queuePriority;
-            queueCreateInfos.push_back(queueCreateInfo);
+            if (std::ranges::find(usedFamilies, queueFamily.index()) == usedFamilies.end()) {
+                queueCreateInfos.push_back(queueCreateInfo);
+                usedFamilies.push_back(queueFamily.index());
+            }
         }
 
         constexpr VkPhysicalDeviceFeatures deviceFeatures{};
@@ -172,7 +174,9 @@ namespace Vox::Render::Vulkan {
 
         VkPhysicalDeviceFeatures2 features2{};
         features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        features2.features.fillModeNonSolid = VK_TRUE;
         features2.pNext = &sync2;
+
 
         createInfo.pNext = &features2;
 
