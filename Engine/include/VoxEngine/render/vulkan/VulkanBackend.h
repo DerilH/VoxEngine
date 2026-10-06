@@ -30,9 +30,10 @@ VULKAN_NS
         void endFrame() override;
 
         RenderTargetRef createWindowTarget(Ref<Window> window) const override;
+        RenderTargetRef createTextureTarget(Extent extent, Format format) const override;
         CommandPoolRef createCommandPool() override;
 
-        TextureRef createTexture(Format format, Extent extent) override;
+        TextureRef createTexture(Format format, Extent extent) const override;
 
         PipelineStateRef createPSO(const PipelineStateDesc& desc) override;
 

@@ -31,8 +31,9 @@ RENDER_NS
         virtual int32_t beginFrame() = 0;
         virtual void endFrame() = 0;
         virtual RenderTargetRef createWindowTarget(Ref<Window> window) const = 0;
+        virtual RenderTargetRef createTextureTarget(Extent extent, Format format) const = 0;
         virtual CommandPoolRef createCommandPool() = 0;
-        virtual TextureRef createTexture(Format format, Extent extent) = 0;
+        virtual TextureRef createTexture(Format format, Extent extent) const = 0;
         virtual PipelineStateRef createPSO(const PipelineStateDesc& desc) = 0;
 
         virtual IndexBufferRef createIndexBuffer(const void* data, uint32_t size, IndexType type) = 0;

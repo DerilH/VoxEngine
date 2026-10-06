@@ -3,6 +3,9 @@
 //
 
 #include "VoxEngine/render/vulkan/VulkanBackend.h"
+
+#include <VoxEngine/render/TextureRenderTarget.h>
+
 #include "VoxEngine/render/vulkan/Debug.h"
 #include "VoxEngine/render/vulkan/VulkanDevice.h"
 #include "VoxEngine/render/vulkan/VulkanResourceCast.h"
@@ -88,6 +91,10 @@ VULKAN_NS
         return surface;
     }
 
+    RenderTargetRef VulkanBackend::createTextureTarget(Extent extent, Format format) const {
+        return new TextureRenderTarget(createTexture(format,extent));
+    }
+
     CommandPoolRef VulkanBackend::createCommandPool() {
         VOX_ASSERT(isInitialized(), "Render backend not initialized");
         auto device = ResourceCast(mCurrentDevice);
@@ -95,7 +102,7 @@ VULKAN_NS
         return device->createHeap<VulkanCommandPool>(queue.getFamily());
     }
 
-    TextureRef VulkanBackend::createTexture(Format format, Extent extent) {
+    TextureRef VulkanBackend::createTexture(Format format, Extent extent) const {
         VOX_ASSERT(isInitialized(), "Render backend not initialized");
         const VulkanDevice* device = ResourceCast(mCurrentDevice);
         return device->createHeap<VulkanTexture>(format, extent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
