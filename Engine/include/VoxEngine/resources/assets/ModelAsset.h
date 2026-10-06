@@ -9,7 +9,7 @@
 RESOURCES_NS
     class ModelAsset : public Asset {
     public:
-        ModelAsset(const std::string &path, Asset **nested, uint32_t nestedCount);
+        ModelAsset(InternedString path, Asset **nested, uint32_t nestedCount);
 
 
         AssetType type() const override {

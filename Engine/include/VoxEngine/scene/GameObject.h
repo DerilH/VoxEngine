@@ -49,7 +49,7 @@ SCENE_NS
             return static_cast<Ref<T>>(*it);
         }
 
-        const Vector<Ref<Component> > &getComponent() {
+        const Vector<Ref<Component> > &getComponents() const{
             return mComponents;
         }
     };

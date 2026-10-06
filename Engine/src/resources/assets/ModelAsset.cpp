@@ -5,6 +5,6 @@
 #include "VoxEngine/resources/assets/ModelAsset.h"
 
 RESOURCES_NS
-    ModelAsset::ModelAsset(const std::string &path, Asset **nested, uint32_t nestedCount) : Asset(path, nested, nestedCount) {}
+    ModelAsset::ModelAsset(InternedString path, Asset **nested, uint32_t nestedCount) : Asset(path, nested, nestedCount) {}
 
 NS_END

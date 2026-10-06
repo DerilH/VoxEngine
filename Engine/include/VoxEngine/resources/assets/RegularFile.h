@@ -10,7 +10,7 @@ RESOURCES_NS
 class RegularFile : public Asset{
     ArrayView<void> mData;
 public:
-    RegularFile(std::string path, ArrayView<void> data);
+    RegularFile(InternedString path, ArrayView<void> data);
 
     ArrayView<void> getData() const {
         return mData;

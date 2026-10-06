@@ -209,7 +209,6 @@ constexpr inline Vox::Render::EnumType fromVk(ApiEnumType format) {\
         }
     }
 
-
     constexpr inline VkExtent2D toVk(const Extent &extent) { return {extent.width, extent.height}; }
 
     constexpr inline VkExtent2D toVk(const Extent &&extent) { return {extent.width, extent.height}; }

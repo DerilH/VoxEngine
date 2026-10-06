@@ -8,6 +8,6 @@
 
 RESOURCES_NS
 class RegularFileLoader : public AssetLoader {
-    Asset *load(std::string path, ArrayView<void> data) override;
+    Asset *load(InternedString path, ArrayView<void> data) override;
 };
 NS_END

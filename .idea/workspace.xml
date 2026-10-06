@@ -48,101 +48,30 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="395dc881-2005-4485-bc1e-6c1807e45dee" name="Changes" comment="Added scene &#10;Added objects with simple component system&#10;Added renderablecomponent &#10;Work on uniforms&#10;Fixed GUI&#10;Added minimal gui for multiple objects&#10;And much more">
-      <change afterPath="$PROJECT_DIR$/Core/include/VoxCore/render/Enums.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderResourceManager.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/AssetWriter.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/ClonableAsset.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/MaterialAsset.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/MaterialLoader.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/MaterialWriter.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/components/MeshRendererComponent.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/src/render/RenderResourceManager.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/src/resources/assets/MaterialAsset.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/src/resources/assets/MaterialLoader.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/src/resources/assets/MaterialWriter.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/src/scene/components/MeshRendererComponent.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/run/resources/materials/test.vmat" afterDir="false" />
+    <list default="true" id="395dc881-2005-4485-bc1e-6c1807e45dee" name="Changes" comment="Fixed many Vulkan validation errors&#10;Fixed render graph compiling logic&#10;Fixed missing present transition for swapchain textures&#10;Started refactoring of render resources management&#10;Added ability to clone, edit and save assets &#10;Improved gui, added gameobject components inspector&#10;And more">
+      <change afterPath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/AssetDirectory.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/run/resources/materials/test1.vmat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/run/resources/nested/test/teapot.fbx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/include/VoxCore/Assert.h" beforeDir="false" afterPath="$PROJECT_DIR$/Core/include/VoxCore/Assert.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/include/VoxCore/Define.h" beforeDir="false" afterPath="$PROJECT_DIR$/Core/include/VoxCore/Define.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/include/VoxCore/Logger.h" beforeDir="false" afterPath="$PROJECT_DIR$/Core/include/VoxCore/Logger.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/include/VoxCore/Pointers.h" beforeDir="false" afterPath="$PROJECT_DIR$/Core/include/VoxCore/Pointers.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/include/VoxCore/containers/ArrayView.h" beforeDir="false" afterPath="$PROJECT_DIR$/Core/include/VoxCore/containers/ArrayView.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Core/include/VoxCore/containers/Containers.h" beforeDir="false" afterPath="$PROJECT_DIR$/Core/include/VoxCore/containers/Containers.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Editor/src/gui/Gui.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/Gui.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Editor/src/gui/Gui.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/Gui.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/CommandBuffer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/CommandBuffer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/CommandPool.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/CommandPool.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/Enums.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/IndexType.inl" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderBackend.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderBackend.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderPassType.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderPassType.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/Renderer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/Renderer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/Texture.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/Texture.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/WindowRenderTarget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/WindowRenderTarget.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/graph/RenderGraph.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/graph/RenderGraph.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/passes/PassTransition.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/passes/PassTransition.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/passes/RenderPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/passes/RenderPass.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/shaders/ShaderUtil.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/shaders/ShaderUtil.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/BlendState.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/BlendState.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/MsaaState.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/MsaaState.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/RasterizerState.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/RasterizerState.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/RenderingState.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/RenderingState.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/Shader.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/Shader.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/ShaderState.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/state/ShaderState.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/Surface.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/Surface.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanBackend.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanBackend.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanCommandBuffer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanCommandBuffer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanCommandPool.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanCommandPool.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanTexture.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanTexture.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanUtil.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanUtil.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/barrier/ImageBarrier.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/barrier/ImageBarrier.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/state/VulkanPipelineState.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/state/VulkanPipelineState.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/ResourcesManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/ResourcesManager.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/Asset.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/Asset.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/AssetLoader.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/AssetLoader.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/AssetType.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/AssetType.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/FbxLoader.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/FbxLoader.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/MeshAsset.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/MeshAsset.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/ModelAsset.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/ModelAsset.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/RegularFile.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/RegularFile.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/RegularFileLoader.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/RegularFileLoader.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/ShaderAsset.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/ShaderAsset.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/ShaderLoader.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/ShaderLoader.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/GameObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/GameObject.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/Scene.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/Scene.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/components/Component.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/components/Component.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/components/ComponentType.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/components/ComponentType.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/components/RenderableComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/components/RendererComponent.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/components/RenderableMeshComponent.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/components/Transform.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/components/Transform.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/core/Engine.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/core/Engine.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/Renderer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/Renderer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/graph/RenderGraph.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/graph/RenderGraph.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/passes/GeometryPass.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/passes/GeometryPass.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/passes/RenderPass.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/passes/RenderPass.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/CommandPool.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanCommandPool.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/Surface.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/Surface.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanBackend.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanBackend.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanCommandBuffer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanCommandBuffer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanDevice.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanDevice.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/resources/ResourcesManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/ResourcesManager.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/Asset.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/Asset.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/AssetLoader.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/AssetLoader.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/FbxLoader.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/FbxLoader.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/MeshAsset.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/MeshAsset.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/ModelAsset.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/ModelAsset.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/RegularFile.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/RegularFile.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/RegularFileLoader.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/RegularFileLoader.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/ShaderAsset.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/ShaderAsset.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/ShaderLoader.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/ShaderLoader.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/scene/Scene.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/scene/Scene.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/scene/components/RenderableMeshComponent.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ThirdParty/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/ThirdParty/CMakeLists.txt" afterDir="false" />
     </list>
     <list id="e81bb849-25f8-4208-9cee-a6de65d0101f" name="NonProjectChanges" comment="">
       <change beforePath="$PROJECT_DIR$/ThirdParty/quill/.github/ISSUE_TEMPLATE/bug-report.md" beforeDir="false" />
@@ -176,7 +105,7 @@
     <option name="completeInNamespacesByDefault" value="true" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="228" />
+    <option name="cachedIndexableFilesCount" value="229" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -264,7 +193,7 @@
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "git-widget-placeholder": "master",
     "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/deril/CLionProjects/VoxEngine/Engine/src/render/passes",
+    "last_opened_file_path": "/home/deril/CLionProjects/VoxEngine/run/resources/materials",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.stylelint": "true",
     "node.js.detected.package.tslint": "true",
@@ -283,11 +212,11 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/run/resources/materials" />
+      <recent name="$PROJECT_DIR$/run/resources/nested/test" />
       <recent name="$PROJECT_DIR$/Engine/src/render/passes" />
       <recent name="$PROJECT_DIR$/Engine/include/VoxEngine/render/passes" />
       <recent name="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets" />
-      <recent name="$PROJECT_DIR$/Engine/src/render" />
-      <recent name="$PROJECT_DIR$/run/resources" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/Engine/src/resources/assets" />
@@ -314,11 +243,6 @@
       </method>
     </configuration>
     <configuration name="VoxEditor" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$/run" PASS_PARENT_ENVS_2="true" PROJECT_NAME="VoxEngine" TARGET_NAME="VoxEditor" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="VoxEngine" RUN_TARGET_NAME="VoxEditor">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -606,7 +530,8 @@
       <workItem from="1791223816007" duration="832000" />
       <workItem from="1791224656484" duration="439000" />
       <workItem from="1791225103214" duration="8093000" />
-      <workItem from="1791233415410" duration="12728000" />
+      <workItem from="1791233415410" duration="13612000" />
+      <workItem from="1791288763424" duration="11850000" />
     </task>
     <task id="LOCAL-00001" summary="first">
       <option name="closed" value="true" />
@@ -696,7 +621,63 @@
       <option name="project" value="LOCAL" />
       <updated>1791110022522</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Added void specialization for ArrayView">
+      <option name="closed" value="true" />
+      <created>1791246177525</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1791246177525</updated>
+    </task>
+    <task id="LOCAL-00013" summary="Added VOX_CHECK_FMT for formatted version of errors">
+      <option name="closed" value="true" />
+      <created>1791246194895</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1791246194895</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Changed options for better debugging and optimization">
+      <option name="closed" value="true" />
+      <created>1791246237631</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1791246237631</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Added NO_MOVE_DEFAULT macro">
+      <option name="closed" value="true" />
+      <created>1791246299085</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1791246299085</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Moved enum definition to core package">
+      <option name="closed" value="true" />
+      <created>1791246370155</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1791246370155</updated>
+    </task>
+    <task id="LOCAL-00017" summary="Removed unused ImageBarrier class">
+      <option name="closed" value="true" />
+      <created>1791246377972</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1791246377972</updated>
+    </task>
+    <task id="LOCAL-00018" summary="Fixed many Vulkan validation errors&#10;Fixed render graph compiling logic&#10;Fixed missing present transition for swapchain textures&#10;Started refactoring of render resources management&#10;Added ability to clone, edit and save assets &#10;Improved gui, added gameobject components inspector&#10;And more">
+      <option name="closed" value="true" />
+      <created>1791246619562</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1791246619562</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -732,7 +713,14 @@
     <MESSAGE value="Early uniform buffers tests" />
     <MESSAGE value="Added scene &#10;Added objects with simple component system&#10;Added renderablecomponent &#10;Work on uniforms&#10;Fixed GUI&#10;Added minimal gui for multiple objects&#10;And much more" />
     <MESSAGE value="Fix: Memory leak, caused by missing memory free for aiScene after processing model asset" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix: Memory leak, caused by missing memory free for aiScene after processing model asset" />
+    <MESSAGE value="Added void specialization for ArrayView" />
+    <MESSAGE value="Added VOX_CHECK_FMT for formatted version of errors" />
+    <MESSAGE value="Changed options for better debugging and optimization" />
+    <MESSAGE value="Added NO_MOVE_DEFAULT macro" />
+    <MESSAGE value="Moved enum definition to core package" />
+    <MESSAGE value="Removed unused ImageBarrier class" />
+    <MESSAGE value="Fixed many Vulkan validation errors&#10;Fixed render graph compiling logic&#10;Fixed missing present transition for swapchain textures&#10;Started refactoring of render resources management&#10;Added ability to clone, edit and save assets &#10;Improved gui, added gameobject components inspector&#10;And more" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fixed many Vulkan validation errors&#10;Fixed render graph compiling logic&#10;Fixed missing present transition for swapchain textures&#10;Started refactoring of render resources management&#10;Added ability to clone, edit and save assets &#10;Improved gui, added gameobject components inspector&#10;And more" />
     <option name="LAST_CHUNK_COMMIT_MESSAGE" value="Removed scene" />
   </component>
   <component name="XDebuggerManager">

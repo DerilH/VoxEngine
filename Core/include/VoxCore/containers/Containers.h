@@ -10,6 +10,7 @@
 #include <string>
 #include <set>
 #include <queue>
+#include <list>
 #include "VoxCore/Define.h"
 #include <llvm/ADT/SmallVector.h>
 
@@ -19,6 +20,9 @@ VOX_NS
 
     template<typename T>
     using Vector = std::vector<T>;
+
+    template<typename T>
+    using LinkedList = std::list<T>;
 
     template<typename T>
     using Queue = std::queue<T>;

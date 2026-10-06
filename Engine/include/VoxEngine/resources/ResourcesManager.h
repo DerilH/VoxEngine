@@ -12,16 +12,19 @@
 #include <VoxCore/Pointers.h>
 #include <VoxCore/containers/ArrayView.h>
 
+#include "AssetDirectory.h"
 #include "assets/AssetWriter.h"
 
 RESOURCES_NS
     class ResourcesManager : public SingletonBase<ResourcesManager> {
         std::filesystem::path mResourcesRoot;
+        UPtr<AssetDirectory> mRootDir;
         HashMap<InternedString, UPtr<Asset> > mAssets;
         Vector<InternedString> mDirty;
         static const UPtr<RegularFileLoader> sRegularLoader;
         static const HashMap<InternedString, UPtr<AssetLoader> > sLoaderByExtension;
         static const HashMap<AssetType, UPtr<AssetWriter> > sWriterByType;
+        void loadDir(const std::filesystem::path& currentPath, AssetDirectory &currentDir);
 
     public:
         void loadAll();
@@ -55,7 +58,13 @@ RESOURCES_NS
         }
 
         void processDirty();
+
         ArrayView<void> readFile(std::filesystem::path path) const;
+
+        ConstRef<AssetDirectory> getRootDir() const {
+            return mRootDir.get();
+        }
+        Vector<ConstRef<Asset>> listDirAssets(InternedString path) const;
         static void SetRoot(std::filesystem::path path);
     };
 

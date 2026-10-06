@@ -117,6 +117,7 @@ namespace Vox::Editor {
 
         renderSelectedOptions();
 
+        mExplorer.render();
 
         ImGui::Render();
         ImDrawData *draw_data = ImGui::GetDrawData();
@@ -229,40 +230,58 @@ namespace Vox::Editor {
         if (!mat) return;
         bool changed = false;
         if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen)) {
-            auto polyMode = mat->polygonMode;
-            if (RenderEnumCombo("Polygon Mode", polyMode)) {
-                mat->polygonMode = polyMode;
+            // auto polyMode = mat->polygonMode;
+            // if (RenderEnumCombo("Polygon Mode", polyMode)) {
+            //     mat->polygonMode = polyMode;
+            //     changed = true;
+            // }
+            //
+            // auto cullMode = mat->cullMode;
+            // if (RenderEnumCombo("Cull Mode", cullMode)) {
+            //     mat->cullMode = cullMode;
+            //     changed = true;
+            // }
+            //
+            // auto topology = mat->topology;
+            // if (RenderEnumCombo("Topology", topology)) {
+            //     mat->topology = topology;
+            //     changed = true;
+            // }
+            //
+            // ImGui::Separator();
+            // ImGui::Text("Shaders");
+            //
+            // for (auto &[stage, shaderPath]: mat->shaders) {
+            // std::string stageName = std::string(magic_enum::enum_name(stage));
+            // ImGui::PushID(static_cast<int>(stage));
+
+            // char buffer[256];
+            // strncpy(buffer, shaderPath.c_str(), sizeof(buffer));
+            static char pathBuffer[512] = "";
+            strncpy(pathBuffer, renderer->getMaterial()->getPath().c_str(), renderer->getMaterial()->getPath().size());
+            if (ImGui::InputText("Material", pathBuffer, IM_ARRAYSIZE(pathBuffer))) {
+                // shaderPath = InternedString(buffer);
                 changed = true;
             }
 
-            auto cullMode = mat->cullMode;
-            if (RenderEnumCombo("Cull Mode", cullMode)) {
-                mat->cullMode = cullMode;
-                changed = true;
-            }
-
-            auto topology = mat->topology;
-            if (RenderEnumCombo("Topology", topology)) {
-                mat->topology = topology;
-                changed = true;
-            }
-
-            ImGui::Separator();
-            ImGui::Text("Shaders");
-
-            for (auto &[stage, shaderPath]: mat->shaders) {
-                std::string stageName = std::string(magic_enum::enum_name(stage));
-                ImGui::PushID(static_cast<int>(stage));
-
-                char buffer[256];
-                strncpy(buffer, shaderPath.c_str(), sizeof(buffer));
-
-                if (ImGui::InputText(stageName.c_str(), buffer, sizeof(buffer))) {
-                    shaderPath = InternedString(buffer);
+            // ImGui::PopID();
+            // }
+            if (ImGui::BeginDragDropTarget()) {
+                if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_ITEM")) {
+                    const char *draggedPath = static_cast<const char *>(payload->Data);
+                    strncpy(pathBuffer, draggedPath, sizeof(pathBuffer) - 1);
+                    pathBuffer[sizeof(pathBuffer) - 1] = '\0';
                     changed = true;
                 }
+                ImGui::EndDragDropTarget();
+            }
 
-                ImGui::PopID();
+            try {
+                if (changed) {
+                    auto newMat = Resources::ResourcesManager::Get().get<Resources::MaterialAsset>(InternedString(pathBuffer));
+                    renderer->setMaterial(newMat);
+                }
+            } catch (std::exception &e) {
             }
         }
         if (changed) {

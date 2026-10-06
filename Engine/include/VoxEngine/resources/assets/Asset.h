@@ -14,6 +14,7 @@ RESOURCES_NS
     class Asset : public Serialization::Serializable {
     protected:
         InternedString mPath;
+        InternedString mName;
 
         Asset **mNestedAssets = nullptr;
         uint32_t mNestedAssetsCount;
@@ -22,9 +23,16 @@ RESOURCES_NS
         explicit Asset(const Asset& asset) = default;
         Asset& operator=(const Asset& asset) = default;
     public:
+
         explicit Asset(InternedString path, Asset **nested = nullptr, uint32_t nestedCount = 0);
 
-        InternedString getPath() const;
+        InternedString getPath() const {
+            return mPath;
+        }
+
+        InternedString getName() const {
+            return mName;
+        }
 
         virtual ~Asset() = 0;
 

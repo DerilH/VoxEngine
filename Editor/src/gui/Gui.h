@@ -9,6 +9,8 @@
 #include <glm/glm.hpp>
 #include <VoxEngine/Engine.h>
 
+#include "AssetExplorer.h"
+
 namespace Vox::Editor {
     class Gui : SingletonBase<Gui>{
         Render::Windowing::Window* mWindow = nullptr;
@@ -18,6 +20,7 @@ namespace Vox::Editor {
         Render::FpsCounter mFpsCounter;
         glm::vec3 mMeshRotation = glm::vec3(0, 0, 0);
         Ref<Scene::GameObject> mSelected = nullptr;
+        AssetExplorer mExplorer;
     public:
 
         void init(Render::Windowing::Window& window, Engine& engine);

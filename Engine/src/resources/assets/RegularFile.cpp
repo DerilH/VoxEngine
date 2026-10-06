@@ -9,7 +9,7 @@
 #include "VoxEngine/resources/assets/Asset.h"
 
 RESOURCES_NS
-    RegularFile::RegularFile(std::string path, ArrayView<void> data) : Asset(std::move(path)), mData(data)
+    RegularFile::RegularFile(InternedString path, ArrayView<void> data) : Asset(path), mData(data)
     {
         VOX_CHECK(!mData.isNull(), "Invalid data pointer");
     }

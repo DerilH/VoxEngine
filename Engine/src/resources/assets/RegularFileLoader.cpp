@@ -6,7 +6,7 @@
 #include "VoxEngine/resources/assets/RegularFile.h"
 
 RESOURCES_NS
-Asset *RegularFileLoader::load(std::string path, ArrayView<void> data) {
+Asset *RegularFileLoader::load(InternedString path, ArrayView<void> data) {
     return new RegularFile(path, data);
 }
 NS_END

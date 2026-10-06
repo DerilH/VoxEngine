@@ -7,11 +7,7 @@
 #include <VoxCore/containers/Containers.h>
 
 RESOURCES_NS
-    Asset::Asset(InternedString path, Asset **nested, uint32_t nestedCount) : mPath(path), mNestedAssets(nested), mNestedAssetsCount(nestedCount) {
-    }
-
-    InternedString Asset::getPath() const {
-        return mPath;
+    Asset::Asset(InternedString path, Asset **nested, uint32_t nestedCount) : mPath(path), mName(std::filesystem::path(path).filename()), mNestedAssets(nested), mNestedAssetsCount(nestedCount) {
     }
 
     bool Asset::hasNested() const {
