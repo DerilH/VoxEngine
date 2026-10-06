@@ -20,6 +20,13 @@ throw std::runtime_error(error);\
 #endif
 
 
+#define VOX_CHECK_FMT(statement, error, ...) \
+if(!(statement)) \
+{                                   \
+LOG_ERROR(error, __VA_ARGS__)\
+throw std::runtime_error(error);\
+}
+
 #define VOX_CHECK(statement, error) \
 if(!(statement)) \
 {                                   \
