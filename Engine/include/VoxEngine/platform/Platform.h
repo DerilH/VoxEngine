@@ -8,6 +8,7 @@
 
 PLATFORM_NS
 class Platform {
-
+public:
+    virtual void enableSandbox(std::filesystem::path allowedDirectory) = 0;
 };
 NS_END

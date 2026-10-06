@@ -30,7 +30,6 @@ VOX_NS
 
     void Engine::init() {
         mResourceManager = &Resources::ResourcesManager::Get();
-        Resources::ResourcesManager::SetRoot("./resources");
         Resources::ResourcesManager::Get().loadAll();
 
         auto window = new Render::Windowing::Window(mTitle, 1400, 900);

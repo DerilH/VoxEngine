@@ -9,6 +9,7 @@
 
 PLATFORM_NS
 class LinuxPlatform : public Platform {
-
+public:
+    void enableSandbox(std::filesystem::path allowedDirectory) override;
 };
 NS_END
