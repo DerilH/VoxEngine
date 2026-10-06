@@ -42,6 +42,10 @@ RESOURCES_NS
             return reinterpret_cast<AssetType *>(mNestedAssets[id]);
         }
 
+        Asset** getNested() const {
+            return mNestedAssets;
+        }
+
         bool hasNested() const;
 
         uint32_t getNestedCount() const;

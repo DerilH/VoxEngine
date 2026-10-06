@@ -10,7 +10,6 @@
 #include <VoxEngine/resources/assets/MaterialAsset.h>
 
 namespace Vox::Editor {
-
     void AssetExplorer::render() {
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
 
@@ -18,8 +17,7 @@ namespace Vox::Editor {
             if (mShouldCloseEditor) {
                 mShouldCloseEditor = false;
                 mAssetEditor = nullptr;
-            }
-            else mAssetEditor->render();
+            } else mAssetEditor->render();
         }
 
         ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkSize.y - 200), ImGuiCond_Always);
@@ -29,11 +27,10 @@ namespace Vox::Editor {
         ImGui::Begin("AssetExplorer", nullptr, windowFlags);
 
         ImGuiTableFlags tableFlags = ImGuiTableFlags_Resizable
-                                   | ImGuiTableFlags_BordersInnerV
-                                   | ImGuiTableFlags_SizingFixedFit;
+                                     | ImGuiTableFlags_BordersInnerV
+                                     | ImGuiTableFlags_SizingFixedFit;
 
         if (ImGui::BeginTable("AssetExplorerTable", 2, tableFlags, ImGui::GetContentRegionAvail())) {
-
             ImGui::TableSetupColumn("TreeColumn", ImGuiTableColumnFlags_WidthFixed, 250.0f);
             ImGui::TableSetupColumn("ContentColumn", ImGuiTableColumnFlags_WidthStretch);
 
@@ -42,7 +39,7 @@ namespace Vox::Editor {
             ImGui::TableSetColumnIndex(0);
 
             ImGuiWindowFlags treeChildFlags = ImGuiWindowFlags_HorizontalScrollbar
-                                            | ImGuiWindowFlags_AlwaysVerticalScrollbar;
+                                              | ImGuiWindowFlags_AlwaysVerticalScrollbar;
 
             if (ImGui::BeginChild("LeftTreePanel", ImVec2(-1.0f, 0.0f), false, treeChildFlags)) {
                 renderTree();
@@ -74,10 +71,10 @@ namespace Vox::Editor {
         ImGui::PushID(dirNode->path.c_str());
 
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow
-                                  | ImGuiTreeNodeFlags_OpenOnDoubleClick
-                                  | ImGuiTreeNodeFlags_SpanFullWidth;
+                                   | ImGuiTreeNodeFlags_OpenOnDoubleClick
+                                   | ImGuiTreeNodeFlags_SpanFullWidth;
 
-        const auto& nestedDirs = dirNode->getNested();
+        const auto &nestedDirs = dirNode->getNested();
         if (nestedDirs.empty()) {
             flags |= ImGuiTreeNodeFlags_Leaf;
         }
@@ -91,11 +88,12 @@ namespace Vox::Editor {
         const bool isOpen = ImGui::TreeNodeEx(folderName.c_str(), flags);
 
         if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen()) {
-            mCurrentDir = const_cast<Resources::AssetDirectory*>(dirNode);
+            mCurrentDir = const_cast<Resources::AssetDirectory *>(dirNode);
+            createContentIcons();
         }
 
         if (isOpen) {
-            for (const auto &childDir : nestedDirs) {
+            for (const auto &childDir: nestedDirs) {
                 renderDirNode(childDir.get());
             }
             ImGui::TreePop();
@@ -107,7 +105,43 @@ namespace Vox::Editor {
     void AssetExplorer::renderContent() {
         if (!mCurrentDir) return;
 
-        const auto& assets = Resources::ResourcesManager::Get().listDirAssets(mCurrentDir->path);
+        float cellSize = 74.0f;
+        float availWidth = ImGui::GetContentRegionAvail().x;
+
+        int columnCount = static_cast<int>(availWidth / cellSize);
+        if (columnCount < 1) columnCount = 1;
+
+        ImGuiTableFlags tableFlags = ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_NoSavedSettings;
+
+        if (ImGui::BeginTable("AssetGridTable", columnCount, tableFlags)) {
+            for (int i = 0; i < columnCount; ++i) {
+                ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, cellSize);
+            }
+
+            auto renderIconItem = [&](auto& iconPtr) {
+                ImGui::TableNextColumn();
+                iconPtr->render();
+            };
+
+            for (auto &icon : mIcons) {
+                renderIconItem(icon);
+
+                if (icon->expanded) {
+                    for (auto &nested : icon->getNested()) {
+                        renderIconItem(nested);
+                    }
+                }
+            }
+
+            ImGui::EndTable();
+        }
+    }
+
+    void AssetExplorer::createContentIcons() {
+        if (!mCurrentDir) return;
+        mIcons.clear();
+
+        const auto &assets = Resources::ResourcesManager::Get().listDirAssets(mCurrentDir->path);
         if (assets.empty()) return;
 
         float cellSize = 74.0f;
@@ -116,28 +150,15 @@ namespace Vox::Editor {
         int columnCount = static_cast<int>(availWidth / cellSize);
         if (columnCount < 1) columnCount = 1;
 
-        ImGuiTableFlags tableFlags = ImGuiTableFlags_SizingFixedFit;
+        for (auto &asset: assets) {
+            auto icon = new AssetIcon(asset);
 
-        if (ImGui::BeginTable("AssetGridTable", columnCount, tableFlags)) {
-
-            for (int i = 0; i < columnCount; ++i) {
-                ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, cellSize);
-            }
-
-            for (auto& asset : assets) {
-                ImGui::TableNextColumn();
-
-                AssetIcon icon(asset);
-
-                icon.setOnDoubleClick([asset, this, icon]() {
-                    if (asset->type() == AssetType::MATERIAL) {
-                        mAssetEditor = makeUPtr<MaterialEditor>(static_cast<ConstRef<Resources::MaterialAsset>>(asset), mShouldCloseEditor);
-                    }
-                });
-                icon.render();
-            }
-
-            ImGui::EndTable();
+            icon->setOnDoubleClick([asset, this, icon]() {
+                if (asset->type() == AssetType::MATERIAL) {
+                    mAssetEditor = makeUPtr<MaterialEditor>(static_cast<ConstRef<Resources::MaterialAsset>>(asset), mShouldCloseEditor);
+                }
+            });
+            mIcons.emplace_back(icon);
         }
     }
 }
