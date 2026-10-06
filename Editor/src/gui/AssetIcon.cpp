@@ -7,7 +7,6 @@
 #include <imgui.h>
 
 namespace Vox::Editor {
-
     AssetIcon::AssetIcon(const ConstRef<Resources::Asset> asset) : mAsset(asset) {
     }
 
@@ -26,6 +25,11 @@ namespace Vox::Editor {
 
             if (ImGui::Button(iconSymbol, iconSize)) {
             }
+
+            if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+                mDoubleClickCallback();
+            }
+
             if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
                 ImGui::SetDragDropPayload("ASSET_ITEM", path.c_str(), path.size() + 1);
 

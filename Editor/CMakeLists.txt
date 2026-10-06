@@ -14,7 +14,13 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
         GIT_TAG v1.92.6)
 FetchContent_MakeAvailable(imgui)
+FetchContent_Declare(
+        CLI11
+        GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
+        GIT_TAG        v2.4.2
+)
 
+FetchContent_MakeAvailable(CLI11)
 
 file(GLOB_RECURSE VOX_SOURCES CONFIGURE_DEPENDS
         src/*.cpp
@@ -40,6 +46,7 @@ target_sources(VoxEditor PRIVATE ${VOX_SOURCES})
 target_link_libraries(VoxEditor
         PUBLIC
         VoxEngine
+        CLI11
         imgui
         backtrace
         project_options

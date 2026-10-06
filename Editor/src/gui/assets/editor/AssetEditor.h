@@ -6,6 +6,13 @@
 
 namespace Vox::Editor {
     class AssetEditor {
+    protected:
+        bool& mShouldClose;
+    public:
+        AssetEditor(bool& shouldClose) : mShouldClose(shouldClose) {}
+        virtual ~AssetEditor() = default;
+
         virtual void render() = 0;
+
     };
 }

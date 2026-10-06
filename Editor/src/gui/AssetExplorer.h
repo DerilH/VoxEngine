@@ -2,10 +2,14 @@
 #include <VoxCore/containers/Containers.h>
 #include <VoxEngine/resources/AssetDirectory.h>
 
+#include "assets/editor/AssetEditor.h"
+
 
 namespace Vox::Editor {
     class AssetExplorer {
-        ConstRef<Resources::AssetDirectory> mCurrentDir;
+        ConstRef<Resources::AssetDirectory> mCurrentDir = nullptr;
+        UPtr<AssetEditor> mAssetEditor = nullptr;
+        bool mShouldCloseEditor = false;
     public:
         void render();
         void renderTree();

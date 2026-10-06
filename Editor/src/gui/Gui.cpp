@@ -197,28 +197,6 @@ namespace Vox::Editor {
         }
     }
 
-    template<typename EnumType>
-    bool RenderEnumCombo(const char *label, EnumType &currentVal) {
-        bool changed = false;
-        constexpr auto entries = magic_enum::enum_entries<EnumType>();
-
-        std::string_view currentName = magic_enum::enum_name(currentVal);
-
-        if (ImGui::BeginCombo(label, currentName.data())) {
-            for (const auto &[value, name]: entries) {
-                bool isSelected = (currentVal == value);
-                if (ImGui::Selectable(name.data(), isSelected)) {
-                    currentVal = value;
-                    changed = true;
-                }
-                if (isSelected) {
-                    ImGui::SetItemDefaultFocus();
-                }
-            }
-            ImGui::EndCombo();
-        }
-        return changed;
-    }
 
     void Gui::renderComponents() {
         if (!mSelected) return;
@@ -284,9 +262,6 @@ namespace Vox::Editor {
             } catch (std::exception &e) {
             }
         }
-        if (changed) {
-            auto path = mat->getPath();
-            Resources::ResourcesManager::Get().update(path, std::move(mat));
-        }
+
     }
 }

@@ -3,7 +3,7 @@
         "FRAGMENT": "shaders/baseShader.frag",
         "VERTEX": "shaders/baseShader.vert"
     },
-    "polygonMode": "FILL",
+    "polygonMode": "LINE",
     "cullMode": "NONE",
     "topology": "TRIANGLE_LIST"
 }

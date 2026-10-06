@@ -28,6 +28,7 @@
       <config projectName="VoxEngine" targetName="spirv-cross-hlsl" />
       <config projectName="VoxEngine" targetName="spirv-cross-util" />
       <config projectName="VoxEngine" targetName="VoxEngine" />
+      <config projectName="VoxEngine" targetName="CLI11" />
       <config projectName="VoxEngine" targetName="VoxEditor" />
       <config projectName="VoxEngine" targetName="spirv-cross-msl" />
       <config projectName="VoxEngine" targetName="spirv-cross-core" />
@@ -48,30 +49,25 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="395dc881-2005-4485-bc1e-6c1807e45dee" name="Changes" comment="Fixed many Vulkan validation errors&#10;Fixed render graph compiling logic&#10;Fixed missing present transition for swapchain textures&#10;Started refactoring of render resources management&#10;Added ability to clone, edit and save assets &#10;Improved gui, added gameobject components inspector&#10;And more">
-      <change afterPath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/AssetDirectory.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/run/resources/materials/test1.vmat" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/run/resources/nested/test/teapot.fbx" afterDir="false" />
+    <list default="true" id="395dc881-2005-4485-bc1e-6c1807e45dee" name="Changes" comment="Added minimal asset explorer with dragndrop support">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/include/VoxCore/containers/Containers.h" beforeDir="false" afterPath="$PROJECT_DIR$/Core/include/VoxCore/containers/Containers.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/MainApp.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/MainApp.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/exec/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/exec/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Editor/src/gui/Gui.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/Gui.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Editor/src/gui/Gui.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/Gui.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanUtil.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanUtil.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/ResourcesManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/ResourcesManager.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/Asset.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/Asset.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/ModelAsset.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/ModelAsset.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/RegularFile.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/RegularFile.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/RegularFileLoader.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/resources/assets/RegularFileLoader.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/GameObject.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/scene/GameObject.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/gui/assets/editor/AssetEditor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/assets/editor/AssetEditor.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/gui/assets/editor/MaterialEditor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/assets/editor/MaterialEditor.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/gui/assets/editor/MaterialEditor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/assets/editor/MaterialEditor.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/platform/LinuxPlatform.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/platform/LinuxPlatform.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/platform/Platform.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/platform/Platform.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/src/core/Engine.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/core/Engine.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/src/platform/LinuxPlatform.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/platform/LinuxPlatform.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/resources/ResourcesManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/ResourcesManager.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/Asset.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/Asset.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/ModelAsset.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/ModelAsset.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/RegularFile.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/RegularFile.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/resources/assets/RegularFileLoader.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/resources/assets/RegularFileLoader.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run/resources/materials/test1.vmat" beforeDir="false" afterPath="$PROJECT_DIR$/run/resources/materials/test1.vmat" afterDir="false" />
     </list>
     <list id="e81bb849-25f8-4208-9cee-a6de65d0101f" name="NonProjectChanges" comment="">
       <change beforePath="$PROJECT_DIR$/ThirdParty/quill/.github/ISSUE_TEMPLATE/bug-report.md" beforeDir="false" />
@@ -105,7 +101,7 @@
     <option name="completeInNamespacesByDefault" value="true" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="229" />
+    <option name="cachedIndexableFilesCount" value="241" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -165,51 +161,51 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "CMake Application.VoxCompiler.executor": "Run",
-    "CMake Application.VoxEditor.executor": "Run",
-    "CMake Application.VoxEngine.executor": "Run",
-    "CMake Debug.Unnamed.executor": "Debug",
-    "CMake Debug.VoxEngine.executor": "Debug",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.RadMigrateCodeStyle": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "RunOnceActivity.west.config.association.type.startup.service": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "SHELLCHECK.PATH": "/home/deril/.local/share/JetBrains/CLion2025.3/Shell Script/shellcheck",
-    "Shell Script.CompileShaders.executor": "Run",
-    "Shell Script.Unnamed.executor": "Run",
-    "bazel.project.detector.is.bazel.project": "true",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "master",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/deril/CLionProjects/VoxEngine/run/resources/materials",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.stylelint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.stylelint": "",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "onboarding.tips.debug.path": "/home/deril/CLionProjects/VoxEngine/main.cpp",
-    "org.rust.first.attach.projects": "true",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "preferences.fileTypes",
-    "structure.view.defaults.are.configured": "true",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;CMake Application.VoxCompiler.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.VoxEditor.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Application.VoxEngine.executor&quot;: &quot;Run&quot;,
+    &quot;CMake Debug.Unnamed.executor&quot;: &quot;Debug&quot;,
+    &quot;CMake Debug.VoxEngine.executor&quot;: &quot;Debug&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.RadMigrateCodeStyle&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.west.config.association.type.startup.service&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;SHELLCHECK.PATH&quot;: &quot;/home/deril/.local/share/JetBrains/CLion2025.3/Shell Script/shellcheck&quot;,
+    &quot;Shell Script.CompileShaders.executor&quot;: &quot;Run&quot;,
+    &quot;Shell Script.Unnamed.executor&quot;: &quot;Run&quot;,
+    &quot;bazel.project.detector.is.bazel.project&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/deril/CLionProjects/VoxEngine/run/resources/materials&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.stylelint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.stylelint&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;onboarding.tips.debug.path&quot;: &quot;/home/deril/CLionProjects/VoxEngine/main.cpp&quot;,
+    &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.fileTypes&quot;,
+    &quot;structure.view.defaults.are.configured&quot;: &quot;true&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/run/resources/materials" />
@@ -227,7 +223,12 @@
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.VoxEditor">
-    <configuration name="VoxCore" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="VoxEngine" TARGET_NAME="VoxCore" CONFIG_NAME="Debug">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="CLI11" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="VoxEngine" TARGET_NAME="CLI11" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -237,7 +238,12 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="VoxEditor" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$/run" PASS_PARENT_ENVS_2="true" PROJECT_NAME="VoxEngine" TARGET_NAME="VoxEditor" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="VoxEngine" RUN_TARGET_NAME="VoxEditor">
+    <configuration name="VoxCore" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="VoxEngine" TARGET_NAME="VoxCore" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="VoxEditor" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="--enable-sandbox --resources ./resources" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$/run" PASS_PARENT_ENVS_2="true" PROJECT_NAME="VoxEngine" TARGET_NAME="VoxEditor" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="VoxEngine" RUN_TARGET_NAME="VoxEditor">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -366,6 +372,7 @@
       <item itemvalue="CMake Application.VoxCore" />
       <item itemvalue="CMake Application.VoxEditor" />
       <item itemvalue="CMake Application.yyjson" />
+      <item itemvalue="CMake Application.CLI11" />
       <item itemvalue="CMake Application.imgui" />
       <item itemvalue="CMake Application.quill" />
       <item itemvalue="CMake Application.spirv-cross-c" />
@@ -531,7 +538,8 @@
       <workItem from="1791224656484" duration="439000" />
       <workItem from="1791225103214" duration="8093000" />
       <workItem from="1791233415410" duration="13612000" />
-      <workItem from="1791288763424" duration="11850000" />
+      <workItem from="1791288763424" duration="17099000" />
+      <workItem from="1791312771005" duration="2302000" />
     </task>
     <task id="LOCAL-00001" summary="first">
       <option name="closed" value="true" />
@@ -677,7 +685,15 @@
       <option name="project" value="LOCAL" />
       <updated>1791246619562</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="Added minimal asset explorer with dragndrop support">
+      <option name="closed" value="true" />
+      <created>1791307743220</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1791307743220</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -720,7 +736,8 @@
     <MESSAGE value="Moved enum definition to core package" />
     <MESSAGE value="Removed unused ImageBarrier class" />
     <MESSAGE value="Fixed many Vulkan validation errors&#10;Fixed render graph compiling logic&#10;Fixed missing present transition for swapchain textures&#10;Started refactoring of render resources management&#10;Added ability to clone, edit and save assets &#10;Improved gui, added gameobject components inspector&#10;And more" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fixed many Vulkan validation errors&#10;Fixed render graph compiling logic&#10;Fixed missing present transition for swapchain textures&#10;Started refactoring of render resources management&#10;Added ability to clone, edit and save assets &#10;Improved gui, added gameobject components inspector&#10;And more" />
+    <MESSAGE value="Added minimal asset explorer with dragndrop support" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added minimal asset explorer with dragndrop support" />
     <option name="LAST_CHUNK_COMMIT_MESSAGE" value="Removed scene" />
   </component>
   <component name="XDebuggerManager">

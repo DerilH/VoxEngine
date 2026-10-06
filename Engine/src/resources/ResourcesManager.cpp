@@ -16,9 +16,6 @@
 RESOURCES_NS
     class AssetWriter;
 
-    inline void checkRoot() {
-    }
-
     const UPtr<RegularFileLoader> ResourcesManager::sRegularLoader = makeUPtr<RegularFileLoader>();
     const HashMap<InternedString, UPtr<AssetLoader> > ResourcesManager::sLoaderByExtension = []() {
         HashMap<InternedString, UPtr<AssetLoader> > map;
@@ -40,7 +37,7 @@ RESOURCES_NS
         loadDir(mResourcesRoot, *mRootDir);
     }
 
-    void ResourcesManager::loadDir(const std::filesystem::path& currentPath, AssetDirectory &currentDir) {
+    void ResourcesManager::loadDir(const std::filesystem::path &currentPath, AssetDirectory &currentDir) {
         for (const auto &entry: std::filesystem::directory_iterator(currentPath)) {
             const auto &path = entry.path();
             auto relPath = relative(path, mResourcesRoot);
@@ -74,7 +71,7 @@ RESOURCES_NS
             if (writer == sWriterByType.end()) {
                 LOG_WARN("No writer provided for asset: {} of type: {}. Skipped", asset->getPath(), magic_enum::enum_name<>(asset->type()));
             } else if (asset) {
-                writer->second->writeToFile(asset->getPath(), asset.get());
+                writer->second->writeToFile(mResourcesRoot / asset->getPath(), asset.get());
             }
         }
         mDirty.clear();
@@ -105,13 +102,12 @@ RESOURCES_NS
     }
 
     Vector<ConstRef<Asset> > ResourcesManager::listDirAssets(InternedString path) const {
-        static const Vector<ConstRef<Asset>> emptyVector(0);
+        static const Vector<ConstRef<Asset> > emptyVector(0);
         auto dirPath = mResourcesRoot / path;
         if (!std::filesystem::exists(dirPath) || !std::filesystem::is_directory(dirPath)) return emptyVector;
 
-        Vector<ConstRef<Asset>> out;
+        Vector<ConstRef<Asset> > out;
         for (const auto &entry: std::filesystem::directory_iterator(dirPath)) {
-
             if (!entry.is_regular_file()) continue;
 
             const auto &p = entry.path();

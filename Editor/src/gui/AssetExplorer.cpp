@@ -3,15 +3,24 @@
 #include "AssetExplorer.h"
 
 #include <imgui.h>
-#include <imgui_internal.h>
 #include <VoxEngine/resources/ResourcesManager.h>
 
 #include "AssetIcon.h"
+#include "assets/editor/MaterialEditor.h"
+#include <VoxEngine/resources/assets/MaterialAsset.h>
 
 namespace Vox::Editor {
 
     void AssetExplorer::render() {
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+        if (mAssetEditor) {
+            if (mShouldCloseEditor) {
+                mShouldCloseEditor = false;
+                mAssetEditor = nullptr;
+            }
+            else mAssetEditor->render();
+        }
 
         ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkSize.y - 200), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, 200), ImGuiCond_Always);
@@ -115,12 +124,16 @@ namespace Vox::Editor {
                 ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, cellSize);
             }
 
-            int currentColumn = 0;
-
-            for (const auto& asset : assets) {
+            for (auto& asset : assets) {
                 ImGui::TableNextColumn();
 
                 AssetIcon icon(asset);
+
+                icon.setOnDoubleClick([asset, this, icon]() {
+                    if (asset->type() == AssetType::MATERIAL) {
+                        mAssetEditor = makeUPtr<MaterialEditor>(static_cast<ConstRef<Resources::MaterialAsset>>(asset), mShouldCloseEditor);
+                    }
+                });
                 icon.render();
             }
 
