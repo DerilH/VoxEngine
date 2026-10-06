@@ -43,6 +43,7 @@ LOG_WARN("{}", error)\
 
 #define VOX_NO_IMPL(name) VOX_CHECK(false, "Called unimplemented feature: " name)
 
+#ifdef STRICT_VULKAN
 #define VK_CHECK(statement, error) \
 {                                  \
 VkResult r = (statement);            \
@@ -50,4 +51,13 @@ if(r != VK_SUCCESS) {              \
     LOG_ERROR("{}: {}", error, (uint32_t)r)\
     throw std::runtime_error(error);\
 }                                   \
-}\
+}
+#else
+#define VK_CHECK(statement, error) \
+{                                  \
+VkResult r = (statement);            \
+if(r != VK_SUCCESS) {              \
+LOG_ERROR("{}: {}", error, (uint32_t)r)\
+}                                   \
+}
+#endif
