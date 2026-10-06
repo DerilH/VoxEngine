@@ -30,10 +30,27 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(spirv_cross)
 
+FetchContent_Declare(
+        yyjson
+        GIT_REPOSITORY https://github.com/ibireme/yyjson.git
+        GIT_TAG        0.10.0
+)
+FetchContent_MakeAvailable(yyjson)
+
+include(FetchContent)
+FetchContent_Declare(
+        magic_enum
+        GIT_REPOSITORY https://github.com/Neargye/magic_enum.git
+        GIT_TAG        v0.9.7
+)
+FetchContent_MakeAvailable(magic_enum)
+
 file(GLOB_RECURSE VOX_SOURCES CONFIGURE_DEPENDS
-        src/*.cpp
-        include/*.cpp
-        include/*.h
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
 )
 
 add_library(VoxEngine ${VOX_SOURCES})
@@ -41,6 +58,8 @@ add_library(VoxEngine ${VOX_SOURCES})
 target_link_libraries(VoxEngine
         PUBLIC
         spirv-cross-core
+        yyjson
+        magic_enum
         Vulkan::Vulkan
         glfw
         shaderc_shared
