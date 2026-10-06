@@ -20,6 +20,11 @@ constexpr int GIGABYTE_SIZE = MEGABYTE_SIZE * 1024;
 #define BUILDER_ENTRY(builderClass, name, type, dst) \
 inline builderClass& name(type name) {dst = name; return *this;}\
 
+#define NO_MOVE_DEFAULT(ClassName)   \
+ClassName() = delete;     \
+ClassName(ClassName&&) = delete;          \
+ClassName& operator=(ClassName&&) = delete;
+
 #define NO_COPY_MOVE_DEFAULT(ClassName)   \
 ClassName() = delete;     \
 ClassName(const ClassName&) = delete;     \
