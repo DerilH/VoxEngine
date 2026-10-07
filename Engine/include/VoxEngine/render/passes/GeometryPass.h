@@ -11,9 +11,13 @@
 RENDER_NS
 class GeometryPass : public RenderPass {
 
+    bool mShouldClear;
 public:
-    explicit GeometryPass(RenderPassType mType, const ArrayView<AttachmentDesc>& reads, const ArrayView<AttachmentDesc>& writes);
+    explicit GeometryPass(RenderPassType mType, bool clear, const ArrayView<AttachmentDesc>& reads, const ArrayView<AttachmentDesc>& writes);
 
     void execute(RenderContext context) override;
+    bool shouldClear() override {
+        return mShouldClear;
+    }
 };
 NS_END

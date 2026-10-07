@@ -69,9 +69,11 @@ RENDER_NS
     void Renderer::createGraph() {
         mGraph = new RenderGraph();
         color = mGraph->createTexture("Color");
-        auto geometry = new GeometryPass(GBUFFER_PASS, {{}}, {{color, DISCARD_W_ATTACHMENT}});
-        mGraph->addPass(geometry);
+        auto text =  mGraph->createTexture("Scene");
+        text->setExact(mBackend->createTexture(Format::BGRA8, Extent(1920, 1080)));
 
+        auto geometry = new GeometryPass(GBUFFER_PASS, true, {{}}, {{text, DISCARD_W_ATTACHMENT}});
+        mGraph->addPass(geometry);
     }
 
     void Renderer::addRenderTarget(RenderTargetRef viewport) {
@@ -81,14 +83,11 @@ RENDER_NS
     void Renderer::drawFrame(RenderTargetRef target) {
         color->setExact(target->getBackBuffer());
 
-        auto cmdBuffer = ((Vulkan::Surface *) target)->getCurrentFrame().getCmdBuffer();
+        auto cmdBuffer = target->getCmdBuffer();
         executeGraph(target, cmdBuffer);
     }
 
     void Renderer::executeGraph(RenderTargetRef target, CommandBufferRef cmdBuffer) {
-        cmdBuffer->setViewportState(0, 0, target->getSize());
-        cmdBuffer->setScissor(0, 0, target->getSize());
-
         mGraph->execute({this, cmdBuffer}, target);
     }
 

@@ -15,7 +15,7 @@ VOX_NS
         PointerType *pData = nullptr;
 
         ArrayView(PointerType *ptr, size_t size) : pData(ptr), mSize(size) {
-            VOX_ASSERT_PTR(ptr, "Buffer pointer is nullptr")
+            // VOX_ASSERT_PTR(ptr, "Buffer pointer is nullptr")
         }
 
         ArrayView(std::initializer_list<PointerType> &&list) : mSize(list.size()) {

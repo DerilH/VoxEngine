@@ -119,7 +119,7 @@ RENDER_NS
             attachments.emplace_back(pass->getWrites()[i]);
         }
 
-        bool clear = pass->getReads().empty();
+        bool clear = pass->shouldClear();
         for (int i = 0; i < pass->getReads().size(); i++) {
             AttachmentDesc attachment = pass->getReads()[i];
             context.cmdBuffer->setBarriers({attachment.transition}, {attachment.texture->getExact()});
@@ -130,8 +130,13 @@ RENDER_NS
             context.cmdBuffer->setBarriers({attachment.transition}, {attachment.texture->getExact()});
         }
 
-        if (!pass->isControlPass) {
-            context.cmdBuffer->beginRenderPass(ArrayView(data(attachments), attachments.size()), {viewport->getSize()}, clear);
+        if (!pass->isControlPass && pass->getWrites().size() != 0) {
+            auto size = pass->getWrites()[0].texture->getExact()->getExtent();
+
+            context.cmdBuffer->setViewportState(0, 0,size);
+            context.cmdBuffer->setScissor(0, 0, size);
+
+            context.cmdBuffer->beginRenderPass(ArrayView(pass->getWrites().pData, pass->getWrites().size()), size, clear);
             pass->setExtent(viewport->getSize());
             pass->execute(context);
             context.cmdBuffer->endRenderPass();

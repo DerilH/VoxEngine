@@ -124,7 +124,7 @@ VULKAN_NS
         for (uint32_t index = 0; index < images.size(); index++) {
             VkImage image = images[index];
             VkImageView view = createImageView(*surface.mDevice, image, surface.getImageFormat());
-            auto t = surface.mDevice->createHeap<VulkanTexture>(surface.getImageFormat(), surface.getSize(), image, view);
+            auto t = surface.mDevice->createHeap<VulkanTexture>(surface.getImageFormat(), extent, image, view);
             textures[index] = t;
         }
 

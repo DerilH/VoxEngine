@@ -5,6 +5,7 @@
 #include "VoxEngine/render/vulkan/VulkanBackend.h"
 
 #include <VoxEngine/render/TextureRenderTarget.h>
+#include <VoxEngine/render/vulkan/VulkanTextureRenderTarget.h>
 
 #include "VoxEngine/render/vulkan/Debug.h"
 #include "VoxEngine/render/vulkan/VulkanDevice.h"
@@ -92,7 +93,7 @@ VULKAN_NS
     }
 
     RenderTargetRef VulkanBackend::createTextureTarget(Extent extent, Format format) const {
-        return new TextureRenderTarget(createTexture(format,extent));
+        return new VulkanTextureRenderTarget(createTexture(format,extent),  ResourceCast(mCurrentDevice));
     }
 
     CommandPoolRef VulkanBackend::createCommandPool() {
@@ -105,7 +106,7 @@ VULKAN_NS
     TextureRef VulkanBackend::createTexture(Format format, Extent extent) const {
         VOX_ASSERT(isInitialized(), "Render backend not initialized");
         const VulkanDevice* device = ResourceCast(mCurrentDevice);
-        return device->createHeap<VulkanTexture>(format, extent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+        return device->createHeap<VulkanTexture>(format, extent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
     }
 
     PipelineStateRef VulkanBackend::createPSO(const PipelineStateDesc& desc) {

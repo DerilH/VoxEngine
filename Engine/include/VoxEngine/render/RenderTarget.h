@@ -8,11 +8,13 @@
 #include "RenderResource.h"
 #include "Types.h"
 #include "VoxCore/math/Extent.h"
+#include "VoxCore/Pointers.h"
 
 RENDER_NS
 class RenderTarget : public RenderResource {
 protected:
     Extent mExtent;
+
 
     RenderTarget(Extent extent) : mExtent(extent) {}
 public:
@@ -24,5 +26,6 @@ public:
     virtual TextureRef getBackBuffer() = 0;
     virtual void resize(Extent extent) = 0;
     inline Extent getSize() const {return mExtent;}
+    virtual Ref<CommandBuffer> getCmdBuffer() const = 0;
 };
 NS_END

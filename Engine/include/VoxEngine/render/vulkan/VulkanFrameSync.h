@@ -12,7 +12,7 @@
 VULKAN_NS
     class VulkanDevice;
 
-    class VulkanFrameSync {
+    class VulkanFrameSync{
         friend class VulkanDevice;
 
         const VulkanDevice &mDevice;

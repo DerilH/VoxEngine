@@ -27,7 +27,7 @@ RENDER_NS
         }
     }
 
-    GeometryPass::GeometryPass(RenderPassType mType, const ArrayView<AttachmentDesc> &reads, const ArrayView<AttachmentDesc> &writes) : RenderPass(mType, reads, writes) {
+    GeometryPass::GeometryPass(RenderPassType mType, bool clear, const ArrayView<AttachmentDesc> &reads, const ArrayView<AttachmentDesc> &writes) : RenderPass(mType, reads, writes), mShouldClear(clear) {
     }
 
 NS_END

@@ -36,6 +36,7 @@ RENDER_NS
         ArrayView<AttachmentDesc>& getReads();
 
         void setExtent(Extent extent);
+        virtual bool shouldClear() {return false;}
     };
 
 NS_END

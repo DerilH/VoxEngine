@@ -41,7 +41,7 @@ namespace Vox::Render::Vulkan {
     }
 
     std::optional<QueueFamily> Surface::findPresentFamily() const {
-        for (const auto& family: mDevice->getPhysicalDevice().getQueueFamilies().getUniqueFamilies()) {
+        for (const auto &family: mDevice->getPhysicalDevice().getQueueFamilies().getUniqueFamilies()) {
             VkBool32 presentSupport = false;
             vkGetPhysicalDeviceSurfaceSupportKHR(mDevice->getPhysicalDevice().getHandle(), family.index(), mHandle, &presentSupport);
 
@@ -52,8 +52,8 @@ namespace Vox::Render::Vulkan {
         return std::nullopt;
     }
 
-    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
-        for (const auto& availableFormat: availableFormats) {
+    VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+        for (const auto &availableFormat: availableFormats) {
             if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
                 return availableFormat;
             }
@@ -63,7 +63,7 @@ namespace Vox::Render::Vulkan {
     }
 
 
-    void Surface::setDevice(VulkanDevice* device) {
+    void Surface::setDevice(VulkanDevice *device) {
         mDevice = device;
         const std::optional<QueueFamily> family = findPresentFamily();
         VOX_CHECK(family.has_value(), "Device cant be used for present");
@@ -73,16 +73,16 @@ namespace Vox::Render::Vulkan {
         createSwapChain();
     }
 
-    SwapChainSupportDetails::SwapChainSupportDetails(const VkSurfaceCapabilitiesKHR& capabilities,
-                                                     const Vector<VkSurfaceFormatKHR>& formats,
-                                                     const Vector<VkPresentModeKHR>& presentModes) : mCapabilities(
-            capabilities), mFormats(formats), mPresentModes(presentModes) {
+    SwapChainSupportDetails::SwapChainSupportDetails(const VkSurfaceCapabilitiesKHR &capabilities,
+                                                     const Vector<VkSurfaceFormatKHR> &formats,
+                                                     const Vector<VkPresentModeKHR> &presentModes) : mCapabilities(
+                                                                                                         capabilities), mFormats(formats), mPresentModes(presentModes) {
     }
 
     Surface::Surface(Ref<Window> window, VkSurfaceKHR handle) : WindowRenderTarget(window), VulkanObject(handle) {
     }
 
-    Surface* Surface::Create(Ref<Window> window, VkInstance instance) {
+    Surface *Surface::Create(Ref<Window> window, VkInstance instance) {
         VkSurfaceKHR s = nullptr;
 
         VK_CHECK(glfwCreateWindowSurface(instance, (GLFWwindow*) window->getHandle(), nullptr, &s),
@@ -99,7 +99,7 @@ namespace Vox::Render::Vulkan {
     }
 
     void Surface::createSwapChain() {
-        SwapChain* old = nullptr;
+        SwapChain *old = nullptr;
         if (mCurrentSwapChain != nullptr) {
             old = mCurrentSwapChain;
         }
@@ -108,7 +108,7 @@ namespace Vox::Render::Vulkan {
         createFrames(mCurrentSwapChain->getImageCount());
     }
 
-    SwapChain& Surface::getSwapChain() const {
+    SwapChain &Surface::getSwapChain() const {
         return *mCurrentSwapChain;
     }
 
@@ -120,15 +120,15 @@ namespace Vox::Render::Vulkan {
         return mSurfaceFormat;
     }
 
-    const VulkanDevice* Surface::getDevice() const {
+    const VulkanDevice *Surface::getDevice() const {
         return mDevice;
     }
 
-    const Queue* Surface::getPresentQueue() const {
+    const Queue *Surface::getPresentQueue() const {
         return mPresentQueue;
     }
 
-    void Surface::presentFrame(const VulkanFrameSync& frame) const {
+    void Surface::presentFrame(const VulkanFrameSync &frame) const {
         VOX_ASSERT(mPresentQueue != nullptr, "No queue provided for present")
         VOX_ASSERT(mCurrentSwapChain != nullptr, "No swapchain provided for present")
 
@@ -154,7 +154,7 @@ namespace Vox::Render::Vulkan {
 
     int32_t Surface::beginFrame() {
         this->update();
-        auto& e = this->getSwapChain();
+        auto &e = this->getSwapChain();
 
         auto frame = mFrames[mCurrentFrame];
         const uint32_t index = frame->begin(e);
@@ -197,7 +197,11 @@ namespace Vox::Render::Vulkan {
         }
     }
 
-    VulkanFrameSync& Surface::getCurrentFrame() const {
+    VulkanFrameSync &Surface::getCurrentFrame() const {
         return *mFrames[mCurrentFrame];
+    }
+
+    Ref<CommandBuffer> Surface::getCmdBuffer() const {
+        return getCurrentFrame().getCmdBuffer();
     }
 }

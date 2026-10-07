@@ -24,7 +24,9 @@ namespace Vox::Editor {
     public:
 
         void init(Render::Window& window, Engine& engine);
-        void render(Render::RenderContext cmd);
+
+        void render(Render::RenderContext cmd, Ref<Render::Texture> sceneTexture);
+
         void renderTreePanel();
         void renderSelectedOptions();
         void renderTransformOptions();

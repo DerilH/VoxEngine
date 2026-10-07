@@ -6,12 +6,11 @@
 
 #include "VoxCore/Define.h"
 #include "VoxCore/Pointers.h"
-#include "WindowRenderTarget.h"
 #include "Device.h"
 #include "VoxCore/render/Enums.h"
 #include "RenderCore.h"
-#include "RenderCore.h"
 #include "VoxEngine/render/state/PipelineStateDesc.h"
+#include "VoxCore/math/Extent.h"
 
 RENDER_NS
     class Window;

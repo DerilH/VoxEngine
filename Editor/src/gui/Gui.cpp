@@ -100,19 +100,67 @@ namespace Vox::Editor {
         ImGui_ImplVulkan_Init(&init_info);
 
         auto &graph = mEngine->getRenderer()->getGraph();
-        auto guiPass = new GuiRenderPass(Vox::Render::RenderPassType::UI_PASS, {{graph.getTexture("Color"), Vox::Render::PassTransition::W_ATTACHMENT_W_ATTACHMENT}}, {}, this);
+        auto guiPass = new GuiRenderPass(Vox::Render::RenderPassType::UI_PASS, {{graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_R_SHADER}}, {{graph.getTexture("Color"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT}}, this);
         graph.addPass(guiPass);
 
         mInitialized = true;
     }
 
-    void Gui::render(Render::RenderContext cmd) {
+    bool registered = false;
+    ImTextureID viewportTextureID;
+    void Gui::render(Render::RenderContext cmd, Ref<Render::Texture> sceneTexture) {
+        //Used for proper buffer deletions
+        //TODO: replace with deferred buffers deletion
+
+        auto device = Render::Vulkan::ResourceCast(mEngine->getRenderer()->getBackend()->getDevice());
+        device->waitIdle();
+        if (!registered) {
+            VkSamplerCreateInfo samplerInfo{};
+            samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+
+            samplerInfo.magFilter = VK_FILTER_LINEAR;
+            samplerInfo.minFilter = VK_FILTER_LINEAR;
+
+            samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+            samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+            samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+            samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+
+            samplerInfo.anisotropyEnable = VK_FALSE;
+            samplerInfo.maxAnisotropy = 1.0f;
+
+            samplerInfo.minLod = 0.0f;
+            samplerInfo.maxLod = 1.0f;
+            samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
+
+            VkSampler viewportSampler;
+            vkCreateSampler(*device, &samplerInfo, nullptr, &viewportSampler);
+
+            viewportTextureID = (ImTextureID)ImGui_ImplVulkan_AddTexture(
+                    viewportSampler,
+                    Render::Vulkan::ResourceCast(sceneTexture)->getView(),
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+                );
+            registered = true;
+        }
+
+
         mFpsCounter.update(Time::Delta());
         VOX_CHECK(mInitialized, "Gui not initialized");
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+        ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+        ImGui::Begin("Viewport",nullptr,flags);
+        ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+
+        ImGui::Image(
+            viewportTextureID,
+            viewportSize
+        );
+        ImGui::End();
         renderTreePanel();
 
         renderSelectedOptions();

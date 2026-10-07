@@ -1,7 +1,7 @@
 {
     "shaders": {
-        "FRAGMENT": "shaders/baseShader.frag",
-        "VERTEX": "shaders/baseShader.vert"
+        "VERTEX": "shaders/baseShader.vert",
+        "FRAGMENT": "shaders/baseShader.frag"
     },
     "polygonMode": "LINE",
     "cullMode": "NONE",

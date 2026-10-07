@@ -88,5 +88,6 @@ VULKAN_NS
 
         TextureRef getBackBuffer() override;
         VulkanFrameSync& getCurrentFrame() const;
+        Ref<CommandBuffer> getCmdBuffer() const override;
     };
 NS_END
