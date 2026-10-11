@@ -10,24 +10,34 @@
 #include "VoxEngine/render/RenderCore.h"
 
 VOX_NS
+    class Engine {
+        Ref<Render::Renderer> mRenderer = nullptr;
+        Ref<Resources::ResourcesManager> mResourceManager = nullptr;
 
-class Engine {
-    std::unordered_map<std::string, Render::Window*> mWindows;
-    Ref<Render::Renderer> mRenderer = nullptr;
-    Ref<Resources::ResourcesManager> mResourceManager = nullptr;
+        bool mInitialized = false;
+        bool mShouldClose = false;
+        InternedString mTitle;
+        Render::RenderAPI mRenderApi;
 
-    bool mInitialized = false;
-    std::string mTitle;
-    Render::RenderAPI mRenderApi;
+        NO_COPY_MOVE_DEFAULT(Engine)
 
-    NO_COPY_MOVE_DEFAULT(Engine)
-public:
-    Ref<Scene::Scene> scene;
-    explicit Engine(std::string mTitle, Render::RenderAPI renderApi);
-    ~Engine();
-    void init();
-    void run();
-    Render::Window* getWindow(std::string name) const;
-    Render::Renderer* getRenderer() const;
-};
+    public:
+        Ref<Scene::Scene> scene;
+
+        explicit Engine(InternedString mTitle, Render::RenderAPI renderApi);
+
+        ~Engine();
+
+        void init();
+
+        void run();
+
+        Render::Renderer *getRenderer() const;
+
+        void shutdown() {
+            LOG_INFO("Shutting down engine");
+            mShouldClose = true;
+        }
+    };
+
 NS_END

@@ -10,7 +10,7 @@
 #include "../../Editor/src/gui/Gui.h"
 #include "VoxEngine/resources/assets/MeshAsset.h"
 #include "VoxEngine/render/state/Shader.h"
-#include <VoxEngine/render/vulkan/VulkanFrameSync.h>
+#include <VoxEngine/render/vulkan/SwapChainFrameSync.h>
 #include <VoxEngine/render/vulkan/VulkanDevice.h>
 #include <VoxEngine/render/vulkan/VulkanDescriptorSet.h>
 #include <VoxEngine/render/vulkan/buffers/VulkanUniformBuffer.h>
@@ -48,11 +48,18 @@ RENDER_NS
             render(el);
         }
 
-        for (const auto &target: mRenderTargets) {
-            if (target->beginFrame() == -1) continue;
-            drawFrame(target);
-            target->endFrame();
+        if (mPresentTargets.size() > 0) {
+            for (const auto &presenter: mPresentTargets) {
+                for (const auto &target: mViewportTargets | std::ranges::views::values) {
+                    if (presenter->beginFrame() == -1) continue;
+                    drawFrame(target, presenter->getCmdBuffer());
+                    presenter->endFrame();
+                }
+            }
+        } else {
+            VOX_CHECK(false, "Headless render mode is not implemented")
         }
+
         for (auto &list: mDrawListByStateHash | std::views::values) {
             list.clear();
         }
@@ -67,23 +74,30 @@ RENDER_NS
     }
 
     void Renderer::createGraph() {
-        mGraph = new RenderGraph();
-        color = mGraph->createTexture("Color");
-        auto text =  mGraph->createTexture("Scene");
-        text->setExact(mBackend->createTexture(Format::BGRA8, Extent(1920, 1080)));
+        auto old = mGraph;
+        mGraph = new RenderGraph(old);
+        int i = 0;
+        auto viewportTextures = (AttachmentDesc*)malloc(sizeof(AttachmentDesc) * mViewportTargets.size());
+        for (const auto target : mViewportTargets) {
+            const auto text = mGraph->createTexture(target.first);
+            new (&viewportTextures[i]) AttachmentDesc{text, DISCARD_W_ATTACHMENT};
+            text->setExact([target]() {return target.second->getBackBuffer();});
+            i++;
+        }
 
-        auto geometry = new GeometryPass(GBUFFER_PASS, true, {{}}, {{text, DISCARD_W_ATTACHMENT}});
+        auto geometry = new GeometryPass(GBUFFER_PASS, true, {{}}, ArrayView(viewportTextures, mViewportTargets.size()));
         mGraph->addPass(geometry);
     }
 
-    void Renderer::addRenderTarget(RenderTargetRef viewport) {
-        mRenderTargets.emplace_back(viewport);
+    void Renderer::addViewportTarget(InternedString name, RenderTargetRef viewport) {
+        mViewportTargets[name] = viewport;
     }
 
-    void Renderer::drawFrame(RenderTargetRef target) {
-        color->setExact(target->getBackBuffer());
+    void Renderer::addPresentTarget(Ref<RenderTarget> target) {
+        mPresentTargets.emplace_back(target);
+    }
 
-        auto cmdBuffer = target->getCmdBuffer();
+    void Renderer::drawFrame(RenderTargetRef target, Ref<CommandBuffer> cmdBuffer) {
         executeGraph(target, cmdBuffer);
     }
 
@@ -120,7 +134,7 @@ RENDER_NS
         Vector<BlendState> blendState = BlendState::GetBuilder().startAttachment().endAttachment().build();
         RasterizerState rasterizerState = RasterizerState::GetBuilder().cullMode(mat->cullMode).polygonMode(mat->polygonMode).build();
         MSAAState msaaState = MSAAState(MSAASamples::COUNT_1);
-        RenderingState renderingState = RenderingState({mRenderTargets[0]->getBackBuffer()->getFormat()}, Format::UNDEFINED, Format::UNDEFINED);
+        RenderingState renderingState = RenderingState({mViewportTargets.begin()->second->getBackBuffer()->getFormat()}, Format::UNDEFINED, Format::UNDEFINED);
         auto blend = ArrayView<BlendState>::Copy(blendState);
         PipelineStateDesc desc(shaderState, blend, rasterizerState, mat->topology, msaaState, renderingState);
 

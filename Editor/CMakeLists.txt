@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28)
 project(VoxEngine)
 include(FetchContent)
 
-set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Vulkan REQUIRED)
@@ -12,7 +12,7 @@ find_package(glm REQUIRED)
 FetchContent_Declare(
         imgui
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
-        GIT_TAG v1.92.6)
+        GIT_TAG docking)
 FetchContent_MakeAvailable(imgui)
 FetchContent_Declare(
         CLI11

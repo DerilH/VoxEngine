@@ -67,7 +67,7 @@ namespace Vox::Editor {
             }
 
             if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
-                ImGui::SetDragDropPayload("ASSET_ITEM", path.c_str(), path.size() + 1);
+                ImGui::SetDragDropPayload("ASSET_ITEM", mAsset->getPath().c_str(), mAsset->getPath().size() + 1);
                 ImGui::Text("Move: %s", fileName.c_str());
                 ImGui::EndDragDropSource();
             }

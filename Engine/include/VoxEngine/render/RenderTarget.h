@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <VoxCore/containers/Containers.h>
+
 #include "VoxCore/Define.h"
 #include "RenderResource.h"
 #include "Types.h"
@@ -14,7 +16,6 @@ RENDER_NS
 class RenderTarget : public RenderResource {
 protected:
     Extent mExtent;
-
 
     RenderTarget(Extent extent) : mExtent(extent) {}
 public:

@@ -20,11 +20,11 @@ namespace Vox::Editor {
             } else mAssetEditor->render();
         }
 
-        ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkSize.y - 200), ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, 200), ImGuiCond_Always);
-        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        // ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkSize.y - 200), ImGuiCond_Always);
+        // ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, 200), ImGuiCond_Always);
+        // ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 
-        ImGui::Begin("AssetExplorer", nullptr, windowFlags);
+        ImGui::Begin("AssetExplorer", nullptr);
 
         ImGuiTableFlags tableFlags = ImGuiTableFlags_Resizable
                                      | ImGuiTableFlags_BordersInnerV

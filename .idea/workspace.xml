@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="BackendCodeEditorMiscSettings">
-    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="5" type="long" />
+    <option name="/Default/Environment/Hierarchy/GeneratedFilesCacheKey/Timestamp/@EntryValue" value="34" type="long" />
     <option name="/Default/Environment/UserInterface/HierarchyView/ViewStyle/@EntryValue" value="SuperTypes" type="string" />
     <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
     <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
@@ -49,30 +49,36 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="395dc881-2005-4485-bc1e-6c1807e45dee" name="Changes" comment="Added TextureRenderTarget and its creation">
-      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanTextureRenderTarget.h" afterDir="false" />
+    <list default="true" id="395dc881-2005-4485-bc1e-6c1807e45dee" name="Changes" comment="Added geometry rendering to gui scene viewport">
+      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/FrameSync.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/windowing/WindowManager.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Engine/src/render/window/WindowManager.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/img.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Core/include/VoxCore/containers/ArrayView.h" beforeDir="false" afterPath="$PROJECT_DIR$/Core/include/VoxCore/containers/ArrayView.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/MainApp.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/MainApp.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/AssetExplorer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/AssetIcon.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Editor/src/gui/Gui.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/Gui.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Editor/src/gui/Gui.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/Gui.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Editor/src/gui/GuiRenderPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Editor/src/gui/GuiRenderPass.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderBackend.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderBackend.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/Engine.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/Engine.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderTarget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderTarget.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/TextureRenderTarget.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/TextureRenderTarget.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/passes/GeometryPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/passes/GeometryPass.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/passes/PassTransition.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/passes/PassTransition.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/passes/RenderPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/passes/RenderPass.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/Renderer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/Renderer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/graph/GraphTexture.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/graph/GraphTexture.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/graph/RenderGraph.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/graph/RenderGraph.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/Surface.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/Surface.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanFrameSync.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanFrameSync.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanFrameSync.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/SwapChainFrameSync.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/include/VoxEngine/render/windowing/Window.h" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/include/VoxEngine/render/windowing/Window.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/src/core/Engine.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/core/Engine.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/render/Renderer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/Renderer.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/render/graph/RenderGraph.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/graph/RenderGraph.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/passes/GeometryPass.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/passes/GeometryPass.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/FrameSync.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/SwapChainFrameSync.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/Surface.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/Surface.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/SwapChain.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/SwapChain.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanBackend.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanBackend.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanCommandBuffer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/vulkan/VulkanCommandBuffer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine/src/render/window/Window.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Engine/src/render/window/Window.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/run/resources/materials/test.vmat" beforeDir="false" afterPath="$PROJECT_DIR$/run/resources/materials/test.vmat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/run/resources/materials/test1.vmat" beforeDir="false" afterPath="$PROJECT_DIR$/run/resources/materials/test1.vmat" afterDir="false" />
     </list>
     <list id="e81bb849-25f8-4208-9cee-a6de65d0101f" name="NonProjectChanges" comment="">
       <change beforePath="$PROJECT_DIR$/ThirdParty/quill/.github/ISSUE_TEMPLATE/bug-report.md" beforeDir="false" />
@@ -93,8 +99,6 @@
       <change beforePath="$PROJECT_DIR$/ThirdParty/quill/README.md" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/ThirdParty/quill/docs/Doxyfile.in" beforeDir="false" afterPath="$PROJECT_DIR$/ThirdParty/quill/docs/Doxyfile.in" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ThirdParty/quill/include/quill/Backend.h" beforeDir="false" afterPath="$PROJECT_DIR$/ThirdParty/quill/include/quill/Backend.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/_deps/imgui-src/backends/sdlgpu3/shader.frag" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/_deps/imgui-src/backends/sdlgpu3/shader.frag" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/_deps/spirv_cross-src/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/_deps/spirv_cross-src/main.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -106,7 +110,7 @@
     <option name="completeInNamespacesByDefault" value="true" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="241" />
+    <option name="cachedIndexableFilesCount" value="242" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
@@ -134,9 +138,14 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/Editor/src/MainApp.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Engine/include/VoxEngine/Engine.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Engine/include/VoxEngine/render/RenderBackend.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/Debug.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/Queue.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Engine/include/VoxEngine/render/vulkan/VulkanState.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Engine/src/core/Engine.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Engine/src/render/Renderer.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file:///usr/include/vulkan/vulkan_core.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MacroExpansionManager">
@@ -205,7 +214,7 @@
     "onboarding.tips.debug.path": "/home/deril/CLionProjects/VoxEngine/main.cpp",
     "org.rust.first.attach.projects": "true",
     "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "preferences.fileTypes",
+    "settings.editor.selected.configurable": "CPPToolchains",
     "structure.view.defaults.are.configured": "true",
     "to.speed.mode.migration.done": "true",
     "vue.rearranger.settings.migration": "true"
@@ -544,7 +553,11 @@
       <workItem from="1791225103214" duration="8093000" />
       <workItem from="1791233415410" duration="13612000" />
       <workItem from="1791288763424" duration="17099000" />
-      <workItem from="1791312771005" duration="19195000" />
+      <workItem from="1791312771005" duration="19282000" />
+      <workItem from="1791358108250" duration="22553000" />
+      <workItem from="1791448500942" duration="379000" />
+      <workItem from="1791464102718" duration="654000" />
+      <workItem from="1791720491229" duration="2391000" />
     </task>
     <task id="LOCAL-00001" summary="first">
       <option name="closed" value="true" />
@@ -746,7 +759,15 @@
       <option name="project" value="LOCAL" />
       <updated>1791323570637</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="Added geometry rendering to gui scene viewport">
+      <option name="closed" value="true" />
+      <created>1791333025363</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1791333025363</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -796,7 +817,8 @@
     <MESSAGE value="Added compile option for strict Vulkan validation" />
     <MESSAGE value="Fixed window resizing" />
     <MESSAGE value="Added TextureRenderTarget and its creation" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added TextureRenderTarget and its creation" />
+    <MESSAGE value="Added geometry rendering to gui scene viewport" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added geometry rendering to gui scene viewport" />
     <option name="LAST_CHUNK_COMMIT_MESSAGE" value="Removed scene" />
   </component>
   <component name="XDebuggerManager">

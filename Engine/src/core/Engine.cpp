@@ -7,6 +7,7 @@
 
 #include <utility>
 #include <VoxEngine/render/RendererFactory.h>
+#include <VoxEngine/render/windowing/WindowManager.h>
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/scene/Scene.h>
 #include <VoxEngine/scene/components/MeshRendererComponent.h>
@@ -32,14 +33,10 @@ VOX_NS
         mResourceManager = &Resources::ResourcesManager::Get();
         Resources::ResourcesManager::Get().loadAll();
 
-        auto window = new Render::Window(mTitle, 1400, 900);
-        mWindows.emplace(mTitle,window);
-
         auto renderBackend = Render::CreateRenderBackend(Render::RenderAPI::VULKAN_API);
         mRenderer = Render::RendererFactory::Create(renderBackend);
-        mRenderer->init();
 
-        mRenderer->addRenderTarget(mRenderer->getBackend()->createWindowTarget(window));
+        mRenderer->init();
     }
 
     void Engine::run() {
@@ -65,17 +62,12 @@ VOX_NS
         });
         meshComp1.setMaterial(mat);
 
-        while (!mWindows[mTitle]->shouldClose()) {
+        while (!mShouldClose) {
             mResourceManager->processDirty();
             const auto renderable = scene->getAllRenderables();
             mRenderer->render(renderable);
             Render::Window::pollEvents();
         }
-    }
-
-    Render::Window * Engine::getWindow(std::string name) const {
-        const auto res = mWindows.find(name);
-        return res != mWindows.end() ? res->second : nullptr;
     }
 
     Render::Renderer* Engine::getRenderer() const {

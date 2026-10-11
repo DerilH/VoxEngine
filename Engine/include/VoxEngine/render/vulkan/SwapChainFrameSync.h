@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <VoxEngine/render/FrameSync.h>
 
 #include "Fence.h"
 #include "Semaphore.h"
@@ -12,7 +13,7 @@
 VULKAN_NS
     class VulkanDevice;
 
-    class VulkanFrameSync{
+    class SwapChainFrameSync : FrameSync{
         friend class VulkanDevice;
 
         const VulkanDevice &mDevice;
@@ -25,19 +26,20 @@ VULKAN_NS
         uint32_t mCurrentImageIndex = 0;
 
         std::optional<Semaphore> mRenderWaitSemaphore;
+        Ref<SwapChain> mSwapChain;
 
-        VulkanFrameSync(const VulkanDevice &device, Fence fence, Semaphore imageSemaphore, CommandBufferRef buffer, VulkanDescriptorPoolRef pool);
+        SwapChainFrameSync(const VulkanDevice &device, Ref<SwapChain> swapChain, Fence fence, Semaphore imageSemaphore, CommandBufferRef buffer, VulkanDescriptorPoolRef pool);
 
-        static VulkanFrameSync Create(const VulkanDevice &device);
+        static SwapChainFrameSync Create(const VulkanDevice &device, Ref<SwapChain> swapChain);
 
     public:
-        uint32_t begin(std::optional<std::reference_wrapper<SwapChain>> swapChain);
+        uint32_t begin() override;
 
-        void submit();
+        void submit() override;
 
         const Semaphore &getRenderWaitSemaphore() const { return mRenderWaitSemaphore.value(); }
         const Semaphore &getImageWaitSemaphore() const { return mImageWaitSemaphore; }
-        const CommandBufferRef getCmdBuffer() const { return mCommandBuffer; }
+        Ref<CommandBuffer> getCmdBuffer() const override { return mCommandBuffer; }
         uint32_t getCurrentImageIndex() const { return mCurrentImageIndex; }
         void setRenderWaitSemaphore(const Semaphore &semaphore) { mRenderWaitSemaphore.emplace(semaphore);}
     };

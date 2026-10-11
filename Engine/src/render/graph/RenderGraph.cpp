@@ -31,6 +31,17 @@ RENDER_NS
         return false;
     }
 
+    RenderGraph::RenderGraph(RenderGraph *old) {
+        if (old) {
+            for (auto const el: old->mSlots) {
+                auto tex = new GraphTexture(mTextures.size());
+                mTextures.emplace_back(tex);
+                mSlots.emplace(el.first, tex);
+            }
+            mDirty = true;
+        }
+    }
+
     void RenderGraph::addPass(RenderPass *pass) {
         mDirty = true;
         mPasses.emplace_back(pass);
@@ -133,10 +144,10 @@ RENDER_NS
         if (!pass->isControlPass && pass->getWrites().size() != 0) {
             auto size = pass->getWrites()[0].texture->getExact()->getExtent();
 
-            context.cmdBuffer->setViewportState(0, 0,size);
+            context.cmdBuffer->setViewportState(0, 0, size);
             context.cmdBuffer->setScissor(0, 0, size);
 
-            context.cmdBuffer->beginRenderPass(ArrayView(pass->getWrites().pData, pass->getWrites().size()), size, clear);
+            context.cmdBuffer->beginRenderPass(pass->getWrites(), size, clear);
             pass->setExtent(viewport->getSize());
             pass->execute(context);
             context.cmdBuffer->endRenderPass();

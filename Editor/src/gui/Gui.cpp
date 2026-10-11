@@ -7,11 +7,17 @@
 #include "VoxEngine/render/RenderBackend.h"
 #include "VoxEngine/render/vulkan/VulkanBackend.h"
 
+#include <vulkan/vulkan.h>
+
+#include <GLFW/glfw3.h>
+
 #include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_vulkan.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_vulkan.h>
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <VoxCore/Time.h>
+#include <VoxEngine/render/TextureRenderTarget.h>
 #include <VoxEngine/render/vulkan/VulkanState.h>
 #include <VoxEngine/render/windowing/Window.h>
 #include <VoxEngine/render/vulkan/VulkanResourceCast.h>
@@ -19,7 +25,6 @@
 #include <VoxEngine/render/vulkan/VulkanUtil.h>
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/scene/components/Transform.h>
-#include <GLFW/glfw3.h>
 #include "GuiRenderPass.h"
 #include "VoxEngine/scene/components/MeshRendererComponent.h"
 
@@ -37,11 +42,12 @@ namespace Vox::Editor {
 
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
-        const ImGuiIO &io = ImGui::GetIO();
-        (void) io;
+        ImGuiIO &io = ImGui::GetIO();
+        io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+        io.FontGlobalScale = 2;
         ImGui::StyleColorsDark();
 
-        ImGui_ImplGlfw_InitForVulkan((GLFWwindow*)mWindow->getHandle(), true);
+        ImGui_ImplGlfw_InitForVulkan((GLFWwindow *) mWindow->getHandle(), true);
         auto device = Render::Vulkan::ResourceCast(mRenderer->getBackend()->getDevice());
 
         VkDescriptorPool pool; {
@@ -86,21 +92,18 @@ namespace Vox::Editor {
         init_info.PipelineInfoMain.PipelineRenderingCreateInfo = {.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
         init_info.PipelineInfoMain.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
 
-        auto targets = mRenderer->getRenderTargets();
+        auto targets = mRenderer->getPresentTargets();
         VkFormat _swapchainImageFormat = VK_FORMAT_UNDEFINED;
         if (!targets.empty()) {
             _swapchainImageFormat = Render::Vulkan::toVk(targets[0]->getBackBuffer()->getFormat());
-        } else {
-            // Fallback if no target yet
-            auto tempTarget = mRenderer->getBackend()->createWindowTarget(&window);
-            _swapchainImageFormat = Render::Vulkan::toVk(tempTarget->getBackBuffer()->getFormat());
         }
         init_info.PipelineInfoMain.PipelineRenderingCreateInfo.pColorAttachmentFormats = &_swapchainImageFormat;
 
         ImGui_ImplVulkan_Init(&init_info);
 
-        auto &graph = mEngine->getRenderer()->getGraph();
-        auto guiPass = new GuiRenderPass(Vox::Render::RenderPassType::UI_PASS, {{graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_R_SHADER}}, {{graph.getTexture("Color"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT}}, this);
+        auto &graph = mRenderer->getGraph();
+
+        auto guiPass = new GuiRenderPass(Vox::Render::RenderPassType::UI_PASS, {{graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_R_SHADER}}, {{graph.getTexture("Out"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT}}, this);
         graph.addPass(guiPass);
 
         mInitialized = true;
@@ -108,6 +111,7 @@ namespace Vox::Editor {
 
     bool registered = false;
     ImTextureID viewportTextureID;
+
     void Gui::render(Render::RenderContext cmd, Ref<Render::Texture> sceneTexture) {
         //Used for proper buffer deletions
         //TODO: replace with deferred buffers deletion
@@ -137,11 +141,11 @@ namespace Vox::Editor {
             VkSampler viewportSampler;
             vkCreateSampler(*device, &samplerInfo, nullptr, &viewportSampler);
 
-            viewportTextureID = (ImTextureID)ImGui_ImplVulkan_AddTexture(
-                    viewportSampler,
-                    Render::Vulkan::ResourceCast(sceneTexture)->getView(),
-                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-                );
+            viewportTextureID = (ImTextureID) ImGui_ImplVulkan_AddTexture(
+                viewportSampler,
+                Render::Vulkan::ResourceCast(sceneTexture)->getView(),
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            );
             registered = true;
         }
 
@@ -152,14 +156,38 @@ namespace Vox::Editor {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
+
+        ImGuiViewport *viewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(viewport->WorkPos);
+        ImGui::SetNextWindowSize(viewport->WorkSize);
+        ImGui::SetNextWindowViewport(viewport->ID);
+
+        ImGuiWindowFlags hostWindowFlags =
+                ImGuiWindowFlags_NoDocking |
+                ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoCollapse |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoBringToFrontOnFocus |
+                ImGuiWindowFlags_NoNavFocus |
+                ImGuiWindowFlags_NoBackground;
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+        ImGui::Begin("MainDockSpaceWindow", nullptr, hostWindowFlags);
+        ImGui::PopStyleVar(3);
+
+        ImGuiID dockspaceID = ImGui::GetID("MainDockSpace");
+        ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+        ImGui::End();
+
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-        ImGui::Begin("Viewport",nullptr,flags);
+        ImGui::Begin("Viewport", nullptr, flags);
         ImVec2 viewportSize = ImGui::GetContentRegionAvail();
 
-        ImGui::Image(
-            viewportTextureID,
-            viewportSize
-        );
+        ImGui::Image(viewportTextureID,viewportSize);
         ImGui::End();
         renderTreePanel();
 
@@ -175,12 +203,7 @@ namespace Vox::Editor {
     }
 
     void Gui::renderTreePanel() {
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->WorkPos, ImGuiCond_Always);
-        ImGui::SetNextWindowSize(ImVec2(200.0f, viewport->WorkSize.y * 0.5f), ImGuiCond_Always);
-        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-
-        ImGui::Begin("Scene", nullptr, windowFlags);
+        ImGui::Begin("Scene");
 
         auto objs = mEngine->scene->getRootObjects();
         for (const auto el: objs) {
@@ -209,15 +232,13 @@ namespace Vox::Editor {
 
     void Gui::renderSelectedOptions() {
         const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x - 300, viewport->WorkPos.y);
-        ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
+        // ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x - 300, viewport->WorkPos.y);
+        // ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 
-        ImVec2 size = ImVec2(300.0f, viewport->WorkSize.y);
-        ImGui::SetNextWindowSize(size, ImGuiCond_Always);
+        // ImVec2 size = ImVec2(300.0f, viewport->WorkSize.y);
+        // ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 
-        ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-
-        ImGui::Begin("Object options", nullptr, windowFlags);
+        ImGui::Begin("Object options");
 
         renderTransformOptions();
 
@@ -310,6 +331,5 @@ namespace Vox::Editor {
             } catch (std::exception &e) {
             }
         }
-
     }
 }

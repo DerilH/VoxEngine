@@ -18,7 +18,7 @@ VULKAN_NS
     class VulkanDevice;
     class QueueFamily;
     class Queue;
-    class VulkanFrameSync;
+    class SwapChainFrameSync;
     class SwapChain;
 
     struct SwapChainSupportDetails {
@@ -55,7 +55,7 @@ VULKAN_NS
         VkSurfaceFormatKHR mSurfaceFormat;
         Format mImageFormat;
 
-        Vector<VulkanFrameSync*> mFrames{};
+        Vector<SwapChainFrameSync*> mFrames{};
         Vector<Semaphore*> mRenderFinishedSemaphores;
         uint8_t mCurrentFrame = 0;
 
@@ -82,12 +82,12 @@ VULKAN_NS
         void setDevice(VulkanDevice* device);
         const VulkanDevice* getDevice() const;
         const Queue *getPresentQueue() const;
-        void presentFrame(const VulkanFrameSync &frame) const;
+        void presentFrame(const SwapChainFrameSync &frame) const;
 
         void resize(Extent extent) override;
 
         TextureRef getBackBuffer() override;
-        VulkanFrameSync& getCurrentFrame() const;
+        SwapChainFrameSync& getCurrentFrame() const;
         Ref<CommandBuffer> getCmdBuffer() const override;
     };
 NS_END

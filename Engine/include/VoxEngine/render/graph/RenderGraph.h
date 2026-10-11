@@ -25,7 +25,7 @@ RENDER_NS
 
         bool mDirty = true;
     public:
-        explicit RenderGraph() = default;
+        explicit RenderGraph(RenderGraph* old);
         NO_COPY_MOVE(RenderGraph);
 
         void addPass(RenderPass* pass);

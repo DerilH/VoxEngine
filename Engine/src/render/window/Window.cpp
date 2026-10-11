@@ -6,19 +6,9 @@
 #include <VoxEngine/render/windowing/Window.h>
 
 namespace Vox::Render {
-    bool Window::sGlfwInitialized = false;
-
-    Window::Window(std::string title, const int width, const int height) : mTitle(std::move(title)), mExtent(Extent(width,height)){
-        glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
-        InitGlfw();
-
-        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-
-        mHandle = glfwCreateWindow(mExtent.width, mExtent.height, title.c_str(), nullptr, nullptr);
-
-
-        glfwSetWindowUserPointer(mHandle, this);
-        glfwSetWindowSizeCallback(mHandle, [](GLFWwindow *p, const int w, const int h) {
+    Window::Window(InternedString title, Extent size, GLFWwindow *handle) : mTitle(std::move(title)), mExtent(size), mHandle(handle) {
+        glfwSetWindowUserPointer(handle, this);
+        glfwSetWindowSizeCallback(handle, [](GLFWwindow *p, const int w, const int h) {
             auto *window = static_cast<Window *>(glfwGetWindowUserPointer(p));
             window->mExtent.width = w;
             window->mExtent.height = h;
@@ -26,8 +16,35 @@ namespace Vox::Render {
         });
     }
 
+    Window *Window::Create(InternedString title, Extent size, int targetMonitorIndex, bool maximized) {
+        int monitorCount = 0;
+        GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
+        VOX_CHECK(monitorCount > 0, "Cannot create window, no monitors found");
+        if (monitorCount < targetMonitorIndex) {
+            LOG_WARN("Monitor with by index {} not found, fallback to first found", targetMonitorIndex)
+            targetMonitorIndex = 0;
+        }
+        GLFWmonitor *targetMonitor = monitors[targetMonitorIndex];
+
+
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+
+        const auto handle = glfwCreateWindow(size.width, size.height, title.c_str(), nullptr, nullptr);
+        VOX_CHECK(handle, "Unknown error when creating window");
+
+        if (maximized) {
+            int monitorX, monitorY;
+            glfwGetMonitorPos(targetMonitor, &monitorX, &monitorY);
+            glfwSetWindowPos(handle, monitorX + 100, monitorY + 100);
+            glfwMaximizeWindow(handle);
+            glfwGetWindowSize(handle, reinterpret_cast<int *>(&size.width), reinterpret_cast<int *>(&size.height));
+        }
+
+        return new Window(title, size, handle);
+    }
+
     std::string Window::getTitle() {
-            return mTitle;
+        return mTitle;
     }
 
     void Window::setTitle(std::string title) {
@@ -46,7 +63,7 @@ namespace Vox::Render {
     }
 
     bool Window::shouldClose() const {
-            return glfwWindowShouldClose(mHandle);
+        return glfwWindowShouldClose(mHandle);
     }
 
     void Window::makeCurrent() const {
@@ -57,18 +74,12 @@ namespace Vox::Render {
         glfwDestroyWindow(mHandle);
     }
 
-    void Window::InitGlfw() {
-        if (!sGlfwInitialized) {
-            glfwInit();
-            sGlfwInitialized = true;
-        }
-    }
-
-    void Window::terminateGLfw() {
-        if (sGlfwInitialized) {
-            glfwTerminate();
-            sGlfwInitialized = false;
-        }
+    void Window::setOnClose(std::function<void()> onClose) {
+        mOnClose = onClose;
+        glfwSetWindowCloseCallback(mHandle, [](GLFWwindow* window) {
+            auto w = (Window*)glfwGetWindowUserPointer(window);
+            w->mOnClose();
+        });
     }
 
     Extent Window::getExtent() const {

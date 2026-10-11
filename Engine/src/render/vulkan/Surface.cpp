@@ -5,7 +5,7 @@
 
 #include <VoxEngine/render/vulkan/VulkanDevice.h>
 #include <VoxEngine/render/vulkan/Surface.h>
-#include <VoxEngine/render/vulkan/VulkanFrameSync.h>
+#include <VoxEngine/render/vulkan/SwapChainFrameSync.h>
 #include <VoxEngine/render/vulkan/SwapChain.h>
 #include "VoxEngine/render/vulkan/VulkanUtil.h"
 #include "VoxEngine/render/windowing/Window.h"
@@ -128,7 +128,7 @@ namespace Vox::Render::Vulkan {
         return mPresentQueue;
     }
 
-    void Surface::presentFrame(const VulkanFrameSync &frame) const {
+    void Surface::presentFrame(const SwapChainFrameSync &frame) const {
         VOX_ASSERT(mPresentQueue != nullptr, "No queue provided for present")
         VOX_ASSERT(mCurrentSwapChain != nullptr, "No swapchain provided for present")
 
@@ -154,10 +154,9 @@ namespace Vox::Render::Vulkan {
 
     int32_t Surface::beginFrame() {
         this->update();
-        auto &e = this->getSwapChain();
 
         auto frame = mFrames[mCurrentFrame];
-        const uint32_t index = frame->begin(e);
+        const uint32_t index = frame->begin();
         if (index == -1 || mCurrentSwapChain->needsRebuild()) {
             LOG_VERBOSE("Swapchain rebuild needed");
             return -1;
@@ -192,12 +191,12 @@ namespace Vox::Render::Vulkan {
         mFrames.reserve(buffers);
         mRenderFinishedSemaphores.reserve(buffers);
         for (int i = 0; i < buffers; i++) {
-            mFrames.emplace_back(mDevice->createHeap<VulkanFrameSync>());
+            mFrames.emplace_back(mDevice->createHeap<SwapChainFrameSync>(mCurrentSwapChain));
             mRenderFinishedSemaphores.emplace_back(mDevice->createHeap<Semaphore>());
         }
     }
 
-    VulkanFrameSync &Surface::getCurrentFrame() const {
+    SwapChainFrameSync &Surface::getCurrentFrame() const {
         return *mFrames[mCurrentFrame];
     }
 

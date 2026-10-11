@@ -3,6 +3,16 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/ThirdParty/quill" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/buildtest/_deps/cli11-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/buildtest/_deps/imgui-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/buildtest/_deps/magic_enum-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/buildtest/_deps/spirv_cross-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/buildtest/_deps/yyjson-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/buildtest/build/_deps/cli11-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/buildtest/build/_deps/imgui-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/buildtest/build/_deps/magic_enum-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/buildtest/build/_deps/spirv_cross-src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/buildtest/build/_deps/yyjson-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/imgui-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/spirv_cross-src" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/cmake-build-release/_deps/imgui-src" vcs="Git" />
