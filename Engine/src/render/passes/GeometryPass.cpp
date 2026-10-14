@@ -6,6 +6,8 @@
 
 #include <VoxEngine/render/buffers/UniformBuffer.h>
 #include <VoxEngine/render/state/PipelineState.h>
+#include <VoxEngine/resources/ResourceManager.h>
+#include <VoxEngine/resources/assets/TextureAsset.h>
 
 #include "VoxEngine/render/Renderer.h"
 
@@ -18,7 +20,15 @@ RENDER_NS
 
             context.cmdBuffer->bindGroup(resManager->getCameraGroup());
             context.cmdBuffer->bindGroup(resManager->getModelGroup());
+            context.cmdBuffer->bindGroup(resManager->getSamplerGroup());
+
             for (const auto &item: entry.second) {
+                static Ref<Texture> text = nullptr;
+                if (!text) {
+                    auto t = context.renderer->getResourceManager()->get<Resources::TextureAsset>("textures/Wood.png");
+                    text = context.renderer->getBackend()->createTexture(Format::RGBA8, t->getExtent(), t->getPixels().pData, t->getPixels().size());
+                }
+                resManager->updateSample(text);
                 resManager->getModelBuffer()->write(&item.modelMat, sizeof(glm::mat4));
                 item.execute(context.cmdBuffer);
             }

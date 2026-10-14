@@ -4,6 +4,7 @@ Vox::Render::RenderResourceManager::RenderResourceManager(const Ref<RenderBacken
 }
 
 
+
 Vox::Ref<Vox::Render::PipelineState> Vox::Render::RenderResourceManager::getPipeline(PipelineStateDesc desc) {
     decltype(auto) it = mPipelineStateByHash[desc];
     if (it == nullptr) {

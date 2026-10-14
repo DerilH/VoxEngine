@@ -11,12 +11,18 @@ VULKAN_NS
         Ref<VulkanDevice> mDevice;
         Ref<VulkanDescriptorSet> mCameraDescSet;
         Ref<VulkanDescriptorSet> mModelDescSet;
+        Ref<VulkanDescriptorSet> mSamplerDescSet;
 
         Ref<PipelineState> createPSO(PipelineStateDesc &desc) override;
+
         Vector<VkDescriptorSetLayout> createDescriptorLayouts(const Vector<ShaderRef> &shaders);
+
         bool mCachePrepared = false;
+
     public:
         explicit VulkanRenderResourceManager(Ref<RenderBackend> backend, Ref<VulkanDevice> device);
+
+        void updateSample(Ref<Texture> texture) override;
 
         void prepareCache() override;
     };

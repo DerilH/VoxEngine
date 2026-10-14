@@ -20,9 +20,10 @@ VULKAN_NS
 
         explicit VulkanBackend(RenderAPI api);
 
+    public:
+
         explicit VulkanBackend() = delete;
 
-    public:
         virtual ~VulkanBackend() = default;
 
         int32_t beginFrame() override;
@@ -30,23 +31,26 @@ VULKAN_NS
         void endFrame() override;
 
         RenderTargetRef createWindowTarget(Ref<Window> window) const override;
+
         RenderTargetRef createTextureTarget(Extent extent, Format format) const override;
+
         CommandPoolRef createCommandPool() override;
 
         TextureRef createTexture(Format format, Extent extent) const override;
 
+        TextureRef createTexture(Format format, Extent extent, const void *data, uint32_t size) const override;
+
         // PipelineStateRef createPSO(const PipelineStateDesc& desc) override;
 
-        IndexBufferRef createIndexBuffer(const void* data, uint32_t size, IndexType type) override;
+        IndexBufferRef createIndexBuffer(const void *data, uint32_t size, IndexType type) override;
 
-        VertexBufferRef createVertexBuffer(const void* data, uint32_t size, BufferUsage usage) override;
+        VertexBufferRef createVertexBuffer(const void *data, uint32_t size, BufferUsage usage) override;
+
         UniformBufferRef createUniformBuffer(uint32_t size) override;
-
-        VmaAllocator createAllocator(const VulkanDevice& device);
 
         inline VkInstance getVkInstance() const { return mInstance; }
 
-        static RenderBackend* Create() {
+        static RenderBackend *Create() {
             return new VulkanBackend(RenderAPI::VULKAN_API);
         }
 

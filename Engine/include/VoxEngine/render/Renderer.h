@@ -28,8 +28,8 @@ RENDER_NS
         friend class RendererFactory;
 
     protected:
-        HashMap<InternedString, Ref<RenderTarget>> mViewportTargets;
-        Vector<Ref<RenderTarget>> mPresentTargets;
+        HashMap<InternedString, Ref<RenderTarget> > mViewportTargets;
+        Vector<Ref<RenderTarget> > mPresentTargets;
         Ref<FrameSync> mHeadlessFrame;
 
         int mBufferingLevel = 0;
@@ -41,7 +41,7 @@ RENDER_NS
         Ref<RenderResourceManager> mRenderResourceManager;
         Ref<Resources::ResourceManager> mResourceManager;
 
-        explicit Renderer(Ref<Resources::ResourceManager> resourceManager,Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend);
+        explicit Renderer(Ref<Resources::ResourceManager> resourceManager, Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend);
 
         void drawFrame(RenderTargetRef target, Ref<CommandBuffer> cmdBuffer);
 
@@ -59,6 +59,7 @@ RENDER_NS
         void setBuffering(char buffers);
 
         void addViewportTarget(InternedString name, RenderTargetRef target);
+
         void addPresentTarget(Ref<RenderTarget> target);
 
         void stop();
@@ -72,16 +73,16 @@ RENDER_NS
         void clearDrawList(const PipelineStateDesc &state);
 
         void draw(Ref<Scene::MeshRendererComponent> component);
+
         void updateCamera(Ref<Scene::CameraComponent> camera);
-        Ref<RenderBackend> getBackend() const;
 
-        Ref<RenderResourceManager> getRenderResourceManager() const;
-
+        Ref<RenderBackend> getBackend() const {return mBackend;}
+        Ref<Resources::ResourceManager> getResourceManager() const { return mResourceManager; }
+        Ref<RenderResourceManager> getRenderResourceManager() const { return mRenderResourceManager; }
         const HashMap<InternedString, RenderTargetRef> &getViewportTargets() const { return mViewportTargets; }
         const Vector<RenderTargetRef> &getPresentTargets() const { return mPresentTargets; }
 
-        RenderGraph &getGraph();
-
+        RenderGraph &getGraph() const { return *mGraph; }
         NO_COPY_MOVE_DEFAULT(Renderer);
     };
 

@@ -19,11 +19,12 @@ RENDER_NS
     protected:
         DeviceRef mCurrentDevice = nullptr;
 
-        RenderBackend(RenderAPI api) : api(api) {}
-        explicit RenderBackend() = delete;
+        explicit RenderBackend(const RenderAPI api) : api(api) {}
         ~RenderBackend() = default;
 
     public:
+        explicit RenderBackend() = delete;
+
         const RenderAPI api;
 
         virtual void init() = 0;
@@ -33,12 +34,13 @@ RENDER_NS
         virtual RenderTargetRef createTextureTarget(Extent extent, Format format) const = 0;
         virtual CommandPoolRef createCommandPool() = 0;
         virtual TextureRef createTexture(Format format, Extent extent) const = 0;
+        virtual TextureRef createTexture(Format format, Extent extent, const void* data, uint32_t size) const;
 
         virtual IndexBufferRef createIndexBuffer(const void* data, uint32_t size, IndexType type) = 0;
         virtual VertexBufferRef createVertexBuffer(const void* data, uint32_t size, BufferUsage usage) = 0;
         virtual UniformBufferRef createUniformBuffer(uint32_t size) = 0;
 
-        virtual DeviceRef getDevice() {return mCurrentDevice;}
+        DeviceRef getDevice() const {return mCurrentDevice;}
 
         NO_COPY_MOVE(RenderBackend);
     };

@@ -109,6 +109,24 @@ VULKAN_NS
         return device->createHeap<VulkanTexture>(format, extent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
     }
 
+    TextureRef VulkanBackend::createTexture(Format format, Extent extent, const void *data, uint32_t size) const {
+        const VulkanDevice* device = ResourceCast(mCurrentDevice);
+        auto staging = device->create<VulkanTransferBuffer>(size);
+
+        const Queue& queue = device->getQueue(TRANSFER_QUEUE);
+        CommandPool& pool = device->getCmdPool(TRANSFER_QUEUE);
+
+        auto texture = createTexture(format, extent);
+
+        VulkanCommandBuffer* cmdBuffer = ResourceCast(pool.allocBuffer());
+        cmdBuffer->begin();
+        staging.write(data, size);
+        staging.copy(cmdBuffer, texture, size);
+        cmdBuffer->end();
+        queue.submit({*cmdBuffer}, true);
+        return texture;
+    }
+
     // PipelineStateRef VulkanBackend::createPSO(const PipelineStateDesc& desc) {
         // VOX_ASSERT(isInitialized(), "Render backend not initialized");
         // const VulkanDevice* device = ResourceCast(mCurrentDevice);

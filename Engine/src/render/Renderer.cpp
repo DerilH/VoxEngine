@@ -170,18 +170,6 @@ RENDER_NS
         buff->write(&view, sizeof(glm::mat4), sizeof(glm::mat4));
     }
 
-    RenderBackend *Renderer::getBackend() const {
-        return mBackend;
-    }
-
-    Ref<RenderResourceManager> Renderer::getRenderResourceManager() const {
-        return mRenderResourceManager;
-    }
-
-    RenderGraph &Renderer::getGraph() {
-        return *mGraph;
-    }
-
     //    void VulkanRenderer::addRenderTarget(RenderTarget* target) {
     //        Renderer::addRenderTarget(target);
     //        const auto vert = Vox::Resources::ResourcesManager::Get().get<Resources::ShaderAsset>("shaders/baseShader.vert");

@@ -7,6 +7,7 @@
 #include <VoxCore/containers/ArrayView.h>
 
 #include "VulkanObject.h"
+#include "VulkanTexture.h"
 #include "VulkanTypes.h"
 
 VULKAN_NS
@@ -26,6 +27,6 @@ VULKAN_NS
         }
 
         void update(const VulkanDevice& device, uint32_t binding, const VulkanUniformBuffer& buffer);
+        void update(const VulkanDevice& device, uint32_t binding, const VulkanTexture& buffer);
     };
-
 NS_END

@@ -9,6 +9,9 @@
 #include <VoxEngine/render/vulkan/VulkanResourceCast.h>
 
 VULKAN_NS
+#define SAMPLER_BINDING 0
+#define SAMPLER_SET 1
+
 #define CAMERA_MATRICES_SIZE sizeof(glm::mat4) * 2
 #define CAMERA_MATRICES_BINDING 0
 #define CAMERA_MATRICES_SET 2
@@ -52,7 +55,7 @@ VULKAN_NS
         info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         info.bindingCount = 0;
         VK_CHECK(vkCreateDescriptorSetLayout(*mDevice, &info, nullptr, &layouts[0]), "Failed to create descriptor set layout");
-        VK_CHECK(vkCreateDescriptorSetLayout(*mDevice, &info, nullptr, &layouts[1]), "Failed to create descriptor set layout");
+        layouts[SAMPLER_SET] = mSamplerDescSet->getLayouts();
         layouts[CAMERA_MATRICES_SET] = mCameraDescSet->getLayouts();
         layouts[MODEL_MATRICES_SET] = mModelDescSet->getLayouts();
 
@@ -70,7 +73,7 @@ VULKAN_NS
         createInfo.pColorBlendState = &blendState;
 
         blendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        VkPipelineColorBlendAttachmentState byAttachment[blend.size() == 0 ? 1 : blend.size()];
+        VkPipelineColorBlendAttachmentState byAttachment[blend.empty() ? 1 : blend.size()];
         for (int i = 0; i < blend.size(); i++) {
             auto state = blend[i];
             auto &attachment = byAttachment[i];
@@ -235,8 +238,12 @@ VULKAN_NS
     VulkanRenderResourceManager::VulkanRenderResourceManager(Ref<RenderBackend> backend, Ref<VulkanDevice> device) : RenderResourceManager(backend), mDevice(device) {
     }
 
+    void VulkanRenderResourceManager::updateSample(Ref<Texture> texture) {
+        mSamplerDescSet->update(*mDevice, SAMPLER_BINDING, *ResourceCast(texture));
+    }
+
     void VulkanRenderResourceManager::prepareCache() {
-        mGlobalDescPool = mDevice->createHeap<VulkanDescriptorPool>(100, ArrayView<VkDescriptorPoolSize>({{toVk(ShaderResourceType::UNIFORM_BUFFER), 100}})); {
+        mGlobalDescPool = mDevice->createHeap<VulkanDescriptorPool>(100, ArrayView<VkDescriptorPoolSize>({{toVk(ShaderResourceType::COMBINED_IMAGE_SAMPLER), 100}, {toVk(ShaderResourceType::UNIFORM_BUFFER), 100}})); {
             VkDescriptorSetLayoutCreateInfo createInfo{};
             createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             createInfo.bindingCount = 1;
@@ -270,7 +277,25 @@ VULKAN_NS
             mModelBuffer = mDevice->createHeap<VulkanUniformBuffer>(MODEL_MATRICES_SIZE);
             mModelDescSet->update(*mDevice, MODEL_MATRICES_BINDING, *ResourceCast(mModelBuffer));
             mModelGroup = new VulkanBindGroup(mModelDescSet, MODEL_MATRICES_SET);
+        } {
+            VkDescriptorSetLayoutCreateInfo createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+            createInfo.bindingCount = 1;
+
+            VkDescriptorSetLayoutBinding binding{};
+            binding.binding = 0;
+            binding.descriptorCount = 1;
+            binding.descriptorType = toVk(ShaderResourceType::COMBINED_IMAGE_SAMPLER);
+            binding.pImmutableSamplers = nullptr;
+            binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+            createInfo.pBindings = &binding;
+
+            VkDescriptorSetLayout layout;
+            vkCreateDescriptorSetLayout(*mDevice, &createInfo, nullptr, &layout);
+            mSamplerDescSet = mDevice->createHeap<VulkanDescriptorSet>(mGlobalDescPool, layout);
+            mSamplerGroup = new VulkanBindGroup(mSamplerDescSet, SAMPLER_SET);
         }
+
         mCachePrepared = true;
     }
 

@@ -13,7 +13,7 @@ RESOURCES_NS
         unsigned char *img_data = stbi_load_from_memory(static_cast<stbi_uc const *>(data.pData), static_cast<int>(data.size()), &width, &height, &channels, 0);
         VOX_CHECK_FMT(img_data, "Cannot read image {}", path);
         const size_t size = width * height * channels;
-        return new TextureAsset(path, ArrayView<void>(img_data, size));
+        return new TextureAsset(path, ArrayView<void>(img_data, size), Extent(width,height));
     }
 
 NS_END

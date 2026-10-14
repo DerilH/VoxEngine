@@ -14,8 +14,10 @@ RENDER_NS
         Ref<RenderBackend> mBackend;
         Ref<BindGroup> mCameraGroup;
         Ref<BindGroup> mModelGroup;
+        Ref<BindGroup> mSamplerGroup;
         Ref<UniformBuffer> mCameraBuffer;
         Ref<UniformBuffer> mModelBuffer;
+        Ref<Texture> mSamplerTexture;
 
     private:
         virtual Ref<PipelineState> createPSO(PipelineStateDesc &desc) = 0;
@@ -34,6 +36,12 @@ RENDER_NS
         Ref<BindGroup> getModelGroup() const {
             return mModelGroup;
         }
+
+        Ref<BindGroup> getSamplerGroup() const {
+            return mSamplerGroup;
+        }
+
+        virtual void updateSample(Ref<Texture> texture) = 0;
 
         Ref<UniformBuffer> getCameraBuffer() const {
             return mCameraBuffer;

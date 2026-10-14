@@ -57,7 +57,6 @@ RENDER_NS
 
         virtual void bindGroup(Ref<BindGroup> bindGroup) = 0;
 
-
         static PassTransition deduceNextTransition(PassTransition lastTransition, TargetUsage nextTarget) {
             switch (nextTarget) {
                 case TargetUsage::W_ATTACHMENT: {

@@ -23,7 +23,8 @@ VULKAN_NS
         explicit VulkanTransferBuffer(VkBuffer buffer, VmaAllocation alloc, const VmaAllocationInfo &allocInfo);
     public:
         void write(const void* data, size_t size);
-        void copy(const CommandBufferRef cmdBuffer, const RenderBufferRef buffer, VkDeviceSize size);
+        void copy(CommandBufferRef cmdBuffer, RenderBufferRef buffer, VkDeviceSize size);
+        void copy(CommandBufferRef cmdBuffer, Ref<Texture> buffer, VkDeviceSize size);
     };
 
 NS_END

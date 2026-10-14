@@ -8,7 +8,7 @@
 #include "VoxEngine/render/vulkan/VulkanResourceCast.h"
 
 VULKAN_NS
-    VulkanTransferBuffer VulkanTransferBuffer::Create(const VulkanDevice& device, VkDeviceSize size) {
+    VulkanTransferBuffer VulkanTransferBuffer::Create(const VulkanDevice &device, VkDeviceSize size) {
         VkBufferCreateInfo bufferCreateInfo{};
         bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
@@ -25,11 +25,11 @@ VULKAN_NS
         return VulkanTransferBuffer(buffer, allocation, info);
     }
 
-    VulkanTransferBuffer::VulkanTransferBuffer(const VkBuffer buffer, const VmaAllocation alloc, const VmaAllocationInfo& allocInfo) : RenderBuffer(BufferUsage::TRANSFER_SRC), VulkanRenderBuffer(buffer, alloc, allocInfo), TransferBuffer() {
+    VulkanTransferBuffer::VulkanTransferBuffer(const VkBuffer buffer, const VmaAllocation alloc, const VmaAllocationInfo &allocInfo) : RenderBuffer(BufferUsage::TRANSFER_SRC), VulkanRenderBuffer(buffer, alloc, allocInfo), TransferBuffer() {
         VOX_ASSERT_PTR(allocInfo.pMappedData, "buffer not mapped")
     }
 
-    void VulkanTransferBuffer::write(const void* data, size_t size) {
+    void VulkanTransferBuffer::write(const void *data, size_t size) {
         memcpy(mAllocInfo.pMappedData, data, size);
     }
 
@@ -42,6 +42,23 @@ VULKAN_NS
         copyRegion.srcOffset = 0;
         copyRegion.size = size;
         vkCmdCopyBuffer(*ResourceCast(cmdBuffer), mHandle, *dstBuffer, 1, &copyRegion);
+    }
+
+    void VulkanTransferBuffer::copy(CommandBufferRef cmdBuffer, Ref<Texture> image, VkDeviceSize size) {
+        VkBufferImageCopy region{};
+        region.bufferOffset = 0;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = 0;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+
+        region.imageOffset = {0, 0, 0};
+        region.imageExtent = {image->getExtent().width, image->getExtent().height, 1};
+
+        vkCmdCopyBufferToImage(*ResourceCast(cmdBuffer), *this, ResourceCast(image)->getHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
     }
 
 NS_END
