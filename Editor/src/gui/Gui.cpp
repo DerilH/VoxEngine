@@ -45,6 +45,11 @@ namespace Vox::Editor {
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         io.FontGlobalScale = 2;
         ImGui::StyleColorsDark();
+        auto &style = ImGui::GetStyle();
+        style.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+        style.Colors[ImGuiCol_ChildBg] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+        style.Colors[ImGuiCol_TitleBg] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+        style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
 
         ImGui_ImplGlfw_InitForVulkan((GLFWwindow *) mWindow->getHandle(), true);
         auto device = Render::Vulkan::ResourceCast(mRenderer->getBackend()->getDevice());
@@ -142,12 +147,15 @@ namespace Vox::Editor {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
+        ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+
         ImGui::Begin("MainDockSpaceWindow", nullptr, hostWindowFlags);
         ImGui::PopStyleVar(3);
 
         ImGuiID dockspaceID = ImGui::GetID("MainDockSpace");
-        ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+        ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);
         ImGui::End();
+        ImGui::PopStyleColor();
 
         for (const auto &screen: mScreens | std::views::values) {
             screen->render(context);

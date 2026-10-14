@@ -1,7 +1,7 @@
 #version 450
 layout(set = 2, binding = 0) uniform GlobalData {
-    mat4 view;
     mat4 proj;
+    mat4 view;
 } globalData;
 
 layout(set = 3, binding = 0) uniform UniformBufferObject {

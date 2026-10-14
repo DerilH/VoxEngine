@@ -94,7 +94,7 @@ VULKAN_NS
         }
         VkDependencyInfo depInfo{};
         depInfo.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
-        depInfo.imageMemoryBarrierCount = 1;
+        depInfo.imageMemoryBarrierCount = transitions.size();
         depInfo.pImageMemoryBarriers = barriers;
 
         vkCmdPipelineBarrier2(*this, &depInfo);
@@ -117,7 +117,7 @@ VULKAN_NS
             // }
             attachmentInfo[i].loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
             attachmentInfo[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-            attachmentInfo[i].clearValue = {{0, 0.0f, 0.0f, 0.0f}};
+            attachmentInfo[i].clearValue = {{0, 0.0f, 0.0f, 1.0f}};
         }
 
         VkRenderingInfo renderingInfo{};

@@ -45,10 +45,9 @@ VULKAN_NS
     }
 
     Vector<VkDescriptorSetLayout> VulkanRenderResourceManager::createDescriptorLayouts(const Vector<ShaderRef> &shaders) {
-        // HashMap<uint8_t, HashMap<uint8_t, VkDescriptorSetLayoutBinding> > bindingsBySet;
-
         Vector<VkDescriptorSetLayout> layouts;
         layouts.resize(4);
+
         VkDescriptorSetLayoutCreateInfo info{};
         info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
         info.bindingCount = 0;
@@ -56,56 +55,6 @@ VULKAN_NS
         VK_CHECK(vkCreateDescriptorSetLayout(*mDevice, &info, nullptr, &layouts[1]), "Failed to create descriptor set layout");
         layouts[CAMERA_MATRICES_SET] = mCameraDescSet->getLayouts();
         layouts[MODEL_MATRICES_SET] = mModelDescSet->getLayouts();
-
-        for (const auto shader: shaders) {
-            auto compiledShader = shader->getCompiledShader();
-
-            for (const auto &uniform: compiledShader->uniforms) {
-                switch (uniform.set) {
-                    case CAMERA_MATRICES_SET:
-                    case MODEL_MATRICES_SET:
-                        break;
-                    default:
-                        VOX_CHECK_FMT(false, "Invalid uniform set({}) or binding({}) in shader {}, check shader layout conventions", uniform.set, uniform.binding, shader->getCompiledShader()->name)
-                }
-                // if (binding.stageFlags != 0) {
-                // binding.stageFlags |= toVk(shader->getStage());
-                // } else {
-                // binding.binding = uniform.binding;
-                // binding.descriptorCount = uniform.isArray() ? uniform.getArraySize() : 1;
-                // binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-                // binding.stageFlags = toVk(shader->getStage());
-                // binding.pImmutableSamplers = nullptr;
-                // }
-            }
-        }
-        //
-        // Vector<VkDescriptorSetLayout> layouts(bindingsBySet.size());
-        // for (int i = 0; i < bindingsBySet.size(); i++) {
-        //     auto &bindings = bindingsBySet[i];
-        //
-        //     VkDescriptorSetLayoutBinding vkBindings[bindings.size()];
-        //     const VkDescriptorSetLayoutBinding *vkBindingsPtr = nullptr;
-        //     if (!bindings.empty()) {
-        //         // if (i == 0) {
-        //         // layouts[i] = device.getGlobalDescriptorSet()->getLayouts();
-        //         // continue;
-        //         // }
-        //
-        //         for (const auto [index, binding]: bindings | std::views::values | std::views::enumerate) {
-        //             vkBindings[index] = binding;
-        //         }
-        //         vkBindingsPtr = vkBindings;
-        //     }
-        //
-        //     VkDescriptorSetLayoutCreateInfo layoutInfo{};
-        //     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-        //     layoutInfo.bindingCount = bindings.size();
-        //     layoutInfo.pBindings = vkBindingsPtr;
-        //
-        //     VK_CHECK(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &layouts[i]),
-        //              "Failed to create descriptor set layout");
-        // }
 
         return layouts;
     }
@@ -121,7 +70,7 @@ VULKAN_NS
         createInfo.pColorBlendState = &blendState;
 
         blendState.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-        VkPipelineColorBlendAttachmentState byAttachment[blend.size()];
+        VkPipelineColorBlendAttachmentState byAttachment[blend.size() == 0 ? 1 : blend.size()];
         for (int i = 0; i < blend.size(); i++) {
             auto state = blend[i];
             auto &attachment = byAttachment[i];
@@ -136,7 +85,6 @@ VULKAN_NS
         }
         blendState.attachmentCount = blend.size();
         blendState.pAttachments = byAttachment;
-
 
         //MSAA
         auto &msaa = desc.getMSAA();
@@ -195,7 +143,7 @@ VULKAN_NS
         auto &shaderState = desc.getShader();
         auto &shaders = shaderState.shaders();
 
-        VkPipelineShaderStageCreateInfo stages[shaders.size()];
+        VkPipelineShaderStageCreateInfo stages[shaders.size() == 0 ? 1 : shaders.size()];
         createInfo.stageCount = shaders.size();
         createInfo.pStages = stages;
 
@@ -225,7 +173,7 @@ VULKAN_NS
 
         auto &inputs = (*vertexShader)->getCompiledShader()->inputs;
 
-        VkVertexInputAttributeDescription attributes[inputs.size()];
+        VkVertexInputAttributeDescription attributes[inputs.size() == 0 ? 1 : inputs.size()];
 
         int offset = 0;
         for (int i = 0; i < inputs.size(); i++) {
@@ -293,9 +241,10 @@ VULKAN_NS
             createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             createInfo.bindingCount = 1;
             VkDescriptorSetLayoutBinding binding{};
+            binding.binding = 0;
             binding.descriptorCount = 1;
             binding.descriptorType = toVk(ShaderResourceType::UNIFORM_BUFFER);
-            binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
             createInfo.pBindings = &binding;
 
             VkDescriptorSetLayout layout;
@@ -309,9 +258,10 @@ VULKAN_NS
             createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             createInfo.bindingCount = 1;
             VkDescriptorSetLayoutBinding binding{};
+            binding.binding = 0;
             binding.descriptorCount = 1;
             binding.descriptorType = toVk(ShaderResourceType::UNIFORM_BUFFER);
-            binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+            binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
             createInfo.pBindings = &binding;
 
             VkDescriptorSetLayout layout;
