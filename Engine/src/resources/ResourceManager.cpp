@@ -10,6 +10,7 @@
 #include <VoxEngine/resources/assets/MaterialLoader.h>
 #include <VoxEngine/resources/assets/MaterialWriter.h>
 #include <VoxEngine/resources/assets/ShaderAsset.h>
+#include <VoxEngine/resources/assets/TextureLoader.h>
 
 #include "VoxEngine/resources/assets/FbxLoader.h"
 #include "VoxEngine/resources/assets/ShaderLoader.h"
@@ -24,6 +25,7 @@ RESOURCES_NS
         map.emplace(".vert", makeUPtr<ShaderLoader>());
         map.emplace(".frag", makeUPtr<ShaderLoader>());
         map.emplace(".vmat", makeUPtr<MaterialLoader>());
+        map.emplace(".png", makeUPtr<TextureLoader>());
         return map;
     }();
 

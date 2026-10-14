@@ -11,19 +11,13 @@
 RENDER_NS
     class UniformBuffer : virtual public RenderBuffer {
     protected:
-        UniformBinding mBinding;
-
-        UniformBuffer(const UniformBinding binding) : mBinding(binding) {
+        UniformBuffer() {
         }
 
     public:
-        virtual void write(const void* data, uint32_t size) = 0;
+        virtual void write(const void *data, uint32_t size) = 0;
 
-        inline void bind(CommandBufferRef cmdBuffer, uint32_t offset) {
-            cmdBuffer->bindUniformBuffer(this);
-        }
-
-        virtual void* getInternalDescriptorSet() const { return nullptr; }
+        virtual void write(const void *data, uint32_t size, uint32_t offset) = 0;
     };
 
 NS_END

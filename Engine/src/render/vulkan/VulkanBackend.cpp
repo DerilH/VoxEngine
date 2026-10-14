@@ -109,11 +109,11 @@ VULKAN_NS
         return device->createHeap<VulkanTexture>(format, extent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
     }
 
-    PipelineStateRef VulkanBackend::createPSO(const PipelineStateDesc& desc) {
-        VOX_ASSERT(isInitialized(), "Render backend not initialized");
-        const VulkanDevice* device = ResourceCast(mCurrentDevice);
-        return device->createHeap<VulkanPipelineState>(desc);
-    }
+    // PipelineStateRef VulkanBackend::createPSO(const PipelineStateDesc& desc) {
+        // VOX_ASSERT(isInitialized(), "Render backend not initialized");
+        // const VulkanDevice* device = ResourceCast(mCurrentDevice);
+        // return device->createHeap<VulkanPipelineState>(desc);
+    // }
 
     IndexBufferRef VulkanBackend::createIndexBuffer(const void* data, uint32_t size, IndexType type) {
         const VulkanDevice* device = ResourceCast(mCurrentDevice);

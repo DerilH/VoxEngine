@@ -12,6 +12,8 @@
 #include "Texture.h"
 
 RENDER_NS
+    class BindGroup;
+
     class CommandBuffer : RenderResource {
     protected:
         bool mStarted = false;
@@ -53,7 +55,7 @@ RENDER_NS
 
         virtual void bindVertexBuffer(VertexBufferRef buffer) = 0;
 
-        virtual void bindUniformBuffer(UniformBufferRef buffer) = 0;
+        virtual void bindGroup(Ref<BindGroup> bindGroup) = 0;
 
 
         static PassTransition deduceNextTransition(PassTransition lastTransition, TargetUsage nextTarget) {

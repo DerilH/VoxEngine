@@ -17,15 +17,12 @@ VULKAN_NS
         friend class VulkanDevice;
 
     protected:
-        VulkanDescriptorSetRef mDescriptorSet = nullptr;
-
         static VulkanUniformBuffer Create(const VulkanDevice& device, VkDeviceSize size);
 
         VulkanUniformBuffer(VkBuffer buffer, VmaAllocation alloc, const VmaAllocationInfo& allocInfo);
 
     public:
         void write(const void* data, uint32_t size) override;
-        void* getInternalDescriptorSet() const override { return mDescriptorSet; }
-        void setDescriptorSet(VulkanDescriptorSetRef set) { mDescriptorSet = set; }
+        void write(const void *data, uint32_t size, uint32_t offset) override;
     };
 NS_END

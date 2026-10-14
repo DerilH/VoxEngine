@@ -20,10 +20,6 @@ VULKAN_NS
         PhysicalDevice mPhysicalDevice;
         HashMap<QueueType, Queue> mQueues;
         HashMap<QueueType, VulkanCommandPool&> mCmdPools;
-        VulkanDescriptorPoolRef mGlobalDescriptorPool = nullptr;
-        VulkanDescriptorSetRef mGlobalDescriptors = nullptr;
-        VkDescriptorSetLayout mModelDescriptorSetLayout = VK_NULL_HANDLE;
-        class VulkanUniformBuffer* mGlobalUniformBuffer = nullptr;
         VkInstance mVkInstance;
 
         VulkanDevice(VkDevice handle, const PhysicalDevice &physicalDevice, HashMap<QueueType, Queue> queues, VkInstance backend);
@@ -39,9 +35,7 @@ VULKAN_NS
         const Queue &getQueue(QueueType type) const;
         VulkanCommandPool& getCmdPool(QueueType type) const;
         VmaAllocator getAllocator() const;
-        const VulkanDescriptorSetRef& getGlobalDescriptorSet() const;
-        VkDescriptorSetLayout getModelDescriptorSetLayout() const;
-        VulkanDescriptorSetRef createDescriptorSet(VkDescriptorSetLayout layout) const;
+        VulkanDescriptorSetRef createDescriptorSet(Ref<VulkanDescriptorPool> pool, VkDescriptorSetLayout layout) const;
 
         void waitIdle() const;
 

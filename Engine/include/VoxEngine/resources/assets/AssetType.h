@@ -11,7 +11,8 @@ enum class AssetType : uint16_t {
     MODEL,
     MESH,
     MATERIAL,
-    SHADER
+    SHADER,
+    TEXTURE
 };
 
 constexpr std::string_view operator+(const AssetType type) noexcept {

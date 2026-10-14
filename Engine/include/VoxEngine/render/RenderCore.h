@@ -4,8 +4,14 @@
 
 #pragma once
 
+#include <VoxCore/Pointers.h>
+
 #include "VoxCore/Define.h"
+
 RENDER_NS
+    class RenderResourceManager;
+    class RenderBackend;
+
     typedef enum {
         VULKAN_API,
         OPENGL_API,
@@ -13,6 +19,9 @@ RENDER_NS
         DX12_API
     } RenderAPI;
 
-class RenderBackend;
-RenderBackend* CreateRenderBackend(RenderAPI api);
+
+    RenderBackend *CreateRenderBackend(RenderAPI api);
+
+    Ref<RenderResourceManager> CreateRenderResourceManager(Ref<RenderBackend> api);
+
 NS_END

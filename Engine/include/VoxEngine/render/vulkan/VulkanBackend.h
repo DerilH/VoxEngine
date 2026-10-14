@@ -35,7 +35,7 @@ VULKAN_NS
 
         TextureRef createTexture(Format format, Extent extent) const override;
 
-        PipelineStateRef createPSO(const PipelineStateDesc& desc) override;
+        // PipelineStateRef createPSO(const PipelineStateDesc& desc) override;
 
         IndexBufferRef createIndexBuffer(const void* data, uint32_t size, IndexType type) override;
 

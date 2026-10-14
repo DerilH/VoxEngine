@@ -21,7 +21,9 @@ VULKAN_NS
         VulkanDescriptorSet(VkDescriptorSet handle, VkDescriptorSetLayout layout) : VulkanObject(handle), mLayout(layout) {}
     public:
         NO_COPY_MOVE_DEFAULT(VulkanDescriptorSet);
-        VkDescriptorSetLayout getLayouts() const;
+        VkDescriptorSetLayout getLayouts() const {
+            return mLayout;
+        }
 
         void update(const VulkanDevice& device, uint32_t binding, const VulkanUniformBuffer& buffer);
     };

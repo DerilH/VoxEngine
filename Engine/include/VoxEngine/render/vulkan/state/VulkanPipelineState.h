@@ -16,13 +16,11 @@ VULKAN_NS
     class VulkanPipelineState : public PipelineState, public VulkanObject<VkPipeline> {
         friend class VulkanDevice;
         friend class VulkanCommandBuffer;
-        Vector<VkDescriptorSetLayout> mDescriptorLayouts;
         VkPipelineLayout mLayout;
 
-        VulkanPipelineState(const PipelineStateDesc& desc, VkPipeline handle, VkPipelineLayout layout, Vector<VkDescriptorSetLayout>& descriptorLayouts);
+        VulkanPipelineState(const PipelineStateDesc& desc, VkPipeline handle, VkPipelineLayout layout);
 
-        static VulkanPipelineState Create(const VulkanDevice& device, const PipelineStateDesc& desc);
-
+        static VulkanPipelineState Create(const VulkanDevice &device, PipelineStateDesc desc, const VkGraphicsPipelineCreateInfo& info);
     public:
         void bind(CommandBufferRef cmdBuffer) override {
             cmdBuffer->bindPipelineState(this);

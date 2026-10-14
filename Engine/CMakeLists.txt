@@ -35,6 +35,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(magic_enum)
 
+FetchContent_Declare(
+        stb
+        GIT_REPOSITORY https://github.com/nothings/stb.git
+        GIT_TAG        master
+)
+
+FetchContent_MakeAvailable(stb)
+add_library(stb INTERFACE)
+target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
+
 file(GLOB_RECURSE VOX_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
@@ -58,6 +68,7 @@ target_link_libraries(VoxEngine
         assimp::assimp
         VoxCore
         project_options
+        stb
 )
 
 target_include_directories(VoxEngine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

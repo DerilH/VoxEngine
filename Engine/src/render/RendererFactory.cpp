@@ -3,10 +3,13 @@
 //
 
 #include <VoxEngine/render/RendererFactory.h>
-#include <VoxEngine/resources/ResourceManager.h>
+#include <VoxEngine/render/Renderer.h>
 
 RENDER_NS
-    Renderer* RendererFactory::Create(RenderBackend *backend, Ref<Resources::ResourceManager> resManager) {
-        return new Renderer(resManager, backend);
+    Renderer* RendererFactory::Create(RenderAPI api, Ref<Resources::ResourceManager> resManager) {
+        auto back = CreateRenderBackend(api);
+        auto res = CreateRenderResourceManager(back);
+
+        return new Renderer(resManager, res, back);
     }
 NS_END

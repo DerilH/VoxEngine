@@ -4,24 +4,22 @@
 
 #include "VoxEngine/render/passes/GeometryPass.h"
 
-#include <VoxEngine/render/vulkan/VulkanDescriptorSet.h>
-#include <VoxEngine/render/vulkan/VulkanResourceCast.h>
+#include <VoxEngine/render/buffers/UniformBuffer.h>
+#include <VoxEngine/render/state/PipelineState.h>
 
 #include "VoxEngine/render/Renderer.h"
 
 RENDER_NS
     void GeometryPass::execute(RenderContext context) {
+        auto resManager = context.renderer->getRenderResourceManager();
         for (auto &entry: context.renderer->getDrawLists()) {
-            auto state = context.renderer->getRenderResourceManager()->getPipeline(entry.first);
+            auto state = resManager->getPipeline(entry.first);
             state->bind(context.cmdBuffer);
+
+            context.cmdBuffer->bindGroup(resManager->getCameraGroup());
+            context.cmdBuffer->bindGroup(resManager->getModelGroup());
             for (const auto &item: entry.second) {
-
-                auto vkDevice = Vulkan::ResourceCast(context.renderer->getBackend()->getDevice());
-
-                VkDescriptorSet globalSet = vkDevice->getGlobalDescriptorSet()->getHandle();
-                auto l = Vulkan::ResourceCast(context.cmdBuffer)->getCurrentLayout();
-                vkCmdBindDescriptorSets(Vulkan::ResourceCast(context.cmdBuffer)->getHandle(), VK_PIPELINE_BIND_POINT_GRAPHICS, l, 0, 1, &globalSet, 0, nullptr);
-
+                resManager->getModelBuffer()->write(&item.modelMat, sizeof(glm::mat4));
                 item.execute(context.cmdBuffer);
             }
         }

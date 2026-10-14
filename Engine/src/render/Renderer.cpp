@@ -25,12 +25,13 @@ namespace Vox::Scene {
 }
 
 RENDER_NS
-    Renderer::Renderer(Ref<Resources::ResourceManager> resManager, Ref<RenderBackend> backend) : mBackend(backend), mRenderResourceManager(new RenderResourceManager(backend)), mResourceManager(resManager), backendApi(backend->api) {
+    Renderer::Renderer(Ref<Resources::ResourceManager> resManager, Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend) : mBackend(backend), mRenderResourceManager(renderResManager), mResourceManager(resManager), backendApi(backend->api) {
     }
 
     void Renderer::init() {
         setBuffering(3);
         createGraph();
+        mRenderResourceManager->prepareCache();
     }
 
     void Renderer::render(Ref<Scene::RendererComponent> el) {
@@ -46,7 +47,7 @@ RENDER_NS
         for (const auto el: renderable) {
             render(el);
         }
-
+        updateCamera();
         if (mPresentTargets.size() > 0) {
             for (const auto &presenter: mPresentTargets) {
                 for (const auto &target: mViewportTargets | std::ranges::views::values) {
@@ -76,11 +77,11 @@ RENDER_NS
         auto old = mGraph;
         mGraph = new RenderGraph(old);
         int i = 0;
-        auto viewportTextures = (AttachmentDesc*)malloc(sizeof(AttachmentDesc) * mViewportTargets.size());
-        for (const auto target : mViewportTargets) {
+        auto viewportTextures = (AttachmentDesc *) malloc(sizeof(AttachmentDesc) * mViewportTargets.size());
+        for (const auto target: mViewportTargets) {
             const auto text = mGraph->createTexture(target.first);
-            new (&viewportTextures[i]) AttachmentDesc{text, DISCARD_W_ATTACHMENT};
-            text->setExact([target]() {return target.second->getBackBuffer();});
+            new(&viewportTextures[i]) AttachmentDesc{text, DISCARD_W_ATTACHMENT};
+            text->setExact([target]() { return target.second->getBackBuffer(); });
             i++;
         }
 
@@ -118,7 +119,7 @@ RENDER_NS
 
     void Renderer::draw(Ref<Scene::MeshRendererComponent> component) {
         auto mesh = mRenderResourceManager->getMesh(component->getMesh());
-        glm::mat4 identity(1.0f);
+        glm::mat4 modelMat(1.0f);
 
         auto mat = component->getMaterial();
         auto vertPath = mat->shaders.at(ShaderStage::VERTEX);
@@ -138,19 +139,31 @@ RENDER_NS
         PipelineStateDesc desc(shaderState, blend, rasterizerState, mat->topology, msaaState, renderingState);
 
         auto t = component->gameObject;
-        identity = glm::translate(identity, t->transform->getPos());
-        identity = identity * glm::mat4_cast(t->transform->getRotation());
-        identity = glm::scale(identity, t->transform->getScale());
-        mesh->getModelUbo()->write(&identity, sizeof(identity));
+        modelMat = glm::translate(modelMat, t->transform->getPos());
+        modelMat = modelMat * glm::mat4_cast(t->transform->getRotation());
+        modelMat = glm::scale(modelMat, t->transform->getScale());
 
-        mDrawListByStateHash[desc].emplace_back(mesh);
+        mDrawListByStateHash[desc].emplace_back(mesh, modelMat);
     }
 
-    void Renderer::draw(Ref<Resources::ShaderAsset> vertexShaderAsset, Ref<Resources::ShaderAsset> fragmentShaderAsset, Resources::ModelAsset *model) {
-        for (int i = 0; i < model->getNestedCount(); i++) {
-            auto mesh = model->getNested<Resources::MeshAsset>(i);
-            // draw(TODO);
-        }
+    void Renderer::updateCamera() {
+        glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+        glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+        glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+        auto view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
+
+        float fov = glm::radians(45.0f);
+        float aspect = 1400.0f / 900.0f;
+        float zNear = 0.1f;
+        float zFar = 100.0f;
+
+        auto proj = glm::perspective(fov, aspect, zNear, zFar);
+        proj[1][1] *= -1.0f;
+
+        auto buff = mRenderResourceManager->getCameraBuffer();
+        buff->write(&proj, sizeof(glm::mat4));
+        buff->write(&view, sizeof(glm::mat4), sizeof(glm::mat4));
     }
 
     RenderBackend *Renderer::getBackend() const {

@@ -10,8 +10,9 @@
 RENDER_NS
 struct DrawItem {
     RenderMesh* mesh;
+    glm::mat4 modelMat;
 
-    DrawItem(RenderMesh* mesh) : mesh(mesh) {
+    DrawItem(RenderMesh* mesh, glm::mat4 modelMat) : mesh(mesh), modelMat(modelMat) {
     }
 
     void execute(CommandBufferRef cmdBuffer) const {

@@ -6,8 +6,7 @@
 #include <VoxEngine/render/vulkan/VulkanDevice.h>
 
 VULKAN_NS
-    VulkanUniformBuffer VulkanUniformBuffer::Create(const VulkanDevice& device, VkDeviceSize size) {
-
+    VulkanUniformBuffer VulkanUniformBuffer::Create(const VulkanDevice &device, VkDeviceSize size) {
         VkBufferCreateInfo bufferCreateInfo{};
         bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
         bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
@@ -23,13 +22,18 @@ VULKAN_NS
         return {buffer, allocation, info};
     }
 
-    VulkanUniformBuffer::VulkanUniformBuffer(VkBuffer buffer, VmaAllocation alloc, const VmaAllocationInfo& allocInfo) : RenderBuffer(BufferUsage::UNIFORM), VulkanRenderBuffer(buffer, alloc, allocInfo), UniformBuffer(UniformBinding(0,0)) {
+    VulkanUniformBuffer::VulkanUniformBuffer(VkBuffer buffer, VmaAllocation alloc, const VmaAllocationInfo &allocInfo) : RenderBuffer(BufferUsage::UNIFORM), VulkanRenderBuffer(buffer, alloc, allocInfo), UniformBuffer() {
     }
 
-    void VulkanUniformBuffer::write(const void* data, uint32_t size) {
-        void* mappedData = mAllocInfo.pMappedData;
-        if (mappedData) {
-            memcpy(mappedData, data, std::min((uint32_t)mAllocInfo.size, size));
+    void VulkanUniformBuffer::write(const void *data, uint32_t size) {
+        if (void *mappedData = mAllocInfo.pMappedData) {
+            memcpy(mappedData, data, std::min(static_cast<uint32_t>(mAllocInfo.size), size));
+        }
+    }
+
+    void VulkanUniformBuffer::write(const void *data, uint32_t size, uint32_t offset) {
+        if (void *mappedData = mAllocInfo.pMappedData) {
+            memcpy(static_cast<char8_t *>(mappedData) + offset, data, std::min(static_cast<uint32_t>(mAllocInfo.size), size));
         }
     }
 

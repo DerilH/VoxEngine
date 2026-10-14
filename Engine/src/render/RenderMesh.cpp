@@ -11,9 +11,6 @@ RENDER_NS
     void RenderMesh::use(const CommandBufferRef cmdBuffer) const {
         mVBuffer->bind(cmdBuffer);
         mIBuffer->bind(cmdBuffer);
-        if (mModelUbo) {
-            mModelUbo->bind(cmdBuffer, 0);
-        }
     }
 
     uint32_t RenderMesh::getIndexCount() const {

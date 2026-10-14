@@ -31,8 +31,7 @@ VOX_NS
     void Engine::init() {
         mResourceManager->loadAll();
 
-        const auto renderBackend = Render::CreateRenderBackend(Render::RenderAPI::VULKAN_API);
-        mRenderer = Render::RendererFactory::Create(renderBackend, mResourceManager);
+        mRenderer = Render::RendererFactory::Create(Render::RenderAPI::VULKAN_API, mResourceManager);
 
         mRenderer->init();
     }
@@ -47,7 +46,7 @@ VOX_NS
         auto meshComp = Scene::MeshRendererComponent(obj);
         obj->attachComponent(&meshComp);
         meshComp.setMeshProvider([this]() {
-            const auto t = mResourceManager->get<Resources::ModelAsset>("teapot.fbx");
+            const auto t = mResourceManager->get<Resources::ModelAsset>("fbx.fbx");
             return t->getNested<Resources::MeshAsset>(0);
         });
         meshComp.setMaterial(mat);

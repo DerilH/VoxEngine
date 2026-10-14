@@ -1,10 +1,10 @@
 #version 450
-layout(set = 0, binding = 0) uniform GlobalData {
+layout(set = 2, binding = 0) uniform GlobalData {
     mat4 view;
     mat4 proj;
 } globalData;
 
-layout(set = 1, binding = 0) uniform UniformBufferObject {
+layout(set = 3, binding = 0) uniform UniformBufferObject {
     mat4 model;
 } ubo;
 

@@ -41,7 +41,7 @@ RENDER_NS
         Ref<RenderResourceManager> mRenderResourceManager;
         Ref<Resources::ResourceManager> mResourceManager;
 
-        explicit Renderer(Ref<Resources::ResourceManager> resourceManager, Ref<RenderBackend> backend);
+        explicit Renderer(Ref<Resources::ResourceManager> resourceManager,Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend);
 
         void drawFrame(RenderTargetRef target, Ref<CommandBuffer> cmdBuffer);
 
@@ -72,9 +72,7 @@ RENDER_NS
         void clearDrawList(const PipelineStateDesc &state);
 
         void draw(Ref<Scene::MeshRendererComponent> component);
-
-        void draw(Ref<Resources::ShaderAsset> vertexShaderAsset, Ref<Resources::ShaderAsset> fragmentShaderAsset, Resources::ModelAsset *model);
-
+        void updateCamera();
         Ref<RenderBackend> getBackend() const;
 
         Ref<RenderResourceManager> getRenderResourceManager() const;

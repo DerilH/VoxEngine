@@ -71,7 +71,7 @@ RESOURCES_NS
             auto normals = readVec3Array(mesh->mNormals, mesh->mNumVertices);
             auto uvs = readVec2Array(mesh->mTextureCoords[0], mesh->mNumVertices);
             auto indices = readIndices(mesh->mFaces, mesh->mNumFaces);
-            auto interleaved = createInterleaved(vertices,vertices);
+            auto interleaved = createInterleaved(vertices,uvs);
             nested[i] = new MeshAsset(path + "/" + mesh->mName.C_Str(), interleaved, vertices, normals, uvs, indices);
             LOG_VERBOSE("Mesh loaded {}", nested[i]->getPath());
         }

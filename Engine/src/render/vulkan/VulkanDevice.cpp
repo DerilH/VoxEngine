@@ -23,70 +23,6 @@ namespace Vox::Render::Vulkan {
             mCmdPools.emplace(type, *this->createHeap<VulkanCommandPool>(queue.getFamily()));
         }
         mAllocator = createAllocator();
-        initGlobalDescriptors();
-    }
-
-    void VulkanDevice::initGlobalDescriptors() {
-        mGlobalDescriptorPool = this->createHeap<VulkanDescriptorPool>(100, ArrayView<VkDescriptorPoolSize>({{toVk(ShaderResourceType::UNIFORM_BUFFER), 100}}));
-
-        {
-            VkDescriptorSetLayoutCreateInfo createInfo{};
-            createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            createInfo.bindingCount = 1;
-            VkDescriptorSetLayoutBinding binding{};
-            binding.descriptorCount = 1;
-            binding.descriptorType = toVk(ShaderResourceType::UNIFORM_BUFFER);
-            binding.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS;
-            createInfo.pBindings = &binding;
-
-            VkDescriptorSetLayout layout;
-            vkCreateDescriptorSetLayout(*this, &createInfo, nullptr, &layout);
-            mGlobalDescriptors = this->createHeap<VulkanDescriptorSet>(mGlobalDescriptorPool, layout);
-        }
-
-        {
-            VkDescriptorSetLayoutCreateInfo createInfo{};
-            createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            createInfo.bindingCount = 1;
-            VkDescriptorSetLayoutBinding binding{};
-            binding.descriptorCount = 1;
-            binding.binding = 0;
-            binding.descriptorType = toVk(ShaderResourceType::UNIFORM_BUFFER);
-            binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-            createInfo.pBindings = &binding;
-
-            vkCreateDescriptorSetLayout(*this, &createInfo, nullptr, &mModelDescriptorSetLayout);
-        }
-
-        struct GlobalData {
-            glm::mat4 view;
-            glm::mat4 proj;
-        };
-
-        mGlobalUniformBuffer = this->createHeap<VulkanUniformBuffer>(sizeof(GlobalData));
-
-        GlobalData data{};
-
-        glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 3.0f);
-        glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-        glm::vec3 cameraUp     = glm::vec3(0.0f, 1.0f, 0.0f);
-
-        data.view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
-
-        float fov    = glm::radians(45.0f);
-        float aspect = 1400.0f / 900.0f;
-        float zNear  = 0.1f;
-        float zFar   = 100.0f;
-
-        data.proj = glm::perspective(fov, aspect, zNear, zFar);
-
-        data.proj[1][1] *= -1.0f;
-        void* mappedData = mGlobalUniformBuffer->getAllocationInfo().pMappedData;
-        if (mappedData) {
-            memcpy(mappedData, &data, sizeof(GlobalData));
-        }
-
-        mGlobalDescriptors->update(*this, 0, *mGlobalUniformBuffer);
     }
 
     PhysicalDevice VulkanDevice::getPhysicalDevice() const {
@@ -113,16 +49,8 @@ namespace Vox::Render::Vulkan {
         return mAllocator;
     }
 
-    const VulkanDescriptorSetRef &VulkanDevice::getGlobalDescriptorSet() const {
-        return mGlobalDescriptors;
-    }
-
-    VkDescriptorSetLayout VulkanDevice::getModelDescriptorSetLayout() const {
-        return mModelDescriptorSetLayout;
-    }
-
-    VulkanDescriptorSetRef VulkanDevice::createDescriptorSet(VkDescriptorSetLayout layout) const {
-        return this->createHeap<VulkanDescriptorSet>(mGlobalDescriptorPool, layout);
+    VulkanDescriptorSetRef VulkanDevice::createDescriptorSet(Ref<VulkanDescriptorPool> pool, VkDescriptorSetLayout layout) const {
+        return this->createHeap<VulkanDescriptorSet>(pool, layout);
     }
 
     void VulkanDevice::waitIdle() const {

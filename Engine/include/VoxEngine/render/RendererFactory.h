@@ -3,17 +3,21 @@
 //
 
 #pragma once
-#include "Renderer.h"
+#include <VoxCore/Pointers.h>
+#include <VoxEngine/resources/ResourceManager.h>
+
 #include "RenderCore.h"
 
 RENDER_NS
+    class Renderer;
+
     class RendererFactory {
         virtual void t() = 0;
 
         virtual ~RendererFactory() = default;
 
     public:
-        static Renderer *Create(RenderBackend *backend, Ref<Resources::ResourceManager> resManager);
+        static Renderer *Create(RenderAPI backend, Ref<Resources::ResourceManager> resManager);
     };
 
 NS_END

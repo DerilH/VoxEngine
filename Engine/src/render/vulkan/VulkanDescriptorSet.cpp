@@ -21,10 +21,6 @@ VULKAN_NS
         return {set, layout};
     }
 
-    VkDescriptorSetLayout VulkanDescriptorSet::getLayouts() const {
-        return mLayout;
-    }
-
     void VulkanDescriptorSet::update(const VulkanDevice& device, uint32_t binding, const VulkanUniformBuffer& buffer) {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = buffer.getHandle();

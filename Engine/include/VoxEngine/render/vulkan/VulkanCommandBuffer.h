@@ -49,7 +49,7 @@ VULKAN_NS
 
         void bindVertexBuffer(VertexBufferRef buffer) override;
 
-        void bindUniformBuffer(UniformBufferRef buffer) override;
+        void bindGroup(Ref<BindGroup> bindGroup) override;
 
         VkPipelineLayout getCurrentLayout() const { return mCurrentLayout; }
     private:

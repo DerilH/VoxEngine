@@ -111,9 +111,9 @@ VULKAN_NS
             //TODO: change layout to currently used by image
             // auto t = ResourceCast(attachments[i].texture->getExact());
             // if (t->currentTransition == PassTransition::DISCARD_R_SHADER){
-                // attachmentInfo[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            // attachmentInfo[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             // } else {
-                attachmentInfo[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            attachmentInfo[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             // }
             attachmentInfo[i].loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
             attachmentInfo[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -164,13 +164,11 @@ VULKAN_NS
         vkCmdBindVertexBuffers(*this, 0, 1, vertexBuffers, offsets);
     }
 
-    void VulkanCommandBuffer::bindUniformBuffer(UniformBufferRef buffer) {
+    void VulkanCommandBuffer::bindGroup(Ref<BindGroup> bindGroup) {
         VOX_ASSERT(mStarted, "Command buffer not started")
 
-        if (auto internalSet = (VulkanDescriptorSet *) buffer->getInternalDescriptorSet()) {
-            VkDescriptorSet meshSet = internalSet->getHandle();
-            vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, 1, 1, &meshSet, 0, nullptr);
-        }
+        auto set = ResourceCast(bindGroup)->getSet()->getHandle();
+        vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, ResourceCast(bindGroup)->getSetId(), 1, &set, 0, nullptr);
     }
 
     VkImageMemoryBarrier2 createBarrier(PassTransition transition, Ref<VulkanTexture> texture) {
@@ -272,10 +270,10 @@ VULKAN_NS
                 imageBarrier.dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT;
                 break;
             case W_ATTACHMENT_R_SHADER:
-                imageBarrier.oldLayout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                imageBarrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageBarrier.srcStageMask  = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-                imageBarrier.dstStageMask  = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+                imageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
                 imageBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
                 imageBarrier.dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT;
                 break;
