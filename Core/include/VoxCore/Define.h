@@ -7,6 +7,7 @@ constexpr int GIGABYTE_SIZE = MEGABYTE_SIZE * 1024;
 
 #define VOX_NS namespace Vox {
 #define RENDER_NS namespace Vox::Render {
+#define INPUT_NS namespace Vox::Input {
 #define SCENE_NS namespace Vox::Scene {
 #define SHADERS_NS namespace Vox::Render::Shaders {
 #define VULKAN_NS namespace Vox::Render::Vulkan {

@@ -42,13 +42,16 @@ RENDER_NS
         }
     }
 
-    void Renderer::render(HashSet<Ref<Scene::RendererComponent> > renderable) {
+    void Renderer::render(Ref<Scene::Scene> scene) {
         Time::Update();
-        for (const auto el: renderable) {
+        for (const auto el: scene->getAllRenderables()) {
             render(el);
         }
-        updateCamera();
-        if (mPresentTargets.size() > 0) {
+        if (const auto activeCamera = scene->getActiveCamera()) {
+            updateCamera(activeCamera);
+        }
+
+        if (!mPresentTargets.empty()) {
             for (const auto &presenter: mPresentTargets) {
                 for (const auto &target: mViewportTargets | std::ranges::views::values) {
                     if (presenter->beginFrame() == -1) continue;
@@ -146,9 +149,10 @@ RENDER_NS
         mDrawListByStateHash[desc].emplace_back(mesh, modelMat);
     }
 
-    void Renderer::updateCamera() {
-        glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-        glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+    void Renderer::updateCamera(Ref<Scene::CameraComponent> camera) {
+        //TODO make proper cameras
+        glm::vec3 cameraPos = camera->gameObject->transform->getPos();
+        glm::vec3 cameraTarget = cameraPos + camera->gameObject->transform->getForward();
         glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
         auto view = glm::lookAt(cameraPos, cameraTarget, cameraUp);

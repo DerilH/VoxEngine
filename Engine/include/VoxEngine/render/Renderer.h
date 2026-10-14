@@ -52,7 +52,7 @@ RENDER_NS
 
         void init();
 
-        void render(HashSet<Ref<Scene::RendererComponent> > renderable);
+        void render(Ref<Scene::Scene> scene);
 
         void render(Ref<Scene::RendererComponent> el);
 
@@ -72,7 +72,7 @@ RENDER_NS
         void clearDrawList(const PipelineStateDesc &state);
 
         void draw(Ref<Scene::MeshRendererComponent> component);
-        void updateCamera();
+        void updateCamera(Ref<Scene::CameraComponent> camera);
         Ref<RenderBackend> getBackend() const;
 
         Ref<RenderResourceManager> getRenderResourceManager() const;

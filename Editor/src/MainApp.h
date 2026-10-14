@@ -7,6 +7,8 @@
 
 #include <VoxEngine/render/vulkan/VulkanState.h>
 #include <CLI/CLI.hpp>
+#include <VoxEngine/scene/GameObject.h>
+#include <VoxEngine/scene/components/Transform.h>
 
 #include "gui/Gui.h"
 
@@ -38,11 +40,36 @@ public:
         mEngine->getRenderer()->addPresentTarget(windowTarget);
         mEngine->getRenderer()->createGraph();
 
-        auto& graph = mEngine->getRenderer()->getGraph();
-        auto outText = graph.createTexture("Out");
-        outText->setExact([windowTarget]() {return windowTarget->getBackBuffer();});
 
-        window->onClose += [this](auto w){mEngine->shutdown();};
+        window->onKeyPressed += [this](auto w, auto key, auto action) {
+            auto camera = mEngine->scene->getActiveCamera();
+            if (camera) {
+                if (action == Vox::Input::KeyAction::RELEASE) return;
+                auto transform = camera->gameObject->transform;
+                auto pos = transform->getPos();
+
+                switch (key) {
+                    case Vox::Input::Key::W:
+                        transform->setPos(pos + transform->getForward());
+                        break;
+                    case Vox::Input::Key::S:
+                        transform->setPos(pos + -transform->getForward());
+                        break;
+                    case Vox::Input::Key::A:
+                        transform->setPos(pos + -transform->getRight());
+                        break;
+                    case Vox::Input::Key::D:
+                        transform->setPos(pos + transform->getRight());
+                        break;
+                }
+            }
+        };
+
+        auto &graph = mEngine->getRenderer()->getGraph();
+        auto outText = graph.createTexture("Out");
+        outText->setExact([windowTarget]() { return windowTarget->getBackBuffer(); });
+
+        window->onClose += [this](auto w) { mEngine->shutdown(); };
         gui = new Vox::Editor::Gui();
         gui->init(*Vox::Render::WindowManager::Get().getMainWindow(), *mEngine);
 

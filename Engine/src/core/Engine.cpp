@@ -17,6 +17,7 @@
 #include "VoxEngine/resources/assets/ShaderAsset.h"
 #include "VoxEngine/render/RenderBackend.h"
 #include "VoxEngine/resources/assets/MeshAsset.h"
+#include "VoxEngine/scene/components/CameraComponent.h"
 
 VOX_NS
     constexpr const char* SHADERS_SRC_PATH = "./resources/shaders";
@@ -51,19 +52,15 @@ VOX_NS
         });
         meshComp.setMaterial(mat);
 
-        // auto obj1 = scene->createObject("TestTeapot1");
-        // auto meshComp1 = Scene::MeshRendererComponent(obj1);
-        // obj1->attachComponent(&meshComp1);
-        // meshComp1.setMeshProvider([this]() {
-            // const auto t = mResourceManager->get<Resources::ModelAsset>("teapot1.fbx");
-            // return t->getNested<Resources::MeshAsset>(0);
-        // });
-        // meshComp1.setMaterial(mat);
+
+        //TODO add separate camera for editor;
+        auto camera = scene->createObject("DefaultCamera");
+        camera->attachComponent(new Scene::CameraComponent(camera));
+        scene->setActiveCamera(camera->findComponent<Scene::CameraComponent>());
 
         while (!mShouldClose) {
             mResourceManager->processDirty();
-            const auto renderable = scene->getAllRenderables();
-            mRenderer->render(renderable);
+            mRenderer->render(scene.get());
             Render::Window::pollEvents();
         }
     }

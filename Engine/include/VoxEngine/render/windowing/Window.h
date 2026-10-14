@@ -5,6 +5,7 @@
 #include <VoxCore/Pointers.h>
 #include <VoxCore/containers/Containers.h>
 #include <VoxCore/signal/Event.h>
+#include <VoxEngine/input/Key.h>
 
 #include "VoxCore/math/Extent.h"
 
@@ -20,6 +21,7 @@ namespace Vox::Render {
     public:
         Event<Ref<Window>> onClose;
         Event<Extent> onResize;
+        Event<Ref<Window>, Input::Key, Input::KeyAction> onKeyPressed;
 
         Extent getSize() const {
             return mExtent;

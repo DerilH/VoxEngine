@@ -32,6 +32,10 @@ void Vox::Scene::Scene::removeRenderable(Ref<RendererComponent> renderable) {
     mRenderables.erase(renderable);
 }
 
-Vox::HashSet<Vox::Scene::RendererComponent *> Vox::Scene::Scene::getAllRenderables() {
-    return mRenderables;
+void Vox::Scene::Scene::addCamera(Ref<CameraComponent> camera) {
+    mCameras.emplace(camera);
+}
+
+void Vox::Scene::Scene::removeCamera(Ref<CameraComponent> camera) {
+    mCameras.erase(camera);
 }

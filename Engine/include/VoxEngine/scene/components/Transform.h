@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/vec3.hpp>
 #include <VoxCore/Define.h>
+#include <VoxCore/math/Define.h>
 #include <VoxCore/math/Types.h>
 
 #include "Component.h"
@@ -36,6 +37,14 @@ SCENE_NS
 
         Quat getRotation() const {
             return mRotation;
+        }
+
+        Vec3 getForward() const {
+            return FORWARD_VECTOR * mRotation;
+        }
+
+        Vec3 getRight() const {
+            return RIGHT_VECTOR * mRotation;
         }
 
         void setPos(const Vec3 pos) {
