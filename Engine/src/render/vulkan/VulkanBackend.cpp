@@ -106,7 +106,7 @@ VULKAN_NS
     TextureRef VulkanBackend::createTexture(Format format, Extent extent) const {
         VOX_ASSERT(isInitialized(), "Render backend not initialized");
         const VulkanDevice* device = ResourceCast(mCurrentDevice);
-        return device->createHeap<VulkanTexture>(format, extent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+        return device->createHeap<VulkanTexture>(format, extent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_2_TRANSFER_DST_BIT_KHR);
     }
 
     TextureRef VulkanBackend::createTexture(Format format, Extent extent, const void *data, uint32_t size) const {

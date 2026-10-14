@@ -10,9 +10,9 @@
 RESOURCES_NS
     Asset *TextureLoader::load(std::string path, ArrayView<void> data) {
         int width, height, channels;
-        unsigned char *img_data = stbi_load_from_memory(static_cast<stbi_uc const *>(data.pData), static_cast<int>(data.size()), &width, &height, &channels, 0);
+        unsigned char *img_data = stbi_load_from_memory(static_cast<stbi_uc const *>(data.pData), static_cast<int>(data.size()), &width, &height, &channels, STBI_rgb_alpha);
         VOX_CHECK_FMT(img_data, "Cannot read image {}", path);
-        const size_t size = width * height * channels;
+        const size_t size = width * height * 4;
         return new TextureAsset(path, ArrayView<void>(img_data, size), Extent(width,height));
     }
 

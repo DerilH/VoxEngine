@@ -56,6 +56,8 @@ VULKAN_NS
     }
 
     VkSampler createDefaultSampler(VkDevice device) {
+        static VkSampler sampler;
+        if (sampler) return sampler;
         VkSamplerCreateInfo samplerInfo{};
         samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 
@@ -81,9 +83,8 @@ VULKAN_NS
         samplerInfo.minLod = 0.0f;
         samplerInfo.maxLod = 0.0f;
 
-        VkSampler textureSampler;
-        VK_CHECK(vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler), "Failed to create texture sampler!")
-        return textureSampler;
+        VK_CHECK(vkCreateSampler(device, &samplerInfo, nullptr, &sampler), "Failed to create texture sampler!")
+        return sampler;
     }
 
 NS_END

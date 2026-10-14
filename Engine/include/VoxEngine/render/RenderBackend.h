@@ -20,7 +20,7 @@ RENDER_NS
         DeviceRef mCurrentDevice = nullptr;
 
         explicit RenderBackend(const RenderAPI api) : api(api) {}
-        ~RenderBackend() = default;
+        virtual ~RenderBackend() = default;
 
     public:
         explicit RenderBackend() = delete;
@@ -34,7 +34,7 @@ RENDER_NS
         virtual RenderTargetRef createTextureTarget(Extent extent, Format format) const = 0;
         virtual CommandPoolRef createCommandPool() = 0;
         virtual TextureRef createTexture(Format format, Extent extent) const = 0;
-        virtual TextureRef createTexture(Format format, Extent extent, const void* data, uint32_t size) const;
+        virtual TextureRef createTexture(Format format, Extent extent, const void* data, uint32_t size) const = 0;
 
         virtual IndexBufferRef createIndexBuffer(const void* data, uint32_t size, IndexType type) = 0;
         virtual VertexBufferRef createVertexBuffer(const void* data, uint32_t size, BufferUsage usage) = 0;
