@@ -11,6 +11,7 @@
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/scene/Scene.h>
 #include <VoxEngine/scene/components/MeshRendererComponent.h>
+#include <VoxEngine/scene/components/Transform.h>
 
 #include "VoxEngine/render/RenderCore.h"
 #include "VoxEngine/resources/assets/ModelAsset.h"
@@ -57,7 +58,7 @@ VOX_NS
         auto camera = scene->createObject("DefaultCamera");
         camera->attachComponent(new Scene::CameraComponent(camera));
         scene->setActiveCamera(camera->findComponent<Scene::CameraComponent>());
-
+        camera->transform->setPos(Vec3(0,0,10));
         while (!mShouldClose) {
             mResourceManager->processDirty();
             mRenderer->render(scene.get());
