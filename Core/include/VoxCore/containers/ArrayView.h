@@ -61,6 +61,10 @@ VOX_NS
         bool empty() const { return isNull() || mSize == 0; }
         uint32_t size() const { return mSize; }
 
+        void free() const {
+            delete[] pData;
+        }
+
         static ArrayView Empty() {
             ArrayView bf = ArrayView((PointerType *) 1, 0);
             bf.pData = nullptr;
@@ -82,7 +86,7 @@ VOX_NS
 
         template<typename T>
         ArrayView(ArrayView<T> typedView)
-            : pData(typedView.pData), mSizeBytes(typedView.sizeInBytes()) {
+            : mSizeBytes(typedView.sizeInBytes()), pData(typedView.pData) {
         }
 
         size_t sizeInBytes() const { return mSizeBytes; }
@@ -91,6 +95,11 @@ VOX_NS
         bool isNull() const { return pData == nullptr; }
         bool empty() const { return isNull() || mSizeBytes == 0; }
         uint32_t size() const { return static_cast<uint32_t>(mSizeBytes); }
+
+        void free() const {
+            const auto charPtr = static_cast<char*>(pData);
+            delete[] charPtr;
+        }
 
         static ArrayView Empty() {
             return ArrayView(nullptr, 0);

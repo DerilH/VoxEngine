@@ -6,7 +6,6 @@
 #include "VoxEngine/resources/assets/Asset.h"
 #include "VoxEngine/resources/assets/AssetLoader.h"
 #include "VoxEngine/resources/assets/RegularFileLoader.h"
-#include "VoxCore/SingletonBase.h"
 #include <string>
 #include <unordered_map>
 #include <VoxCore/Pointers.h>
@@ -14,9 +13,14 @@
 
 #include "AssetDirectory.h"
 #include "assets/AssetWriter.h"
+#include "assets/MaterialAsset.h"
+#include "assets/MeshAsset.h"
+#include "assets/ModelAsset.h"
 
 RESOURCES_NS
-    class ResourcesManager : public SingletonBase<ResourcesManager> {
+    class Defaults;
+
+    class ResourceManager {
         std::filesystem::path mResourcesRoot;
         UPtr<AssetDirectory> mRootDir;
         HashMap<InternedString, UPtr<Asset> > mAssets;
@@ -24,13 +28,13 @@ RESOURCES_NS
         static const UPtr<RegularFileLoader> sRegularLoader;
         static const HashMap<InternedString, UPtr<AssetLoader> > sLoaderByExtension;
         static const HashMap<AssetType, UPtr<AssetWriter> > sWriterByType;
-        void loadDir(const std::filesystem::path& currentPath, AssetDirectory &currentDir);
+
+        void loadDir(const std::filesystem::path &currentPath, AssetDirectory &currentDir);
 
     public:
         void loadAll();
 
-        template<typename T>
-            requires std::derived_from<T, Asset>
+        template<std::derived_from<Asset> T>
         ConstRef<T> get(const InternedString key) const {
             auto asset = mAssets.find(key);
             VOX_CHECK_FMT(asset != mAssets.end(), "Cannot find asset {}", key);
@@ -39,14 +43,17 @@ RESOURCES_NS
             return static_cast<T *>(asset->second.get());
         }
 
-        template<typename T>
-            requires std::derived_from<T, Asset>
+        template<std::derived_from<Asset> T>
+        ConstRef<T> getDefault() const {
+            static_assert(false, "No default value for provided asset type");
+        }
+
+        template<std::derived_from<Asset> T>
         UPtr<T> getForEdit(const InternedString key) const {
             return get<T>(key)->clone();
         }
 
-        template<typename T>
-            requires std::derived_from<T, Asset>
+        template<std::derived_from<Asset> T>
         void update(const InternedString key, UPtr<T> asset) {
             auto &original = mAssets[key];
             if (original == nullptr || original->type() != asset->type()) {
@@ -64,8 +71,20 @@ RESOURCES_NS
         ConstRef<AssetDirectory> getRootDir() const {
             return mRootDir.get();
         }
-        Vector<ConstRef<Asset>> listDirAssets(InternedString path) const;
-        static void SetRoot(std::filesystem::path path);
+
+        Vector<ConstRef<Asset> > listDirAssets(InternedString path) const;
+
+        void setRoot(std::filesystem::path path);
     };
+
+    template<>
+    inline ConstRef<MaterialAsset> ResourceManager::getDefault() const {
+        return get<MaterialAsset>("defaults/DefaultMaterial.vmat");
+    }
+
+    template<>
+    inline ConstRef<ModelAsset> ResourceManager::getDefault() const {
+        return get<ModelAsset>("defaults/DefaultCube.fbx");
+    }
 
 NS_END

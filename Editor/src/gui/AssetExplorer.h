@@ -1,25 +1,29 @@
 #pragma once
 #include <VoxCore/containers/Containers.h>
+#include <VoxEngine/Engine.h>
 #include <VoxEngine/resources/AssetDirectory.h>
 
 #include "AssetIcon.h"
 #include "assets/editor/AssetEditor.h"
-
+#include "components/GuiComponent.h"
 
 namespace Vox::Editor {
-
-    class AssetExplorer {
+    class AssetExplorer : public GuiComponent {
         ConstRef<Resources::AssetDirectory> mCurrentDir = nullptr;
         UPtr<AssetEditor> mAssetEditor = nullptr;
         bool mShouldCloseEditor = false;
         Vector<UPtr<AssetIcon>> mIcons;
+        Ref<Engine> mEngine;
+        Ref<Resources::ResourceManager> mResManager;
 
         void renderTree();
         void renderDirNode(ConstRef<Resources::AssetDirectory> dir);
         void renderContent();
         void createContentIcons();
     public:
-        void render();
+        AssetExplorer(Ref<Engine> engine);
 
+    protected:
+        void renderInternal(Render::RenderContext context) override;
     };
 }

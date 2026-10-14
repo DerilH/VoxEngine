@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(VoxEngine)
+project(VoxEditor)
 include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 23)
@@ -23,7 +23,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(CLI11)
 
 file(GLOB_RECURSE VOX_SOURCES CONFIGURE_DEPENDS
-        src/*.cpp
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
 )
 
 add_library(imgui)
@@ -46,6 +50,7 @@ target_sources(VoxEditor PRIVATE ${VOX_SOURCES})
 target_link_libraries(VoxEditor
         PUBLIC
         VoxEngine
+        VoxCore
         CLI11
         imgui
         backtrace

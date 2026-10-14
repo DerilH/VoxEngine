@@ -13,7 +13,7 @@ RENDER_NS
         virtual ~RendererFactory() = default;
 
     public:
-        static Renderer *Create(RenderBackend *backend);
+        static Renderer *Create(RenderBackend *backend, Ref<Resources::ResourceManager> resManager);
     };
 
 NS_END

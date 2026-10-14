@@ -2,7 +2,9 @@
 
 #include <string>
 #include <GLFW/glfw3.h>
+#include <VoxCore/Pointers.h>
 #include <VoxCore/containers/Containers.h>
+#include <VoxCore/signal/Event.h>
 
 #include "VoxCore/math/Extent.h"
 
@@ -13,14 +15,21 @@ namespace Vox::Render {
         GLFWwindow* mHandle;
         InternedString mTitle;
         Extent mExtent;
-        std::function<void()> mOnClose;
         Window(InternedString title, Extent size, GLFWwindow* handle);
         static Window* Create(InternedString title, Extent size, int targetMonitorIndex, bool maximized);
     public:
+        Event<Ref<Window>> onClose;
+        Event<Extent> onResize;
 
-        Extent getExtent() const;
-        uint32_t getWidth() const;
-        uint32_t getHeight() const;
+        Extent getSize() const {
+            return mExtent;
+        }
+        uint32_t getWidth() const {
+            return mExtent.width;
+        }
+        uint32_t getHeight() const {
+            return mExtent.height;
+        }
 
         InternedString getTitle();
 
@@ -36,7 +45,6 @@ namespace Vox::Render {
 
         void destroy() const;
 
-        void setOnClose(std::function<void()> onClose);
         static void pollEvents() {
             glfwPollEvents();
         }

@@ -7,7 +7,6 @@
 #include "VoxEngine/render/passes/GeometryPass.h"
 #include "VoxEngine/render/passes/PassTransition.h"
 #include "VoxEngine/render/RenderTarget.h"
-#include "../../Editor/src/gui/Gui.h"
 #include "VoxEngine/resources/assets/MeshAsset.h"
 #include "VoxEngine/render/state/Shader.h"
 #include <VoxEngine/render/vulkan/SwapChainFrameSync.h>
@@ -26,7 +25,7 @@ namespace Vox::Scene {
 }
 
 RENDER_NS
-    Renderer::Renderer(Ref<RenderBackend> backend) : mBackend(backend), mRenderResourceManager(new RenderResourceManager(backend)), backendApi(backend->api) {
+    Renderer::Renderer(Ref<Resources::ResourceManager> resManager, Ref<RenderBackend> backend) : mBackend(backend), mRenderResourceManager(new RenderResourceManager(backend)), mResourceManager(resManager), backendApi(backend->api) {
     }
 
     void Renderer::init() {
@@ -124,8 +123,8 @@ RENDER_NS
         auto mat = component->getMaterial();
         auto vertPath = mat->shaders.at(ShaderStage::VERTEX);
         auto fragPath = mat->shaders.at(ShaderStage::FRAGMENT);
-        auto vert = Resources::ResourcesManager::Get().get<Resources::ShaderAsset>(vertPath);
-        auto frag = Resources::ResourcesManager::Get().get<Resources::ShaderAsset>(fragPath);
+        auto vert = mResourceManager->get<Resources::ShaderAsset>(vertPath);
+        auto frag = mResourceManager->get<Resources::ShaderAsset>(fragPath);
 
         auto vertexShader = new Shader(&vert->getCompiled());
         auto fragmentShader = new Shader(&frag->getCompiled());

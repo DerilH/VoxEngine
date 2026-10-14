@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include <imgui.h>
 #include <VoxEngine/render/passes/RenderPass.h>
 #include "Gui.h"
 
@@ -14,8 +13,7 @@ namespace Vox::Editor {
         GuiRenderPass(Render::RenderPassType mType, ArrayView<Render::AttachmentDesc> reads, ArrayView<Render::AttachmentDesc> writes, Gui* gui) : RenderPass(mType, reads, writes), mGui(gui) {}
 
         void execute(Render::RenderContext context) override {
-            auto text = mReads[0].texture->getExact();
-            mGui->render(context, text);
+            mGui->render(context);
         }
         bool shouldClear() override {
             return true;

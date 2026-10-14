@@ -207,6 +207,7 @@ constexpr inline Vox::Render::EnumType fromVk(ApiEnumType format) {\
             case IndexType::UINT16: return 2;
             case IndexType::UINT32: return 4;
         }
+       __builtin_unreachable();
     }
 
     constexpr inline VkExtent2D toVk(const Extent &extent) { return {extent.width, extent.height}; }

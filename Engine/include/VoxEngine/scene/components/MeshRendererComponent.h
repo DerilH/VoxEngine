@@ -13,7 +13,7 @@ namespace Vox::Render {
 
 SCENE_NS
     class MeshRendererComponent : public RendererComponent {
-        std::function<Ref<Resources::MeshAsset>()> mMeshProvider;
+        std::function<ConstRef<Resources::MeshAsset>()> mMeshProvider;
         ConstRef<Resources::MaterialAsset> mMaterial;
         ConstRef<Resources::ShaderAsset> mVertexShader;
         ConstRef<Resources::ShaderAsset> mFragmentShader;
@@ -21,7 +21,7 @@ SCENE_NS
     public:
         explicit MeshRendererComponent(GameObjectRef gameObject);
 
-        void setMeshProvider(const std::function<Ref<Resources::MeshAsset>()> &meshProvider) {
+        void setMeshProvider(const std::function<ConstRef<Resources::MeshAsset>()> &meshProvider) {
             mMeshProvider = meshProvider;
         }
 

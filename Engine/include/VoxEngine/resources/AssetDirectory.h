@@ -5,12 +5,21 @@
 RESOURCES_NS
     class AssetDirectory {
         LinkedList<UPtr<AssetDirectory> > mNested;
+        LinkedList<Ref<Asset> > mAssets;
 
     public:
         const InternedString path;
         const InternedString name;
 
         AssetDirectory(InternedString path, InternedString name) : path(path), name(name) {
+        }
+
+        void addAsset(Ref<Asset> asset) {
+            mAssets.emplace_back(asset);
+        }
+
+        void removeAsset(Ref<Asset> asset) {
+            mAssets.remove(asset);
         }
 
         void addDirectory(UPtr<AssetDirectory> dir) {
@@ -25,6 +34,10 @@ RESOURCES_NS
 
         const LinkedList<UPtr<AssetDirectory> > &getNested() const {
             return mNested;
+        }
+
+        const LinkedList<Ref<Asset> > &getAssets() const {
+            return mAssets;
         }
     };
 

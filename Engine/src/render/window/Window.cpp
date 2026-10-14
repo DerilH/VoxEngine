@@ -6,12 +6,13 @@
 #include <VoxEngine/render/windowing/Window.h>
 
 namespace Vox::Render {
-    Window::Window(InternedString title, Extent size, GLFWwindow *handle) : mTitle(std::move(title)), mExtent(size), mHandle(handle) {
+    Window::Window(InternedString title, Extent size, GLFWwindow *handle) : mHandle(handle), mTitle(std::move(title)), mExtent(size) {
         glfwSetWindowUserPointer(handle, this);
         glfwSetWindowSizeCallback(handle, [](GLFWwindow *p, const int w, const int h) {
             auto *window = static_cast<Window *>(glfwGetWindowUserPointer(p));
             window->mExtent.width = w;
             window->mExtent.height = h;
+            window->onResize.invoke(window->mExtent);
             LOG_VERBOSE("Resized: w:{}, h:{}", w, h);
         });
     }
@@ -37,9 +38,13 @@ namespace Vox::Render {
             glfwGetMonitorPos(targetMonitor, &monitorX, &monitorY);
             glfwSetWindowPos(handle, monitorX + 100, monitorY + 100);
             glfwMaximizeWindow(handle);
-            glfwGetWindowSize(handle, reinterpret_cast<int *>(&size.width), reinterpret_cast<int *>(&size.height));
-        }
 
+            glfwGetMonitorWorkarea(targetMonitor, nullptr, nullptr, reinterpret_cast<int*>(&size.width), reinterpret_cast<int*>(&size.height));
+        }
+        glfwSetWindowCloseCallback(handle, [](GLFWwindow* window) {
+            auto w = (Window*)glfwGetWindowUserPointer(window);
+            w->onClose.invoke(w);
+        });
         return new Window(title, size, handle);
     }
 
@@ -72,25 +77,5 @@ namespace Vox::Render {
 
     void Window::destroy() const {
         glfwDestroyWindow(mHandle);
-    }
-
-    void Window::setOnClose(std::function<void()> onClose) {
-        mOnClose = onClose;
-        glfwSetWindowCloseCallback(mHandle, [](GLFWwindow* window) {
-            auto w = (Window*)glfwGetWindowUserPointer(window);
-            w->mOnClose();
-        });
-    }
-
-    Extent Window::getExtent() const {
-        return mExtent;
-    }
-
-    uint32_t Window::getHeight() const {
-        return mExtent.height;
-    }
-
-    uint32_t Window::getWidth() const {
-        return mExtent.width;
     }
 }

@@ -8,10 +8,9 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
-#include <set>
 #include <queue>
 #include <list>
-#include "VoxCore/Define.h"
+#include "../Define.h"
 #include <llvm/ADT/SmallVector.h>
 
 VOX_NS

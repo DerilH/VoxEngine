@@ -22,6 +22,8 @@ RENDER_NS
         RenderPass(RenderPassType mType, ArrayView<AttachmentDesc> reads, ArrayView<AttachmentDesc> writes, bool isControlPass = false);
 
     public:
+        virtual ~RenderPass() = default;
+
         const bool isControlPass;
 
         HashSet<RenderPassRef> mNext;

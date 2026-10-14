@@ -1,0 +1,9 @@
+{
+    "shaders": {
+        "VERTEX": "defaults/DefaultShader.vert",
+        "FRAGMENT": "defaults/DefaultShader.frag"
+    },
+    "polygonMode": "FILL",
+    "cullMode": "NONE",
+    "topology": "TRIANGLE_LIST"
+}

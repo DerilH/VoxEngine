@@ -13,6 +13,10 @@
 #include "VoxEngine/resources/assets/MeshAsset.h"
 #include "VoxEngine/resources/assets/ShaderAsset.h"
 
+namespace Vox::Resources {
+    class ResourceManager;
+}
+
 namespace Vox::Scene {
     class MeshRendererComponent;
 }
@@ -35,8 +39,9 @@ RENDER_NS
         HashMap<PipelineStateDesc, Vector<DrawItem> > mDrawListByStateHash;
         Ref<RenderBackend> mBackend;
         Ref<RenderResourceManager> mRenderResourceManager;
+        Ref<Resources::ResourceManager> mResourceManager;
 
-        explicit Renderer(Ref<RenderBackend> backend);
+        explicit Renderer(Ref<Resources::ResourceManager> resourceManager, Ref<RenderBackend> backend);
 
         void drawFrame(RenderTargetRef target, Ref<CommandBuffer> cmdBuffer);
 

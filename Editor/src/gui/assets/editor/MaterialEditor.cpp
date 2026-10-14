@@ -5,13 +5,13 @@
 #include "MaterialEditor.h"
 
 #include <imgui.h>
-#include <VoxEngine/resources/ResourcesManager.h>
+#include <VoxEngine/resources/ResourceManager.h>
 
 namespace Vox::Resources {
     class MaterialAsset;
 }
 
-Vox::Editor::MaterialEditor::MaterialEditor(ConstRef<Resources::MaterialAsset> asset, bool& shouldClose) : AssetEditor(shouldClose), mOriginalAsset(asset), mAsset(std::move(asset->cloneTyped())) {
+Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, ConstRef<Resources::MaterialAsset> asset, bool& shouldClose) : AssetEditor(shouldClose), mEngine(engine), mOriginalAsset(asset), mAsset(std::move(asset->cloneTyped())) {
 }
 
 template<typename EnumType>
@@ -92,7 +92,7 @@ void Vox::Editor::MaterialEditor::render() {
     if (changed) {
         auto path = mAsset->getPath();
         auto clone = mAsset->cloneTyped();
-        Resources::ResourcesManager::Get().update(path, std::move(mAsset));
+        mEngine->getResourceManager()->update(path, std::move(mAsset));
         mAsset = std::move(clone);
     }
     ImGui::End();

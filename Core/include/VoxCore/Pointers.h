@@ -8,7 +8,6 @@ using Ref = Type*;
 template<typename Type>
 using ConstRef = const Type*;
 
-
 template<typename Type>
 using UPtr = std::unique_ptr<Type>;
 

@@ -15,7 +15,6 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
-#include <glm/gtc/matrix_transform.hpp>
 #include <VoxCore/Time.h>
 #include <VoxEngine/render/TextureRenderTarget.h>
 #include <VoxEngine/render/vulkan/VulkanState.h>
@@ -24,8 +23,8 @@
 #include <VoxEngine/render/vulkan/VulkanDevice.h>
 #include <VoxEngine/render/vulkan/VulkanUtil.h>
 #include <VoxEngine/scene/GameObject.h>
-#include <VoxEngine/scene/components/Transform.h>
 #include "GuiRenderPass.h"
+#include "screens/SceneEditScreen.h"
 #include "VoxEngine/scene/components/MeshRendererComponent.h"
 
 namespace Vox::Editor {
@@ -103,52 +102,20 @@ namespace Vox::Editor {
 
         auto &graph = mRenderer->getGraph();
 
-        auto guiPass = new GuiRenderPass(Vox::Render::RenderPassType::UI_PASS, {{graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_R_SHADER}}, {{graph.getTexture("Out"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT}}, this);
+        auto guiPass = new GuiRenderPass(Render::RenderPassType::UI_PASS, {{graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_R_SHADER}}, {{graph.getTexture("Out"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT}}, this);
         graph.addPass(guiPass);
+
+        mScreens["SceneEdit"] = makeUPtr<SceneEditScreen>(mEngine);
 
         mInitialized = true;
     }
 
-    bool registered = false;
-    ImTextureID viewportTextureID;
 
-    void Gui::render(Render::RenderContext cmd, Ref<Render::Texture> sceneTexture) {
-        //Used for proper buffer deletions
+    void Gui::render(Render::RenderContext context) {
         //TODO: replace with deferred buffers deletion
-
+        //Used for proper buffer deletions
         auto device = Render::Vulkan::ResourceCast(mEngine->getRenderer()->getBackend()->getDevice());
         device->waitIdle();
-        if (!registered) {
-            VkSamplerCreateInfo samplerInfo{};
-            samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-
-            samplerInfo.magFilter = VK_FILTER_LINEAR;
-            samplerInfo.minFilter = VK_FILTER_LINEAR;
-
-            samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-
-            samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-            samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-            samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-
-            samplerInfo.anisotropyEnable = VK_FALSE;
-            samplerInfo.maxAnisotropy = 1.0f;
-
-            samplerInfo.minLod = 0.0f;
-            samplerInfo.maxLod = 1.0f;
-            samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK;
-
-            VkSampler viewportSampler;
-            vkCreateSampler(*device, &samplerInfo, nullptr, &viewportSampler);
-
-            viewportTextureID = (ImTextureID) ImGui_ImplVulkan_AddTexture(
-                viewportSampler,
-                Render::Vulkan::ResourceCast(sceneTexture)->getView(),
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-            );
-            registered = true;
-        }
-
 
         mFpsCounter.update(Time::Delta());
         VOX_CHECK(mInitialized, "Gui not initialized");
@@ -156,13 +123,12 @@ namespace Vox::Editor {
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-
-        ImGuiViewport *viewport = ImGui::GetMainViewport();
+        const ImGuiViewport *viewport = ImGui::GetMainViewport();
         ImGui::SetNextWindowPos(viewport->WorkPos);
         ImGui::SetNextWindowSize(viewport->WorkSize);
         ImGui::SetNextWindowViewport(viewport->ID);
 
-        ImGuiWindowFlags hostWindowFlags =
+        constexpr ImGuiWindowFlags hostWindowFlags =
                 ImGuiWindowFlags_NoDocking |
                 ImGuiWindowFlags_NoTitleBar |
                 ImGuiWindowFlags_NoCollapse |
@@ -183,153 +149,14 @@ namespace Vox::Editor {
         ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
         ImGui::End();
 
-        ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-        ImGui::Begin("Viewport", nullptr, flags);
-        ImVec2 viewportSize = ImGui::GetContentRegionAvail();
-
-        ImGui::Image(viewportTextureID,viewportSize);
-        ImGui::End();
-        renderTreePanel();
-
-        renderSelectedOptions();
-
-        mExplorer.render();
+        for (const auto &screen: mScreens | std::views::values) {
+            screen->render(context);
+        }
 
         ImGui::Render();
         ImDrawData *draw_data = ImGui::GetDrawData();
 
-        auto *vkCmd = dynamic_cast<Render::Vulkan::VulkanCommandBuffer *>(cmd.cmdBuffer);
+        const auto *vkCmd = dynamic_cast<Render::Vulkan::VulkanCommandBuffer *>(context.cmdBuffer);
         ImGui_ImplVulkan_RenderDrawData(draw_data, *vkCmd, nullptr);
-    }
-
-    void Gui::renderTreePanel() {
-        ImGui::Begin("Scene");
-
-        auto objs = mEngine->scene->getRootObjects();
-        for (const auto el: objs) {
-            ImGui::PushID(el);
-
-            ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick;
-
-            if (mSelected == el) {
-                flags |= ImGuiTreeNodeFlags_Selected;
-            }
-
-            auto isOpen = ImGui::TreeNodeEx(el->getName().c_str(), flags);
-            if (ImGui::IsItemClicked(ImGuiMouseButton_Left) && !ImGui::IsItemToggledOpen()) {
-                mSelected = el;
-                mMeshRotation = glm::degrees(glm::eulerAngles(mSelected->transform->getRotation()));
-            }
-
-            if (isOpen) {
-                ImGui::TreePop();
-            }
-            ImGui::PopID();
-        }
-
-        ImGui::End();
-    }
-
-    void Gui::renderSelectedOptions() {
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-        // ImVec2 pos = ImVec2(viewport->WorkPos.x + viewport->WorkSize.x - 300, viewport->WorkPos.y);
-        // ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
-
-        // ImVec2 size = ImVec2(300.0f, viewport->WorkSize.y);
-        // ImGui::SetNextWindowSize(size, ImGuiCond_Always);
-
-        ImGui::Begin("Object options");
-
-        renderTransformOptions();
-
-        renderComponents();
-
-        ImGui::End();
-    }
-
-    void Gui::renderTransformOptions() {
-        ImGui::Text("Tranform");
-        if (auto el = mSelected) {
-            auto pos = el->transform->getPos();
-            if (ImGui::DragFloat3("Position", &pos.x, 0.05f)) {
-                el->transform->setPos(pos);
-            }
-
-            if (ImGui::DragFloat3("Rotation", &mMeshRotation.x, 1.0f)) {
-                el->transform->setRotation(glm::quat(glm::radians(mMeshRotation)));
-            }
-
-            auto scale = el->transform->getScale();
-            if (ImGui::DragFloat3("Scale", &scale.x, 0.05f)) {
-                el->transform->setScale(scale);
-            }
-        }
-    }
-
-
-    void Gui::renderComponents() {
-        if (!mSelected) return;
-
-        auto renderer = mSelected->findComponent<Scene::MeshRendererComponent>();
-        if (!renderer) return;
-
-        auto mat = renderer->getMaterial()->cloneTyped();
-        if (!mat) return;
-        bool changed = false;
-        if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen)) {
-            // auto polyMode = mat->polygonMode;
-            // if (RenderEnumCombo("Polygon Mode", polyMode)) {
-            //     mat->polygonMode = polyMode;
-            //     changed = true;
-            // }
-            //
-            // auto cullMode = mat->cullMode;
-            // if (RenderEnumCombo("Cull Mode", cullMode)) {
-            //     mat->cullMode = cullMode;
-            //     changed = true;
-            // }
-            //
-            // auto topology = mat->topology;
-            // if (RenderEnumCombo("Topology", topology)) {
-            //     mat->topology = topology;
-            //     changed = true;
-            // }
-            //
-            // ImGui::Separator();
-            // ImGui::Text("Shaders");
-            //
-            // for (auto &[stage, shaderPath]: mat->shaders) {
-            // std::string stageName = std::string(magic_enum::enum_name(stage));
-            // ImGui::PushID(static_cast<int>(stage));
-
-            // char buffer[256];
-            // strncpy(buffer, shaderPath.c_str(), sizeof(buffer));
-            static char pathBuffer[512] = "";
-            strncpy(pathBuffer, renderer->getMaterial()->getPath().c_str(), renderer->getMaterial()->getPath().size());
-            if (ImGui::InputText("Material", pathBuffer, IM_ARRAYSIZE(pathBuffer))) {
-                // shaderPath = InternedString(buffer);
-                changed = true;
-            }
-
-            // ImGui::PopID();
-            // }
-            if (ImGui::BeginDragDropTarget()) {
-                if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_ITEM")) {
-                    const char *draggedPath = static_cast<const char *>(payload->Data);
-                    strncpy(pathBuffer, draggedPath, sizeof(pathBuffer) - 1);
-                    pathBuffer[sizeof(pathBuffer) - 1] = '\0';
-                    changed = true;
-                }
-                ImGui::EndDragDropTarget();
-            }
-
-            try {
-                if (changed) {
-                    auto newMat = Resources::ResourcesManager::Get().get<Resources::MaterialAsset>(InternedString(pathBuffer));
-                    renderer->setMaterial(newMat);
-                }
-            } catch (std::exception &e) {
-            }
-        }
     }
 }

@@ -80,6 +80,9 @@ namespace Vox::Render::Vulkan {
     }
 
     Surface::Surface(Ref<Window> window, VkSurfaceKHR handle) : WindowRenderTarget(window), VulkanObject(handle) {
+        window->onResize += [this](auto size) {
+            mCurrentSwapChain->markForRebuild();
+        };
     }
 
     Surface *Surface::Create(Ref<Window> window, VkInstance instance) {

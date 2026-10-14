@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 constexpr int BYTE_SIZE = 1;
 constexpr int KILOBYTE_SIZE = BYTE_SIZE * 1024;
 constexpr int MEGABYTE_SIZE = KILOBYTE_SIZE * 1024;

@@ -3,12 +3,13 @@
 //
 
 #include <filesystem>
-#include "VoxEngine/resources/ResourcesManager.h"
+#include "VoxEngine/resources/ResourceManager.h"
 
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
 #include <VoxEngine/resources/assets/MaterialLoader.h>
 #include <VoxEngine/resources/assets/MaterialWriter.h>
+#include <VoxEngine/resources/assets/ShaderAsset.h>
 
 #include "VoxEngine/resources/assets/FbxLoader.h"
 #include "VoxEngine/resources/assets/ShaderLoader.h"
@@ -16,8 +17,8 @@
 RESOURCES_NS
     class AssetWriter;
 
-    const UPtr<RegularFileLoader> ResourcesManager::sRegularLoader = makeUPtr<RegularFileLoader>();
-    const HashMap<InternedString, UPtr<AssetLoader> > ResourcesManager::sLoaderByExtension = []() {
+    const UPtr<RegularFileLoader> ResourceManager::sRegularLoader = makeUPtr<RegularFileLoader>();
+    const HashMap<InternedString, UPtr<AssetLoader> > ResourceManager::sLoaderByExtension = []() {
         HashMap<InternedString, UPtr<AssetLoader> > map;
         map.emplace(".fbx", makeUPtr<FbxLoader>());
         map.emplace(".vert", makeUPtr<ShaderLoader>());
@@ -26,18 +27,18 @@ RESOURCES_NS
         return map;
     }();
 
-    const HashMap<AssetType, UPtr<AssetWriter> > ResourcesManager::sWriterByType = []() {
+    const HashMap<AssetType, UPtr<AssetWriter> > ResourceManager::sWriterByType = []() {
         HashMap<AssetType, UPtr<AssetWriter> > map;
         map.emplace(AssetType::MATERIAL, makeUPtr<MaterialWriter>());
         return map;
     }();
 
-    void ResourcesManager::loadAll() {
+    void ResourceManager::loadAll() {
         VOX_CHECK(!mResourcesRoot.empty(), "Resource root path not set");
         loadDir(mResourcesRoot, *mRootDir);
     }
 
-    void ResourcesManager::loadDir(const std::filesystem::path &currentPath, AssetDirectory &currentDir) {
+    void ResourceManager::loadDir(const std::filesystem::path &currentPath, AssetDirectory &currentDir) {
         for (const auto &entry: std::filesystem::directory_iterator(currentPath)) {
             const auto &path = entry.path();
             auto relPath = relative(path, mResourcesRoot);
@@ -56,13 +57,17 @@ RESOURCES_NS
                 auto view = readFile(path);
                 Asset *asset = loader->load(relPath, view);
                 mAssets.emplace(relPath.string(), asset);
+                for (int i = 0; i < asset->getNestedCount(); i++) {
+                    auto nested = asset->getNested()[i];
+                    mAssets.emplace(nested->getPath(), nested);
+                }
             } catch (std::exception &e) {
                 LOG_ERROR("Error while loading asset: {} {}", path.string(), e.what())
             }
         }
     }
 
-    void ResourcesManager::processDirty() {
+    void ResourceManager::processDirty() {
         VOX_CHECK(!mResourcesRoot.empty(), "Resource root path not set");
 
         for (const auto &key: mDirty) {
@@ -77,7 +82,7 @@ RESOURCES_NS
         mDirty.clear();
     }
 
-    ArrayView<void> ResourcesManager::readFile(std::filesystem::path path) const {
+    ArrayView<void> ResourceManager::readFile(std::filesystem::path path) const {
         std::ifstream file(path, std::ios::binary | std::ios::ate);
         if (!file)
             return ArrayView<void>(nullptr, 0);
@@ -101,7 +106,7 @@ RESOURCES_NS
         return ArrayView(buffer, outSize);
     }
 
-    Vector<ConstRef<Asset> > ResourcesManager::listDirAssets(InternedString path) const {
+    Vector<ConstRef<Asset> > ResourceManager::listDirAssets(InternedString path) const {
         static const Vector<ConstRef<Asset> > emptyVector(0);
         auto dirPath = mResourcesRoot / path;
         if (!std::filesystem::exists(dirPath) || !std::filesystem::is_directory(dirPath)) return emptyVector;
@@ -122,12 +127,12 @@ RESOURCES_NS
     }
 
 
-    void ResourcesManager::SetRoot(std::filesystem::path path) {
+    void ResourceManager::setRoot(std::filesystem::path path) {
         VOX_CHECK(is_directory(path), "Resource root path must be a directory");
         VOX_CHECK(exists(path), "Resource root not exists");
-        Get().mRootDir = makeUPtr<AssetDirectory>(".", path.filename());
-        Get().mResourcesRoot = std::move(path);
-        LOG_INFO("Resource manager root: {}", absolute(Get().mResourcesRoot).lexically_normal().string());
+        mRootDir = makeUPtr<AssetDirectory>(".", path.filename());
+        mResourcesRoot = std::move(path);
+        LOG_INFO("Resource manager root: {}", std::filesystem::absolute(mResourcesRoot).lexically_normal().string());
     }
 
 NS_END

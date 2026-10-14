@@ -4,9 +4,11 @@
 
 #pragma once
 #include "VoxCore/Define.h"
+#include "VoxEngine/render/Types.h"
 
 RENDER_NS
 class Renderer;
+
 struct RenderContext {
     Renderer* renderer;
     const CommandBufferRef cmdBuffer;

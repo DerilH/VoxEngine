@@ -21,7 +21,7 @@ SCENE_NS
         Quat mLocalRotation = Quat(1,0,0,0);
 
         Ref<GameObject> parent = nullptr;
-        Ref<GameObjectStorage> childs;
+        Ref<GameObjectStorage> mChilds;
 
         explicit Transform(Ref<GameObject> gameObject);
     public:
@@ -54,6 +54,10 @@ SCENE_NS
 
         ComponentType type() override {
             return StaticType();
+        }
+
+        ConstRef<GameObjectStorage> getChilds() const {
+            return mChilds;
         }
 
         static ComponentType StaticType() {

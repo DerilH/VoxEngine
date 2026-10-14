@@ -3,26 +3,19 @@
 #include "AssetExplorer.h"
 
 #include <imgui.h>
-#include <VoxEngine/resources/ResourcesManager.h>
-
 #include "AssetIcon.h"
 #include "assets/editor/MaterialEditor.h"
 #include <VoxEngine/resources/assets/MaterialAsset.h>
+#include <VoxEngine/Engine.h>
 
 namespace Vox::Editor {
-    void AssetExplorer::render() {
-        const ImGuiViewport *viewport = ImGui::GetMainViewport();
-
+    void AssetExplorer::renderInternal(Render::RenderContext context) {
         if (mAssetEditor) {
             if (mShouldCloseEditor) {
                 mShouldCloseEditor = false;
                 mAssetEditor = nullptr;
             } else mAssetEditor->render();
         }
-
-        // ImGui::SetNextWindowPos(ImVec2(0, viewport->WorkSize.y - 200), ImGuiCond_Always);
-        // ImGui::SetNextWindowSize(ImVec2(viewport->WorkSize.x, 200), ImGuiCond_Always);
-        // ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 
         ImGui::Begin("AssetExplorer", nullptr);
 
@@ -60,7 +53,7 @@ namespace Vox::Editor {
     }
 
     void AssetExplorer::renderTree() {
-        auto rootDir = Resources::ResourcesManager::Get().getRootDir();
+        auto rootDir = mResManager->getRootDir();
         if (!rootDir) return;
         renderDirNode(rootDir);
     }
@@ -141,7 +134,7 @@ namespace Vox::Editor {
         if (!mCurrentDir) return;
         mIcons.clear();
 
-        const auto &assets = Resources::ResourcesManager::Get().listDirAssets(mCurrentDir->path);
+        const auto &assets = mResManager->listDirAssets(mCurrentDir->path);
         if (assets.empty()) return;
 
         float cellSize = 74.0f;
@@ -155,10 +148,13 @@ namespace Vox::Editor {
 
             icon->setOnDoubleClick([asset, this, icon]() {
                 if (asset->type() == AssetType::MATERIAL) {
-                    mAssetEditor = makeUPtr<MaterialEditor>(static_cast<ConstRef<Resources::MaterialAsset>>(asset), mShouldCloseEditor);
+                    mAssetEditor = makeUPtr<MaterialEditor>(mEngine, static_cast<ConstRef<Resources::MaterialAsset>>(asset),mShouldCloseEditor);
                 }
             });
             mIcons.emplace_back(icon);
         }
+    }
+
+    AssetExplorer::AssetExplorer(Ref<Engine> engine) : mEngine(engine), mResManager(engine->getResourceManager()) {
     }
 }

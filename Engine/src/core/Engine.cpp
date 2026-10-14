@@ -22,29 +22,28 @@ VOX_NS
     constexpr const char* SHADERS_SRC_PATH = "./resources/shaders";
     constexpr const char* SHADERS_BIN_PATH = "./resources/shadersCache";
 
-    Engine::Engine(std::string mTitle, const Render::RenderAPI renderApi) : mTitle(std::move(mTitle)), mRenderApi(renderApi) {
+    Engine::Engine(std::string mTitle, const Render::RenderAPI renderApi) : mTitle(std::move(mTitle)), mRenderApi(renderApi), mResourceManager(new Resources::ResourceManager()) {
         VOX_CHECK(mRenderApi == Render::VULKAN_API, "Unsupported execute api");
     }
 
-    Engine::~Engine() {
-    }
+    Engine::~Engine() = default;
 
     void Engine::init() {
-        mResourceManager = &Resources::ResourcesManager::Get();
-        Resources::ResourcesManager::Get().loadAll();
+        mResourceManager->loadAll();
 
-        auto renderBackend = Render::CreateRenderBackend(Render::RenderAPI::VULKAN_API);
-        mRenderer = Render::RendererFactory::Create(renderBackend);
+        const auto renderBackend = Render::CreateRenderBackend(Render::RenderAPI::VULKAN_API);
+        mRenderer = Render::RendererFactory::Create(renderBackend, mResourceManager);
 
         mRenderer->init();
     }
 
     void Engine::run() {
-        scene = new Scene::Scene("Test");
+        scene = makeUPtr<Scene::Scene>("Test");
+        onSceneChanged.invoke(scene.get());
 
-        auto mat = mResourceManager->get<Resources::MaterialAsset>("materials/test.vmat");
+        const auto mat = mResourceManager->get<Resources::MaterialAsset>("materials/test.vmat");
 
-        auto obj = scene->createObject("TestTeapot");
+        const auto obj = scene->createObject("TestTeapot");
         auto meshComp = Scene::MeshRendererComponent(obj);
         obj->attachComponent(&meshComp);
         meshComp.setMeshProvider([this]() {
@@ -53,14 +52,14 @@ VOX_NS
         });
         meshComp.setMaterial(mat);
 
-        auto obj1 = scene->createObject("TestTeapot1");
-        auto meshComp1 = Scene::MeshRendererComponent(obj1);
-        obj1->attachComponent(&meshComp1);
-        meshComp1.setMeshProvider([this]() {
-            const auto t = mResourceManager->get<Resources::ModelAsset>("teapot1.fbx");
-            return t->getNested<Resources::MeshAsset>(0);
-        });
-        meshComp1.setMaterial(mat);
+        // auto obj1 = scene->createObject("TestTeapot1");
+        // auto meshComp1 = Scene::MeshRendererComponent(obj1);
+        // obj1->attachComponent(&meshComp1);
+        // meshComp1.setMeshProvider([this]() {
+            // const auto t = mResourceManager->get<Resources::ModelAsset>("teapot1.fbx");
+            // return t->getNested<Resources::MeshAsset>(0);
+        // });
+        // meshComp1.setMaterial(mat);
 
         while (!mShouldClose) {
             mResourceManager->processDirty();
@@ -68,10 +67,6 @@ VOX_NS
             mRenderer->render(renderable);
             Render::Window::pollEvents();
         }
-    }
-
-    Render::Renderer* Engine::getRenderer() const {
-        return mRenderer;
     }
 
 NS_END

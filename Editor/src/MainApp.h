@@ -25,10 +25,10 @@ public:
         app.add_option("--resources", dir, "Set app resources directory")->required();
         app.parse(argc, argv);
 
-        Vox::Resources::ResourcesManager::SetRoot(dir);
         Vox::Render::WindowManager::initBackend();
 
         mEngine = new Vox::Engine("Vox", Vox::Render::VULKAN_API);
+        mEngine->getResourceManager()->setRoot(dir);
         mEngine->init();
 
         auto window = Vox::Render::WindowManager::Get().createWindow("Test", {1280, 720}, 0, true);
@@ -42,7 +42,7 @@ public:
         auto outText = graph.createTexture("Out");
         outText->setExact([windowTarget]() {return windowTarget->getBackBuffer();});
 
-        window->setOnClose([this](){mEngine->shutdown();});
+        window->onClose += [this](auto w){mEngine->shutdown();};
         gui = new Vox::Editor::Gui();
         gui->init(*Vox::Render::WindowManager::Get().getMainWindow(), *mEngine);
 

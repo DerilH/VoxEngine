@@ -5,31 +5,22 @@
 #pragma once
 #include <VoxEngine/render/FpsCounter.h>
 #include <VoxEngine/render/windowing/Window.h>
-
-#include <glm/glm.hpp>
 #include <VoxEngine/Engine.h>
-
-#include "AssetExplorer.h"
+#include "screens/Screen.h"
 
 namespace Vox::Editor {
+
     class Gui : SingletonBase<Gui>{
         Render::Window* mWindow = nullptr;
-        Engine* mEngine = nullptr;
+        Ref<Engine> mEngine = nullptr;
         Render::Renderer* mRenderer = nullptr;
         bool mInitialized = false;
         Render::FpsCounter mFpsCounter;
-        glm::vec3 mMeshRotation = glm::vec3(0, 0, 0);
-        Ref<Scene::GameObject> mSelected = nullptr;
-        AssetExplorer mExplorer;
+        HashMap<InternedString, UPtr<Screen>> mScreens;
     public:
 
         void init(Render::Window& window, Engine& engine);
 
-        void render(Render::RenderContext cmd, Ref<Render::Texture> sceneTexture);
-
-        void renderTreePanel();
-        void renderSelectedOptions();
-        void renderTransformOptions();
-        void renderComponents();
+        void render(Render::RenderContext context);
     };
 }

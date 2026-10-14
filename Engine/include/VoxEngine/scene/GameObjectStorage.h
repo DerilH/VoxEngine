@@ -21,6 +21,10 @@ SCENE_NS
 
         const Vector<GameObjectRef> &getAll();
 
+        uint32_t count() const {
+            return mObjects.size();
+        }
+
         NO_COPY_MOVE(GameObjectStorage)
     };
 

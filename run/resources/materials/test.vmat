@@ -1,9 +1,9 @@
 {
     "shaders": {
-        "FRAGMENT": "shaders/baseShader.frag",
-        "VERTEX": "shaders/baseShader.vert"
+        "VERTEX": "shaders/baseShader.vert",
+        "FRAGMENT": "shaders/baseShader.frag"
     },
     "polygonMode": "FILL",
-    "cullMode": "NONE",
+    "cullMode": "BACK",
     "topology": "TRIANGLE_LIST"
 }

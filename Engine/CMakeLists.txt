@@ -7,15 +7,6 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    add_compile_options(
-            -fmodules
-            -fimplicit-modules
-            -fimplicit-module-maps
-            -fbuiltin-module-map
-    )
-endif()
-
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)

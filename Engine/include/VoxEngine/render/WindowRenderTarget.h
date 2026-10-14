@@ -15,7 +15,7 @@ RENDER_NS
         Ref<Window> mWindow;
 
     public:
-        WindowRenderTarget(Ref<Window> mWindow) : RenderTarget(mWindow->getExtent()), mWindow(mWindow) {
+        WindowRenderTarget(Ref<Window> mWindow) : RenderTarget(mWindow->getSize()), mWindow(mWindow) {
         }
     };
 

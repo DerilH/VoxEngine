@@ -18,7 +18,7 @@ Vox::Ref<Vox::Render::PipelineState> Vox::Render::RenderResourceManager::getPipe
 Vox::Ref<Vox::Render::RenderMesh> Vox::Render::RenderResourceManager::getMesh(ConstRef<Resources::MeshAsset> asset) {
     decltype(auto) mesh = mLoadedMeshes[asset->getPath()];
     if (mesh == nullptr) {
-        VertexBufferRef vBuff = mBackend->createVertexBuffer(data(asset->getVertices()), sizeof(glm::vec3) * asset->getVertices().size(), BufferUsage::VERTEX);
+        VertexBufferRef vBuff = mBackend->createVertexBuffer(data(asset->getInterleaved()), sizeof(char8_t) * asset->getInterleaved().size(), BufferUsage::VERTEX);
         IndexBufferRef iBuff = mBackend->createIndexBuffer(data(asset->getIndices()), sizeof(uint32_t) * asset->getIndices().size(), IndexType::UINT32);
         mesh = new RenderMesh(vBuff, iBuff);
 

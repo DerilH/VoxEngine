@@ -17,7 +17,7 @@ RESOURCES_NS
             vec.at(i) = glm::vec3(vertices[i].x, vertices[i].y, vertices[i].z);
         }
 
-        return std::move(vec);
+        return vec;
     }
 
     std::vector<glm::vec2> readVec2Array(aiVector3D *vertices, size_t count) {
@@ -26,25 +26,41 @@ RESOURCES_NS
             vec.at(i) = glm::vec2(vertices[i].x, vertices[i].y);
         }
 
-        return std::move(vec);
+        return vec;
     }
 
     std::vector<uint32_t> readIndices(aiFace *faces, size_t count) {
         std::vector<uint32_t> vec;
         vec.reserve(count * 3);
-        for (int i = 0; i < count; ++i) {
-            aiFace &face = faces[i];
-            for (int j = 0; j < face.mNumIndices; ++j) {
-                vec.emplace_back(face.mIndices[j]);
+        for (int f = 0; f < count; f++) {
+            const aiFace &face = faces[f];
+            for (int i = 0; i < face.mNumIndices; i++) {
+                vec.push_back(face.mIndices[i]);
             }
         }
         return vec;
     }
 
+    std::vector<char8_t> createInterleaved(Vector<glm::vec3> vertices, Vector<glm::vec2> uv) {
+        VOX_CHECK(vertices.size() == uv.size(), "Different vertices and color count");
+        std::vector<char8_t> buffer;
+        buffer.resize((vertices.size() + uv.size()) * sizeof(glm::vec3));
+        auto* data = (float*)std::data(buffer);
+        for (int i = 0, dataI = 0; i < vertices.size(); i++, dataI += 5) {
+            data[dataI] = vertices[i].x;
+            data[dataI + 1] = vertices[i].y;
+            data[dataI + 2] = vertices[i].z;
+
+            data[dataI + 3] = uv[i].x;
+            data[dataI + 4] = uv[i].y;
+        }
+        return buffer;
+    }
+
     Asset *FbxLoader::load(std::string path, ArrayView<void> data) {
         Assimp::Importer importer{};
 
-        const aiScene *scene = importer.ReadFileFromMemory(data.pData, data.size(), aiPostProcessSteps::aiProcess_Triangulate | aiPostProcessSteps::aiProcess_FlipUVs, "fbx");
+        const aiScene *scene = importer.ReadFileFromMemory(data.pData, data.size(), aiPostProcessSteps::aiProcess_Triangulate, "fbx");
         auto **nested = static_cast<Asset **>(malloc(scene->mNumMeshes * sizeof(MeshAsset)));
         LOG_VERBOSE("Loading model {}", path);
         LOG_VERBOSE("Loading {} meshes", scene->mNumMeshes);
@@ -55,7 +71,8 @@ RESOURCES_NS
             auto normals = readVec3Array(mesh->mNormals, mesh->mNumVertices);
             auto uvs = readVec2Array(mesh->mTextureCoords[0], mesh->mNumVertices);
             auto indices = readIndices(mesh->mFaces, mesh->mNumFaces);
-            nested[i] = new MeshAsset(path + "/" + mesh->mName.C_Str(), vertices, normals, uvs, indices);
+            auto interleaved = createInterleaved(vertices,vertices);
+            nested[i] = new MeshAsset(path + "/" + mesh->mName.C_Str(), interleaved, vertices, normals, uvs, indices);
             LOG_VERBOSE("Mesh loaded {}", nested[i]->getPath());
         }
         return new ModelAsset(path, nested, scene->mNumMeshes);

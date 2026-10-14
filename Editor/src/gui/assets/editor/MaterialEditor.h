@@ -5,6 +5,7 @@
 #pragma once
 
 #include <VoxCore/Pointers.h>
+#include <VoxEngine/Engine.h>
 #include <VoxEngine/resources/assets/MaterialAsset.h>
 
 #include "AssetEditor.h"
@@ -13,9 +14,9 @@ namespace Vox::Editor {
     class MaterialEditor : public AssetEditor {
         ConstRef<Resources::MaterialAsset> mOriginalAsset;
         UPtr<Resources::MaterialAsset> mAsset;
-
+        Ref<Engine> mEngine;
     public:
-        MaterialEditor(ConstRef<Resources::MaterialAsset> asset, bool& shouldClose);
+        MaterialEditor(Ref<Engine> engine, ConstRef<Resources::MaterialAsset> asset, bool& shouldClose);
 
         void render() override;
     };
