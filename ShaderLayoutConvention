@@ -1,0 +1,12 @@
+set=1 - Global data
+set=1 - Texture data
+set=2 - Per camera data
+layout(set = 2, binding = 0) uniform CameraMatrices {
+    mat4 view;
+    mat4 proj;
+} cameraMatrices; - Only in vertex shader
+
+set=3 - Per model data
+layout(set = 3, binding = 0) uniform PerModelData {
+    mat4 model;
+} ubo;
