@@ -31,7 +31,7 @@ RENDER_NS
         virtual int32_t beginFrame() = 0;
         virtual void endFrame() = 0;
         virtual RenderTargetRef createWindowTarget(Ref<Window> window) const = 0;
-        virtual RenderTargetRef createTextureTarget(Extent extent, Format format) const = 0;
+        virtual RenderTargetRef createTextureTarget(Extent extent, Format format, Format depthFormat = Format::D32) const = 0;
         virtual CommandPoolRef createCommandPool() = 0;
         virtual TextureRef createTexture(Format format, Extent extent) const = 0;
         virtual TextureRef createTexture(Format format, Extent extent, const void* data, uint32_t size) const = 0;

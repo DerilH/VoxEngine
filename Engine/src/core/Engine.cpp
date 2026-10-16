@@ -46,7 +46,7 @@ VOX_NS
         const auto obj = scene->createObject("TestTeapot");
         auto meshComp = Scene::MeshRendererComponent(obj);
         obj->attachComponent(&meshComp);
-        const auto t = mResourceManager->get<Resources::ModelAsset>("fbx.fbx");
+        const auto t = mResourceManager->get<Resources::ModelAsset>("defaults/DefaultCube.fbx");
         if (t) {
             meshComp.setMeshProvider([this, t]() {
                 return (*t)->getNestedUnsafe<Resources::MeshAsset>(0);

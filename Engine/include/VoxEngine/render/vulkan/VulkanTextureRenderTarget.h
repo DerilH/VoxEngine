@@ -15,7 +15,10 @@ VULKAN_NS
         Ref<CommandBuffer> mCmdBuffer;
 
     public:
-        VulkanTextureRenderTarget(const Ref<Texture> texture, const Ref<VulkanDevice> device) : TextureRenderTarget(texture), mDevice(device), mCmdBuffer(device->getCmdPool(QueueType::GRAPHICS_QUEUE).allocBuffer()) {
+        VulkanTextureRenderTarget(const Ref<Texture> texture, const Ref<Texture> depthTexture, const Ref<VulkanDevice> device) : TextureRenderTarget(texture, depthTexture), mDevice(device), mCmdBuffer(device->getCmdPool(QueueType::GRAPHICS_QUEUE).allocBuffer()) {
+        }
+
+        VulkanTextureRenderTarget(const Ref<Texture> texture, const Ref<VulkanDevice> device) : VulkanTextureRenderTarget(texture, nullptr, device) {
         }
 
         int32_t beginFrame() override {

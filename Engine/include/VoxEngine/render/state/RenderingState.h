@@ -21,7 +21,11 @@ RENDER_NS
     public:
         RenderingState() = delete;
 
-        RenderingState(ArrayView<Format> formats, Format depthFormat, Format stencilFormat) : mColorFormats(formats.copy<8>()), mFormatsCount(formats.size()), mDepthFormat(depthFormat), mStencilFormat(stencilFormat) {
+        RenderingState(ArrayView<Format> formats, Format depthFormat, Format stencilFormat) : mFormatsCount(formats.size()), mDepthFormat(depthFormat), mStencilFormat(stencilFormat) {
+            mColorFormats.fill(Format::UNDEFINED);
+            for (size_t i = 0; i < formats.size() && i < 8; ++i) {
+                mColorFormats[i] = formats[i];
+            }
         }
 
         ArrayView<const Format> getColorFormats() const { return ArrayView(mColorFormats.data(), mFormatsCount); }
@@ -31,11 +35,12 @@ RENDER_NS
         Format getStencilFormat() const { return mStencilFormat; }
 
         bool operator==(const RenderingState &other) const {
-            bool same = mDepthFormat == other.mDepthFormat && mStencilFormat == other.mStencilFormat;
-            for (int i = 0; i < mColorFormats.size(); ++i) {
-                same = same && mColorFormats[i] == other.mColorFormats[i];
+            if (mDepthFormat != other.mDepthFormat || mStencilFormat != other.mStencilFormat || mFormatsCount != other.mFormatsCount)
+                return false;
+            for (int i = 0; i < mFormatsCount; ++i) {
+                if (mColorFormats[i] != other.mColorFormats[i]) return false;
             }
-            return same;
+            return true;
         }
     };
 
@@ -49,7 +54,7 @@ namespace std {
             XXH64_state_t *state = XXH64_createState();
             XXH64_reset(state, 0);
 
-            for (int i = 0; i < s.mColorFormats.size(); ++i) {
+            for (int i = 0; i < s.mFormatsCount; ++i) {
                 Vox::Render::Format format = s.mColorFormats[i];
                 XXH64_update(state, &format, sizeof(Vox::Render::Format));
             }

@@ -1,52 +1,39 @@
 //
-// Created by deril on 10/6/26.
+// Created by deril on 10/14/26.
 //
 
 #include "MaterialEditor.h"
 
 #include <imgui.h>
+#include <magic_enum/magic_enum.hpp>
 #include <VoxEngine/resources/ResourceManager.h>
+#include <VoxEngine/resources/assets/MaterialAsset.h>
 
-#include "../../components/AssetLinkComponent.h"
-
-namespace Vox::Resources {
+namespace Vox::Editor {
     class MaterialAsset;
 }
 
 Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, ConstRef<Resources::MaterialAsset> asset, bool &shouldClose) : AssetEditor(shouldClose), mEngine(engine), mOriginalAsset(asset), mAsset(std::move(asset->cloneTyped())) {
-    for (auto &[stage, shaderPath]: mAsset->shaders) {
-        std::string stageName = std::string(magic_enum::enum_name(stage));
-        auto a = makeUPtr<AssetLinkComponent>(stageName, [stage, this]() { return mAsset->shaders[stage]; });
-        a->onChanged += [this, stage](auto path) {
-            mAsset->shaders[stage] = path;
-            auto p = mAsset->getPath();
-            auto clone = mAsset->cloneTyped();
-            mEngine->getResourceManager()->update(p, std::move(mAsset));
-            mAsset = std::move(clone);
-        };
-        a->setFilter([this, stage](InternedString a) {
-            auto shader = mEngine->getResourceManager()->get<Resources::ShaderAsset>(a);
-            if (!shader) return false;
-            return shader.value()->getCompiled().stage == stage;
-        });
-        mChilds.emplace(stageName, std::move(a));
-    }
 }
 
-template<typename EnumType>
-bool RenderEnumCombo(const char *label, EnumType &currentVal) {
+template<typename Enum>
+requires std::is_enum_v<Enum>
+bool RenderEnumCombo(const char *label, Enum &currentValue) {
+    constexpr auto values = magic_enum::enum_values<Enum>();
     bool changed = false;
-    constexpr auto entries = magic_enum::enum_entries<EnumType>();
 
-    std::string_view currentName = magic_enum::enum_name(currentVal);
+    std::string_view currentName = magic_enum::enum_name(currentValue);
 
     if (ImGui::BeginCombo(label, currentName.data())) {
-        for (const auto &[value, name]: entries) {
-            bool isSelected = (currentVal == value);
+        for (const auto &value: values) {
+            const bool isSelected = (currentValue == value);
+            std::string_view name = magic_enum::enum_name(value);
+
             if (ImGui::Selectable(name.data(), isSelected)) {
-                currentVal = value;
+                currentValue = value;
                 changed = true;
             }
+
             if (isSelected) {
                 ImGui::SetItemDefaultFocus();
             }
@@ -79,6 +66,24 @@ void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) 
     auto topology = mAsset->topology;
     if (RenderEnumCombo("Topology", topology)) {
         mAsset->topology = topology;
+        changed = true;
+    }
+
+    bool depthTest = mAsset->depthTest;
+    if (ImGui::Checkbox("Depth Test", &depthTest)) {
+        mAsset->depthTest = depthTest;
+        changed = true;
+    }
+
+    bool depthWrite = mAsset->depthWrite;
+    if (ImGui::Checkbox("Depth Write", &depthWrite)) {
+        mAsset->depthWrite = depthWrite;
+        changed = true;
+    }
+
+    auto depthCompareOp = mAsset->depthCompareOp;
+    if (RenderEnumCombo("Depth Compare Op", depthCompareOp)) {
+        mAsset->depthCompareOp = depthCompareOp;
         changed = true;
     }
 

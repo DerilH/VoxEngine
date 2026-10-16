@@ -32,7 +32,7 @@ VULKAN_NS
 
         RenderTargetRef createWindowTarget(Ref<Window> window) const override;
 
-        RenderTargetRef createTextureTarget(Extent extent, Format format) const override;
+        RenderTargetRef createTextureTarget(Extent extent, Format format, Format depthFormat = Format::D32) const override;
 
         CommandPoolRef createCommandPool() override;
 

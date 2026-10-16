@@ -57,6 +57,25 @@ Vox::Ref<Vox::Resources::Asset> Vox::Resources::MaterialLoader::load(InternedStr
     auto cullMode = readEnum<Render::CullMode>(root, "cullMode");
     auto topology = readEnum<Render::PrimitiveTopology>(root, "topology");
 
+    bool depthTest = true;
+    bool depthWrite = true;
+    auto depthCompareOp = Render::CompareOp::LESS_OR_EQUAL;
+
+    auto dtVal = yyjson_obj_get(root, "depthTest");
+    if (dtVal && yyjson_is_bool(dtVal)) {
+        depthTest = yyjson_get_bool(dtVal);
+    }
+
+    auto dwVal = yyjson_obj_get(root, "depthWrite");
+    if (dwVal && yyjson_is_bool(dwVal)) {
+        depthWrite = yyjson_get_bool(dwVal);
+    }
+
+    auto dcoVal = yyjson_obj_get(root, "depthCompareOp");
+    if (dcoVal && yyjson_is_str(dcoVal)) {
+        depthCompareOp = castEnum<Render::CompareOp>(yyjson_get_str(dcoVal));
+    }
+
     yyjson_doc_free(doc);
-    return new MaterialAsset(path, shaders, polygonMode, cullMode, topology);
+    return new MaterialAsset(path, shaders, polygonMode, cullMode, topology, depthTest, depthWrite, depthCompareOp);
 }

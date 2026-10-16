@@ -37,6 +37,10 @@ void Vox::Resources::MaterialWriter::writeToFile(const std::filesystem::path &pa
     writeEnumProp("cullMode", material->cullMode);
     writeEnumProp("topology", material->topology);
 
+    yyjson_mut_obj_add_bool(doc, root, "depthTest", material->depthTest);
+    yyjson_mut_obj_add_bool(doc, root, "depthWrite", material->depthWrite);
+    writeEnumProp("depthCompareOp", material->depthCompareOp);
+
     yyjson_write_err writeErr;
     size_t jsonSize = 0;
     char *jsonStr = yyjson_mut_write_opts(

@@ -89,8 +89,9 @@ VULKAN_NS
         return surface;
     }
 
-    RenderTargetRef VulkanBackend::createTextureTarget(Extent extent, Format format) const {
-        return new VulkanTextureRenderTarget(createTexture(format, extent), ResourceCast(mCurrentDevice));
+    RenderTargetRef VulkanBackend::createTextureTarget(Extent extent, Format format, Format depthFormat) const {
+        TextureRef depth = (depthFormat != Format::UNDEFINED) ? createTexture(depthFormat, extent) : nullptr;
+        return new VulkanTextureRenderTarget(createTexture(format, extent), depth, ResourceCast(mCurrentDevice));
     }
 
     CommandPoolRef VulkanBackend::createCommandPool() {
@@ -103,7 +104,13 @@ VULKAN_NS
     TextureRef VulkanBackend::createTexture(Format format, Extent extent) const {
         VOX_ASSERT(isInitialized(), "Render backend not initialized");
         const VulkanDevice *device = ResourceCast(mCurrentDevice);
-        return device->createHeap<VulkanTexture>(format, extent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_2_TRANSFER_DST_BIT_KHR);
+        VkImageUsageFlags usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_2_TRANSFER_DST_BIT_KHR;
+        if (isDepthFormat(format)) {
+            usage |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        } else {
+            usage |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        }
+        return device->createHeap<VulkanTexture>(format, extent, usage);
     }
 
     TextureRef VulkanBackend::createTexture(Format format, Extent extent, const void *data, uint32_t size) const {
@@ -170,6 +177,4 @@ VULKAN_NS
         VulkanDevice *device = ResourceCast(mCurrentDevice);
         return device->createHeap<VulkanUniformBuffer>(size);
     }
-
-
 NS_END

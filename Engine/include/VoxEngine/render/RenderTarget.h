@@ -25,6 +25,7 @@ public:
     virtual void endFrame() = 0;
 
     virtual TextureRef getBackBuffer() = 0;
+    virtual TextureRef getDepthBuffer() { return nullptr; }
     virtual void resize(Extent extent) = 0;
     inline Extent getSize() const {return mExtent;}
     virtual Ref<CommandBuffer> getCmdBuffer() const = 0;
