@@ -17,6 +17,9 @@ VOX_NS
     template<typename T>
     using SmallVector = std::vector<T>;
 
+    template<typename T, size_t size>
+    using Array = std::array<T, size>;
+
     template<typename T>
     using Vector = std::vector<T>;
 

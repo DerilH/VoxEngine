@@ -13,7 +13,7 @@
 VULKAN_NS
     VulkanPipelineState VulkanPipelineState::Create(const VulkanDevice &device, PipelineStateDesc desc, const VkGraphicsPipelineCreateInfo& info) {
         VkPipeline pipeline{};
-        vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &info, nullptr, &pipeline);
+        VK_CHECK(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &info, nullptr, &pipeline), "Error creating graphics pipeline");
         return VulkanPipelineState(desc, pipeline, info.layout);
     }
 

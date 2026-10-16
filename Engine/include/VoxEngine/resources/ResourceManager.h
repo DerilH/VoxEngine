@@ -3,6 +3,8 @@
 //
 
 #pragma once
+#include <expected>
+
 #include "VoxEngine/resources/assets/Asset.h"
 #include "VoxEngine/resources/assets/AssetLoader.h"
 #include "VoxEngine/resources/assets/RegularFileLoader.h"
@@ -35,11 +37,10 @@ RESOURCES_NS
         void loadAll();
 
         template<std::derived_from<Asset> T>
-        ConstRef<T> get(const InternedString key) const {
+        Expected<ConstRef<T>> get(const InternedString key) const {
             auto asset = mAssets.find(key);
-            VOX_CHECK_FMT(asset != mAssets.end(), "Cannot find asset {}", key);
-            VOX_CHECK_FMT(asset->second->type() == T::StaticType(), "Asset type mismatch for key {}. Actual type is {}. Provided type {}", key, +asset->second->type(), +T::StaticType());
-
+            VOX_EXPECT(asset != mAssets.end(), "Cannot find asset");
+            VOX_EXPECT(asset->second->type() == T::StaticType(), "Asset type mismatch");
             return static_cast<T *>(asset->second.get());
         }
 
@@ -79,12 +80,12 @@ RESOURCES_NS
 
     template<>
     inline ConstRef<MaterialAsset> ResourceManager::getDefault() const {
-        return get<MaterialAsset>("defaults/DefaultMaterial.vmat");
+        return get<MaterialAsset>("defaults/DefaultMaterial.vmat").value();
     }
 
     template<>
     inline ConstRef<ModelAsset> ResourceManager::getDefault() const {
-        return get<ModelAsset>("defaults/DefaultCube.fbx");
+        return get<ModelAsset>("defaults/DefaultCube.fbx").value();
     }
 
 NS_END

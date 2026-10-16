@@ -18,6 +18,6 @@ namespace Vox::Editor {
     public:
         MaterialEditor(Ref<Engine> engine, ConstRef<Resources::MaterialAsset> asset, bool& shouldClose);
 
-        void render() override;
+        void renderInternal(Render::RenderContext context) override;
     };
 }

@@ -3,6 +3,9 @@
 //
 
 #pragma once
+#include <expected>
+
+#include "Error.h"
 #include "VoxCore/Logger.h"
 
 #ifdef VOX_DEBUG
@@ -61,3 +64,12 @@ LOG_ERROR("{}: {}", error, (uint32_t)r)\
 }                                   \
 }
 #endif
+
+#define VOX_EXPECT(statement, error, ...) \
+if(!(statement)) \
+{                 \
+    [[unlikely]] return std::unexpected(Error(error));\
+}
+
+template<typename Result>
+using Expected = std::expected<Result, Vox::Error>;

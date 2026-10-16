@@ -14,7 +14,7 @@ namespace Vox::Editor {
             if (mShouldCloseEditor) {
                 mShouldCloseEditor = false;
                 mAssetEditor = nullptr;
-            } else mAssetEditor->render();
+            } else mAssetEditor->render(context);
         }
 
         ImGui::Begin("AssetExplorer", nullptr);

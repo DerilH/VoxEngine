@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <VoxEngine/render/state/RenderingState.h>
+
 #include "VoxEngine/render/RenderPassType.h"
 
 #include "VoxEngine/render/RenderTarget.h"
@@ -18,9 +20,9 @@ RENDER_NS
         ArrayView<AttachmentDesc> mWrites;
         ArrayView<AttachmentDesc> mReads;
         Extent mExtent;
+        RenderingState mRenderingState;
 
         RenderPass(RenderPassType mType, ArrayView<AttachmentDesc> reads, ArrayView<AttachmentDesc> writes, bool isControlPass = false);
-
     public:
         virtual ~RenderPass() = default;
 
@@ -31,13 +33,26 @@ RENDER_NS
 
         virtual void execute(RenderContext context) = 0;
 
-        RenderPassType getType() const;
+        RenderPassType getType() const {
+            return mType;
+        }
 
-        ArrayView<AttachmentDesc>& getWrites();
+        ArrayView<AttachmentDesc> getWrites() const {
+            return mWrites;
+        }
 
-        ArrayView<AttachmentDesc>& getReads();
+        ArrayView<AttachmentDesc> getReads() const {
+            return mReads;
+        }
 
-        void setExtent(Extent extent);
+        void setExtent(Extent extent) {
+            mExtent = extent;
+        }
+
+        ConstRef<RenderingState> getState() const {
+            return &mRenderingState;
+        }
+
         virtual bool shouldClear() {return false;}
     };
 

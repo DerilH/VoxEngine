@@ -1,8 +1,10 @@
 #pragma once
 #include <VoxCore/Define.h>
 #include <VoxCore/Pointers.h>
+#include <VoxEngine/resources/assets/MaterialAsset.h>
 #include <VoxEngine/resources/assets/MeshAsset.h>
 
+#include "MaterialPipelines.h"
 #include "RenderBackend.h"
 #include "RenderMesh.h"
 
@@ -20,7 +22,7 @@ RENDER_NS
         Ref<Texture> mSamplerTexture;
 
     private:
-        virtual Ref<PipelineState> createPSO(PipelineStateDesc &desc) = 0;
+        virtual Ref<PipelineState> createPSO(ConstRef<PipelineStateDesc> desc) = 0;
 
     public:
         virtual ~RenderResourceManager() = default;
@@ -51,7 +53,9 @@ RENDER_NS
             return mModelBuffer;
         }
 
-        Ref<PipelineState> getPipeline(PipelineStateDesc desc);
+        Ref<PipelineState> getPipeline(ConstRef<Resources::MaterialAsset> material, ConstRef<RenderingState> renderingState);
+
+        Ref<PipelineState> getPipeline(ConstRef<PipelineStateDesc> desc);
 
         Ref<RenderMesh> getMesh(ConstRef<Resources::MeshAsset> mesh);
     };

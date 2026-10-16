@@ -26,80 +26,76 @@ static inline int landlock_restrict_self(int ruleset_fd, uint32_t flags) {
 }
 
 namespace Vox::Platform {
+    void LinuxPlatform::enableSandbox(std::vector<std::filesystem::path> allowedDirs) {
+        struct landlock_ruleset_attr rulesetAttr = {};
+        rulesetAttr.handled_access_fs =
+                LANDLOCK_ACCESS_FS_EXECUTE |
+                LANDLOCK_ACCESS_FS_WRITE_FILE |
+                LANDLOCK_ACCESS_FS_READ_FILE |
+                LANDLOCK_ACCESS_FS_READ_DIR |
+                LANDLOCK_ACCESS_FS_REMOVE_DIR |
+                LANDLOCK_ACCESS_FS_REMOVE_FILE |
+                LANDLOCK_ACCESS_FS_MAKE_CHAR |
+                LANDLOCK_ACCESS_FS_MAKE_DIR |
+                LANDLOCK_ACCESS_FS_MAKE_REG |
+                LANDLOCK_ACCESS_FS_MAKE_SOCK |
+                LANDLOCK_ACCESS_FS_MAKE_FIFO |
+                LANDLOCK_ACCESS_FS_MAKE_BLOCK |
+                LANDLOCK_ACCESS_FS_MAKE_SYM;
 
-   void LinuxPlatform::enableSandbox(std::filesystem::path allowedDirectory) {
-    std::filesystem::path absAllowedDir = std::filesystem::absolute(allowedDirectory);
+        int rulesetFd = landlock_create_ruleset(&rulesetAttr, sizeof(rulesetAttr), 0);
+        VOX_CHECK(rulesetFd >= 0, "Failed to create Landlock ruleset for sandbox")
 
-    struct landlock_ruleset_attr rulesetAttr = {};
-    rulesetAttr.handled_access_fs =
-        LANDLOCK_ACCESS_FS_EXECUTE |
-        LANDLOCK_ACCESS_FS_WRITE_FILE |
-        LANDLOCK_ACCESS_FS_READ_FILE |
-        LANDLOCK_ACCESS_FS_READ_DIR |
-        LANDLOCK_ACCESS_FS_REMOVE_DIR |
-        LANDLOCK_ACCESS_FS_REMOVE_FILE |
-        LANDLOCK_ACCESS_FS_MAKE_CHAR |
-        LANDLOCK_ACCESS_FS_MAKE_DIR |
-        LANDLOCK_ACCESS_FS_MAKE_REG |
-        LANDLOCK_ACCESS_FS_MAKE_SOCK |
-        LANDLOCK_ACCESS_FS_MAKE_FIFO |
-        LANDLOCK_ACCESS_FS_MAKE_BLOCK |
-        LANDLOCK_ACCESS_FS_MAKE_SYM;
+        auto allowPath = [&](const std::filesystem::path &path, uint64_t access) {
+            if (!std::filesystem::exists(path)) return;
 
-    int rulesetFd = landlock_create_ruleset(&rulesetAttr, sizeof(rulesetAttr), 0);
-    if (rulesetFd < 0) {
-        std::cerr << "[Platform] Failed to create Landlock ruleset\n";
-        return;
-    }
+            int fd = open(path.c_str(), O_PATH | O_CLOEXEC);
+            if (fd < 0) return;
 
-    auto allowPath = [&](const std::filesystem::path& path, uint64_t access) {
-        if (!std::filesystem::exists(path)) return;
+            struct landlock_path_beneath_attr pathAttr = {};
+            pathAttr.allowed_access = access;
+            pathAttr.parent_fd = fd;
 
-        int fd = open(path.c_str(), O_PATH | O_CLOEXEC);
-        if (fd < 0) return;
+            landlock_add_rule(rulesetFd, LANDLOCK_RULE_PATH_BENEATH, &pathAttr, 0);
+            close(fd);
+        };
 
-        struct landlock_path_beneath_attr pathAttr = {};
-        pathAttr.allowed_access = access;
-        pathAttr.parent_fd = fd;
+        uint64_t fullAccess = rulesetAttr.handled_access_fs;
+        uint64_t readOnlyAccess = LANDLOCK_ACCESS_FS_READ_FILE |
+                                  LANDLOCK_ACCESS_FS_READ_DIR |
+                                  LANDLOCK_ACCESS_FS_EXECUTE;
 
-        landlock_add_rule(rulesetFd, LANDLOCK_RULE_PATH_BENEATH, &pathAttr, 0);
-        close(fd);
-    };
+        for (const auto &dir: allowedDirs) {
+            std::filesystem::path absAllowedDir = std::filesystem::absolute(dir);
+            allowPath(absAllowedDir, fullAccess);
+        }
 
-       uint64_t fullAccess = rulesetAttr.handled_access_fs;
-       uint64_t readOnlyAccess = LANDLOCK_ACCESS_FS_READ_FILE |
-                                 LANDLOCK_ACCESS_FS_READ_DIR |
-                                 LANDLOCK_ACCESS_FS_EXECUTE;
+        allowPath("/tmp", fullAccess);
 
-       allowPath(absAllowedDir, fullAccess);
+        const char *homeDir = std::getenv("HOME");
+        if (homeDir) {
+            std::filesystem::path nvCache = std::filesystem::path(homeDir) / ".cache";
+            allowPath(nvCache, fullAccess);
+        }
 
-       allowPath("/tmp", fullAccess);
+        allowPath("/dev", readOnlyAccess | LANDLOCK_ACCESS_FS_WRITE_FILE);
+        allowPath("/sys", readOnlyAccess);
+        allowPath("/proc", readOnlyAccess);
+        allowPath("/usr", readOnlyAccess);
+        allowPath("/lib", readOnlyAccess);
+        allowPath("/lib64", readOnlyAccess);
+        allowPath("/etc", readOnlyAccess);
 
-       const char* homeDir = std::getenv("HOME");
-       if (homeDir) {
-           std::filesystem::path nvCache = std::filesystem::path(homeDir) / ".cache";
-           allowPath(nvCache, fullAccess);
-       }
+        if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0) {
+            close(rulesetFd);
+            return;
+        }
+        VOX_CHECK(landlock_restrict_self(rulesetFd, 0) >= 0, "Failed to enable sandbox")
+        for (const auto &dir: allowedDirs) {
+            std::filesystem::path absAllowedDir = std::filesystem::absolute(dir);
+            LOG_INFO("Sandbox allowed path {}", absAllowedDir.c_str())
+        }
 
-       allowPath("/dev", readOnlyAccess | LANDLOCK_ACCESS_FS_WRITE_FILE);
-       allowPath("/sys", readOnlyAccess);
-       allowPath("/proc", readOnlyAccess);
-       allowPath("/usr", readOnlyAccess);
-       allowPath("/lib", readOnlyAccess);
-       allowPath("/lib64", readOnlyAccess);
-       allowPath("/etc", readOnlyAccess);
-
-    if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) < 0) {
         close(rulesetFd);
-        return;
     }
-
-    if (landlock_restrict_self(rulesetFd, 0) < 0) {
-        std::cerr << "[Platform] Failed to restrict self\n";
-    }
-
-       LOG_INFO("Sandbox allowed path {}", absAllowedDir.c_str())
-    close(rulesetFd);
-}
-
 }

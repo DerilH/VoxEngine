@@ -20,8 +20,7 @@ namespace Vox::Editor {
 
         ImGui::PushID(mAsset);
 
-        const auto &path = mAsset->getName();
-        std::string fileName = path;
+        std::string fileName = mAsset->getName();
         auto iconSymbol = "[F]";
 
         bool hasNested = mAsset->hasNested();
@@ -67,7 +66,7 @@ namespace Vox::Editor {
             }
 
             if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
-                ImGui::SetDragDropPayload("ASSET_ITEM", mAsset->getPath().c_str(), mAsset->getPath().size() + 1);
+                ImGui::SetDragDropPayload("ASSET_ITEM", mAsset->getPath().c_str(), mAsset->getPath().size());
                 ImGui::Text("Move: %s", fileName.c_str());
                 ImGui::EndDragDropSource();
             }

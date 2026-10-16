@@ -30,7 +30,7 @@ RENDER_NS
 
         void addPass(RenderPass* pass);
 
-        GraphTextureRef createTexture(InternedString slot = "");
+        GraphTextureRef createTexture(InternedString slot = "", Format format = {});
 
         GraphTextureRef getTexture(InternedString slot);
         Vector<GraphTextureRef> getTextures();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <VoxCore/Pointers.h>
+#include <VoxEngine/resources/assets/MaterialAsset.h>
 #include <VoxEngine/resources/assets/ModelAsset.h>
 #include <VoxEngine/scene/Scene.h>
 
@@ -9,6 +10,7 @@
 #include "VoxEngine/render/graph/RenderGraph.h"
 #include "DrawItem.h"
 #include "FrameSync.h"
+#include "MaterialPipelines.h"
 #include "RenderResourceManager.h"
 #include "VoxEngine/resources/assets/MeshAsset.h"
 #include "VoxEngine/resources/assets/ShaderAsset.h"
@@ -33,10 +35,10 @@ RENDER_NS
         Ref<FrameSync> mHeadlessFrame;
 
         int mBufferingLevel = 0;
-        bool mShouldStop = false;
         RenderGraph *mGraph = nullptr;
-        // GraphTextureRef color;
-        HashMap<PipelineStateDesc, Vector<DrawItem> > mDrawListByStateHash;
+        HashMap<ConstRef<Resources::MaterialAsset>, Vector<DrawItem> > mDrawListByStateHash;
+        HashMap<ConstRef<Resources::MaterialAsset>, MaterialPipelines> mPipelinesByMaterial;
+
         Ref<RenderBackend> mBackend;
         Ref<RenderResourceManager> mRenderResourceManager;
         Ref<Resources::ResourceManager> mResourceManager;
@@ -46,6 +48,7 @@ RENDER_NS
         void drawFrame(RenderTargetRef target, Ref<CommandBuffer> cmdBuffer);
 
         void executeGraph(RenderTargetRef viewport, CommandBufferRef cmdBuffer);
+
 
     public:
         const RenderAPI backendApi;
@@ -62,27 +65,27 @@ RENDER_NS
 
         void addPresentTarget(Ref<RenderTarget> target);
 
-        void stop();
-
         void createGraph();
 
-        const HashMap<PipelineStateDesc, Vector<DrawItem> > &getDrawLists() const;
+        const HashMap<ConstRef<Resources::MaterialAsset>, Vector<DrawItem> > &getDrawLists() const;
 
-        const Vector<DrawItem> &getDrawList(const PipelineStateDesc &state) const;
+        const Vector<DrawItem> &getDrawList(const ConstRef<Resources::MaterialAsset> &state) const;
 
-        void clearDrawList(const PipelineStateDesc &state);
+        void clearDrawList(ConstRef<Resources::MaterialAsset> state);
 
         void draw(Ref<Scene::MeshRendererComponent> component);
 
         void updateCamera(Ref<Scene::CameraComponent> camera);
 
-        Ref<RenderBackend> getBackend() const {return mBackend;}
+        Expected<Ref<PipelineState> > getPipeline(ConstRef<Resources::MaterialAsset> material, ConstRef<RenderingState> renderingState);
+
+        Ref<RenderBackend> getBackend() const { return mBackend; }
         Ref<Resources::ResourceManager> getResourceManager() const { return mResourceManager; }
         Ref<RenderResourceManager> getRenderResourceManager() const { return mRenderResourceManager; }
         const HashMap<InternedString, RenderTargetRef> &getViewportTargets() const { return mViewportTargets; }
         const Vector<RenderTargetRef> &getPresentTargets() const { return mPresentTargets; }
-
         RenderGraph &getGraph() const { return *mGraph; }
+
         NO_COPY_MOVE_DEFAULT(Renderer);
     };
 

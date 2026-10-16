@@ -61,8 +61,19 @@ namespace Vox::Editor {
             if (ImGui::BeginDragDropTarget()) {
                 if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_ITEM")) {
                     const char *draggedPath = static_cast<const char *>(payload->Data);
-                    strncpy(materialBuffer, draggedPath, sizeof(materialBuffer) - 1);
-                    materialBuffer[sizeof(materialBuffer) - 1] = '\0';
+                    size_t dataSize = static_cast<size_t>(payload->DataSize);
+                    
+                    size_t stringLen = dataSize;
+                    if (stringLen > 0 && draggedPath[stringLen - 1] == '\0') {
+                        stringLen--;
+                    }
+
+                    if (stringLen >= sizeof(materialBuffer)) {
+                        stringLen = sizeof(materialBuffer) - 1;
+                    }
+
+                    memcpy(materialBuffer, draggedPath, stringLen);
+                    materialBuffer[stringLen] = '\0';
                     changed = true;
                 }
                 ImGui::EndDragDropTarget();
@@ -77,8 +88,19 @@ namespace Vox::Editor {
             if (ImGui::BeginDragDropTarget()) {
                 if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_ITEM")) {
                     const char *draggedPath = static_cast<const char *>(payload->Data);
-                    strncpy(meshBuffer, draggedPath, sizeof(meshBuffer) - 1);
-                    meshBuffer[sizeof(meshBuffer) - 1] = '\0';
+                    size_t dataSize = static_cast<size_t>(payload->DataSize);
+                    
+                    size_t stringLen = dataSize;
+                    if (stringLen > 0 && draggedPath[stringLen - 1] == '\0') {
+                        stringLen--;
+                    }
+
+                    if (stringLen >= sizeof(meshBuffer)) {
+                        stringLen = sizeof(meshBuffer) - 1;
+                    }
+
+                    memcpy(meshBuffer, draggedPath, stringLen);
+                    meshBuffer[stringLen] = '\0';
                     changed = true;
                 }
                 ImGui::EndDragDropTarget();
@@ -88,11 +110,16 @@ namespace Vox::Editor {
             try {
                 if (changed) {
                     auto newMat = mEngine->getResourceManager()->get<Resources::MaterialAsset>(InternedString(materialBuffer));
-                    renderer->setMaterial(newMat);
-                    auto mesh = mEngine->getResourceManager()->get<Resources::MeshAsset>(InternedString(meshBuffer));
-                    renderer->setMeshProvider([mesh]() {
-                        return mesh;
-                    });
+
+                    if (newMat) {
+                        renderer->setMaterial(*newMat);
+                        auto mesh = mEngine->getResourceManager()->get<Resources::MeshAsset>(InternedString(meshBuffer));
+                        if (mesh.has_value()) {
+                            renderer->setMeshProvider([mesh]() {
+                                return *mesh;
+                            });
+                        }
+                    }
                 }
             } catch (std::exception &e) {
             }

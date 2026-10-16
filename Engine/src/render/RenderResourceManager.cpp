@@ -3,10 +3,8 @@
 Vox::Render::RenderResourceManager::RenderResourceManager(const Ref<RenderBackend> backend) : mBackend(backend) {
 }
 
-
-
-Vox::Ref<Vox::Render::PipelineState> Vox::Render::RenderResourceManager::getPipeline(PipelineStateDesc desc) {
-    decltype(auto) it = mPipelineStateByHash[desc];
+Vox::Ref<Vox::Render::PipelineState> Vox::Render::RenderResourceManager::getPipeline(ConstRef<PipelineStateDesc> desc) {
+    decltype(auto) it = mPipelineStateByHash[*desc];
     if (it == nullptr) {
         it = createPSO(desc);
     }

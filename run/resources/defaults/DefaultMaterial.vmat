@@ -1,7 +1,7 @@
 {
     "shaders": {
-        "VERTEX": "defaults/DefaultShader.vert",
-        "FRAGMENT": "defaults/DefaultShader.frag"
+        "FRAGMENT": "defaults/DefaultShader.fra",
+        "VERTEX": "defaults/DefaultShader.vert"
     },
     "polygonMode": "FILL",
     "cullMode": "NONE",

@@ -34,7 +34,7 @@ RENDER_NS
     RenderGraph::RenderGraph(RenderGraph *old) {
         if (old) {
             for (auto const el: old->mSlots) {
-                auto tex = new GraphTexture(mTextures.size());
+                auto tex = new GraphTexture(mTextures.size(), el.second->getFormat());
                 mTextures.emplace_back(tex);
                 mSlots.emplace(el.first, tex);
             }
@@ -46,7 +46,7 @@ RENDER_NS
         mDirty = true;
         mPasses.emplace_back(pass);
 
-        auto &reads = pass->getReads();
+        auto reads = pass->getReads();
         if (reads.empty()) mEntryNodes.emplace_back(pass);
         else {
             for (int i = 0; i < reads.size(); i++) {
@@ -54,7 +54,7 @@ RENDER_NS
             }
         }
 
-        auto &writes = pass->getWrites();
+        auto writes = pass->getWrites();
         for (int i = 0; i < writes.size(); i++) {
             mWriteDeps[writes[i]].emplace_back(pass);
         }
@@ -105,9 +105,9 @@ RENDER_NS
         return mEntryNodes;
     }
 
-    GraphTextureRef Vox::Render::RenderGraph::createTexture(InternedString slot) {
+    GraphTextureRef Vox::Render::RenderGraph::createTexture(InternedString slot, Format format) {
         mDirty = true;
-        auto tex = new GraphTexture(mTextures.size());
+        auto tex = new GraphTexture(mTextures.size(), format);
         mTextures.emplace_back(tex);
         if (!slot.empty())
             mSlots.emplace(slot, tex);

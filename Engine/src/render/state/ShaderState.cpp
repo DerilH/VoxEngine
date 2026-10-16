@@ -1,21 +1,25 @@
 #include "VoxEngine/render/state/ShaderState.h"
 
-RENDER_NS
+#include <VoxEngine/render/state/Shader.h>
 
-ShaderState::Builder::Builder() = default;
+RENDER_NS
+    ShaderState::Builder::Builder() = default;
 
 ShaderState::Builder &ShaderState::Builder::shader(ShaderRef shader) {
-    mShaders.push_back(shader);
+    mShaders.emplace(shader->getStage(), shader);
     return *this;
 }
 
 ShaderState::Builder &ShaderState::Builder::shaders(const Vector<ShaderRef> &shaders) {
-    mShaders.insert(mShaders.end(), shaders.begin(), shaders.end());
+    for (auto shader : shaders) {
+        this->shader(shader);
+    }
     return *this;
 }
 
-ShaderState ShaderState::Builder::build() const & {
-    VOX_CHECK(mShaders.size() >= 2, "ShaderState must vertex and fragment shader")
+Expected<ShaderState> ShaderState::Builder::build() const & {
+    VOX_EXPECT(mShaders.size() >= 2, "ShaderState must contain at least vertex and fragment shader")
+
     ShaderState state;
     state.mShaders = mShaders;
     return state;

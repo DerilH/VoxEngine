@@ -8,17 +8,18 @@
 #include "VoxCore/containers/Containers.h"
 #include "VoxEngine/render/Types.h"
 #include <xxh3.h>
+#include <VoxCore/render/Enums.h>
 
 RENDER_NS
     class ShaderState {
         friend struct std::hash<ShaderState>;
-        Vector<ShaderRef> mShaders;
+        HashMap<ShaderStage, ShaderRef> mShaders;
 
         explicit ShaderState() = default;
 
     public:
         class Builder {
-            Vector<ShaderRef> mShaders{};
+            HashMap<ShaderStage, ShaderRef> mShaders{};
         public:
             Builder();
 
@@ -26,12 +27,12 @@ RENDER_NS
 
             Builder& shaders(const Vector<ShaderRef>& shaders);
 
-            ShaderState build() const&;
+            Expected<ShaderState> build() const&;
         };
 
         static Builder GetBuilder();
 
-        inline const Vector<ShaderRef>& shaders() const { return mShaders; }
+        inline const HashMap<ShaderStage, ShaderRef>& shaders() const { return mShaders; }
 
         inline bool operator==(const ShaderState& other) const {
             bool same = mShaders.size() == other.mShaders.size();

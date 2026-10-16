@@ -9,13 +9,9 @@
 #include "VoxEngine/render/RenderTarget.h"
 #include "VoxEngine/resources/assets/MeshAsset.h"
 #include "VoxEngine/render/state/Shader.h"
-#include <VoxEngine/render/vulkan/SwapChainFrameSync.h>
-#include <VoxEngine/render/vulkan/VulkanDevice.h>
-#include <VoxEngine/render/vulkan/VulkanDescriptorSet.h>
-#include <VoxEngine/render/vulkan/buffers/VulkanUniformBuffer.h>
-#include <VoxEngine/render/vulkan/VulkanResourceCast.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <VoxEngine/render/buffers/UniformBuffer.h>
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/scene/components/MeshRendererComponent.h>
 #include <VoxEngine/scene/components/Transform.h>
@@ -72,17 +68,13 @@ RENDER_NS
         mBufferingLevel = buffers;
     }
 
-    void Renderer::stop() {
-        mShouldStop = true;
-    }
-
     void Renderer::createGraph() {
         auto old = mGraph;
         mGraph = new RenderGraph(old);
         int i = 0;
         auto viewportTextures = (AttachmentDesc *) malloc(sizeof(AttachmentDesc) * mViewportTargets.size());
         for (const auto target: mViewportTargets) {
-            const auto text = mGraph->createTexture(target.first);
+            const auto text = mGraph->createTexture(target.first, target.second->getBackBuffer()->getFormat());
             new(&viewportTextures[i]) AttachmentDesc{text, DISCARD_W_ATTACHMENT};
             text->setExact([target]() { return target.second->getBackBuffer(); });
             i++;
@@ -90,6 +82,36 @@ RENDER_NS
 
         auto geometry = new GeometryPass(GBUFFER_PASS, true, {{}}, ArrayView(viewportTextures, mViewportTargets.size()));
         mGraph->addPass(geometry);
+    }
+
+
+    Expected<Ref<PipelineState> > Renderer::getPipeline(ConstRef<Resources::MaterialAsset> material, ConstRef<RenderingState> renderingState) {
+        const auto pipIt = mPipelinesByMaterial.find(material);
+        MaterialPipelines pipelines = pipIt == mPipelinesByMaterial.end() ? MaterialPipelines({}) : pipIt->second;
+        auto state = pipelines.find(*renderingState);
+        if (!state) {
+            auto vertPath = material->shaders.at(ShaderStage::VERTEX);
+            auto fragPath = material->shaders.at(ShaderStage::FRAGMENT);
+            auto vert = mResourceManager->get<Resources::ShaderAsset>(vertPath);
+            VOX_EXPECT(vert, vert.error());
+            auto frag = mResourceManager->get<Resources::ShaderAsset>(fragPath);
+            VOX_EXPECT(frag, vert.error());
+
+            auto vertexShader = new Shader(&(*vert)->getCompiled());
+            auto fragmentShader = new Shader(&(*frag)->getCompiled());
+
+            auto shaderState = ShaderState::GetBuilder().shaders({vertexShader, fragmentShader}).build();
+            VOX_EXPECT(shaderState, shaderState.error());
+
+            Vector<BlendState> blendState = BlendState::GetBuilder().startAttachment().endAttachment().build();
+            RasterizerState rasterizerState = RasterizerState::GetBuilder().cullMode(material->cullMode).polygonMode(material->polygonMode).build();
+            MSAAState msaaState = MSAAState(MSAASamples::COUNT_1);
+            auto blend = ArrayView<BlendState>::Copy(blendState);
+            PipelineStateDesc desc(shaderState.value(), blend, rasterizerState, material->topology, msaaState, *renderingState);
+            pipelines.insert({*renderingState, desc});
+            return mRenderResourceManager->getPipeline(&desc);
+        }
+        return mRenderResourceManager->getPipeline(state);
     }
 
     void Renderer::addViewportTarget(InternedString name, RenderTargetRef viewport) {
@@ -108,15 +130,15 @@ RENDER_NS
         mGraph->execute({this, cmdBuffer}, target);
     }
 
-    void Renderer::clearDrawList(const PipelineStateDesc &state) {
-        mDrawListByStateHash.at(state);
+    void Renderer::clearDrawList(ConstRef<Resources::MaterialAsset> state) {
+        mDrawListByStateHash[state].clear();
     }
 
-    const HashMap<PipelineStateDesc, Vector<DrawItem> > &Renderer::getDrawLists() const {
+    const HashMap<ConstRef<Resources::MaterialAsset>, Vector<DrawItem> > &Renderer::getDrawLists() const {
         return mDrawListByStateHash;
     }
 
-    const Vector<DrawItem> &Renderer::getDrawList(const PipelineStateDesc &state) const {
+    const Vector<DrawItem> &Renderer::getDrawList(const ConstRef<Resources::MaterialAsset> &state) const {
         return mDrawListByStateHash.at(state);
     }
 
@@ -125,28 +147,13 @@ RENDER_NS
         glm::mat4 modelMat(1.0f);
 
         auto mat = component->getMaterial();
-        auto vertPath = mat->shaders.at(ShaderStage::VERTEX);
-        auto fragPath = mat->shaders.at(ShaderStage::FRAGMENT);
-        auto vert = mResourceManager->get<Resources::ShaderAsset>(vertPath);
-        auto frag = mResourceManager->get<Resources::ShaderAsset>(fragPath);
-
-        auto vertexShader = new Shader(&vert->getCompiled());
-        auto fragmentShader = new Shader(&frag->getCompiled());
-
-        ShaderState shaderState = ShaderState::GetBuilder().shaders({vertexShader, fragmentShader}).build();
-        Vector<BlendState> blendState = BlendState::GetBuilder().startAttachment().endAttachment().build();
-        RasterizerState rasterizerState = RasterizerState::GetBuilder().cullMode(mat->cullMode).polygonMode(mat->polygonMode).build();
-        MSAAState msaaState = MSAAState(MSAASamples::COUNT_1);
-        RenderingState renderingState = RenderingState({mViewportTargets.begin()->second->getBackBuffer()->getFormat()}, Format::UNDEFINED, Format::UNDEFINED);
-        auto blend = ArrayView<BlendState>::Copy(blendState);
-        PipelineStateDesc desc(shaderState, blend, rasterizerState, mat->topology, msaaState, renderingState);
 
         auto t = component->gameObject;
         modelMat = glm::translate(modelMat, t->transform->getPos());
         modelMat = modelMat * glm::mat4_cast(t->transform->getRotation());
         modelMat = glm::scale(modelMat, t->transform->getScale());
 
-        mDrawListByStateHash[desc].emplace_back(mesh, modelMat);
+        mDrawListByStateHash[mat].emplace_back(mesh, modelMat);
     }
 
     void Renderer::updateCamera(Ref<Scene::CameraComponent> camera) {

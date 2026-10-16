@@ -7,8 +7,9 @@
 #include "VoxCore/Define.h"
 
 PLATFORM_NS
-class Platform {
-public:
-    virtual void enableSandbox(std::filesystem::path allowedDirectory) = 0;
-};
+    class Platform {
+    public:
+        virtual void enableSandbox(std::vector<std::filesystem::path> allowedDirs) = 0;
+    };
+
 NS_END

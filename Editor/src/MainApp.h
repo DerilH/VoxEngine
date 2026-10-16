@@ -20,9 +20,10 @@ public:
     void run(int argc, char **argv) {
         CLI::App app{"VoxEngine"};
 
+        std::vector<std::filesystem::path> customSandboxPaths;
         bool enableSandbox = false;
         app.add_flag("--enable-sandbox", enableSandbox, "Enables sandbox for protection from unwanted filesystem changes");
-
+        app.add_option("--sandbox-paths", customSandboxPaths,"Custom directories allowed in sandbox mode")->expected(1, -1);
         std::string dir = "default";
         app.add_option("--resources", dir, "Set app resources directory")->required();
         app.parse(argc, argv);
@@ -74,7 +75,10 @@ public:
         gui->init(*Vox::Render::WindowManager::Get().getMainWindow(), *mEngine);
 
         Vox::Platform::LinuxPlatform platform{};
-        if (enableSandbox) platform.enableSandbox(".");
+        if (enableSandbox) {
+            customSandboxPaths.emplace_back("./");
+            platform.enableSandbox(customSandboxPaths);
+        }
         mEngine->run();
         cleanup();
     }

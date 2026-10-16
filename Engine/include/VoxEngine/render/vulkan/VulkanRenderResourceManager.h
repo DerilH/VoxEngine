@@ -13,9 +13,9 @@ VULKAN_NS
         Ref<VulkanDescriptorSet> mModelDescSet;
         Ref<VulkanDescriptorSet> mSamplerDescSet;
 
-        Ref<PipelineState> createPSO(PipelineStateDesc &desc) override;
+        Ref<PipelineState> createPSO(ConstRef<PipelineStateDesc> desc) override;
 
-        Vector<VkDescriptorSetLayout> createDescriptorLayouts(const Vector<ShaderRef> &shaders);
+        Vector<VkDescriptorSetLayout> createDescriptorLayouts();
 
         bool mCachePrepared = false;
 

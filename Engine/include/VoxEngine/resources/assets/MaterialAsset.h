@@ -7,6 +7,9 @@
 
 RESOURCES_NS
     class MaterialAsset : public CloneableAsset<MaterialAsset> {
+    protected:
+        MaterialAsset *cloneImpl(void *ptr) const override;
+
     public:
         MaterialAsset(InternedString path, HashMap<Render::ShaderStage, InternedString> &shaders, Render::PolygonMode polygonMode, Render::CullMode cullMode, Render::PrimitiveTopology topology);
 
@@ -14,10 +17,11 @@ RESOURCES_NS
         Render::PolygonMode polygonMode;
         Render::CullMode cullMode;
         Render::PrimitiveTopology topology;
+        InternedString albedo;
 
         ~MaterialAsset() override;
 
-        MaterialAsset *cloneImpl(void *ptr) const override;
+
 
         AssetType type() const override {
             return StaticType();
@@ -27,4 +31,5 @@ RESOURCES_NS
             return AssetType::MATERIAL;
         }
     };
+
 NS_END

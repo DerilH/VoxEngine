@@ -15,8 +15,12 @@ RENDER_NS
     void GeometryPass::execute(RenderContext context) {
         auto resManager = context.renderer->getRenderResourceManager();
         for (auto &entry: context.renderer->getDrawLists()) {
-            auto state = resManager->getPipeline(entry.first);
-            state->bind(context.cmdBuffer);
+            auto state = context.renderer->getPipeline(entry.first, &mRenderingState);
+            if (!state) {
+                LOG_ERROR("Cannot get pipeline state");
+                continue;
+            }
+            state.value()->bind(context.cmdBuffer);
 
             context.cmdBuffer->bindGroup(resManager->getCameraGroup());
             context.cmdBuffer->bindGroup(resManager->getModelGroup());
@@ -26,7 +30,9 @@ RENDER_NS
                 static Ref<Texture> text = nullptr;
                 if (!text) {
                     auto t = context.renderer->getResourceManager()->get<Resources::TextureAsset>("textures/Wood.png");
-                    text = context.renderer->getBackend()->createTexture(Format::RGBA8, t->getExtent(), t->getPixels().pData, t->getPixels().size());
+                    if (t.has_value()) {
+                        text = context.renderer->getBackend()->createTexture(Format::RGBA8, (*t)->getExtent(), (*t)->getPixels().pData, (*t)->getPixels().size());
+                    }
                 }
                 resManager->updateSample(text);
                 resManager->getModelBuffer()->write(&item.modelMat, sizeof(glm::mat4));

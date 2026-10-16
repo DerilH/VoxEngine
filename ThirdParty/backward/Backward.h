@@ -4172,16 +4172,14 @@ namespace backward {
         void print_stacktrace(ST &st, std::ostream &os, Colorize &colorize) {
             print_header(os, st.thread_id());
             _resolver.load_stacktrace(st);
-            for (size_t i = 0; i < st.size(); ++i) {
-                backward::ResolvedTrace t = _resolver.resolve(st[i]);
-
-                os << "#" << i << "  ";
-                if (!t.source.filename.empty()) {
-                    os << t.source.filename << ":" << t.source.line;
-                } else {
-                    os << "[" << t.addr << "]";
+            if (reverse) {
+                for (size_t trace_idx = st.size(); trace_idx > 0; --trace_idx) {
+                    print_trace(os, _resolver.resolve(st[trace_idx - 1]), colorize);
                 }
-                os << "  " << t.source.function << "\n";
+            } else {
+                for (size_t trace_idx = 0; trace_idx < st.size(); ++trace_idx) {
+                    print_trace(os, _resolver.resolve(st[trace_idx]), colorize);
+                }
             }
         }
 
@@ -4267,8 +4265,8 @@ namespace backward {
         void print_source_loc(std::ostream &os, const char *indent,
                               const ResolvedTrace::SourceLoc &source_loc,
                               void *addr = nullptr) {
-            os << indent << "Source \"" << source_loc.filename << "\", line "
-               << source_loc.line << ", in " << source_loc.function;
+            os << indent << "Source \"" << source_loc.filename << ":"
+               << source_loc.line << "\"" << ", in " << source_loc.function;
 
             if (address && addr != nullptr) {
                 os << " [" << addr << "]";

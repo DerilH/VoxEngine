@@ -11,38 +11,42 @@
 
 RENDER_NS
     class RenderingState {
-        friend struct std::hash<Vox::Render::RenderingState>;
-        ArrayView<Format> mColorFormats;
+        friend struct std::hash<RenderingState>;
+        Array<Format, 8> mColorFormats;
+        uint8_t mFormatsCount;
         Format mDepthFormat;
         Format mStencilFormat;
-
+        mutable uint64_t mCachedHash = 0;
 
     public:
         RenderingState() = delete;
 
-        RenderingState(ArrayView<Format> colorFormats, Format depthFormat, Format stencilFormat) : mColorFormats(colorFormats), mDepthFormat(depthFormat), mStencilFormat(stencilFormat) {
+        RenderingState(ArrayView<Format> formats, Format depthFormat, Format stencilFormat) : mColorFormats(formats.copy<8>()), mFormatsCount(formats.size()), mDepthFormat(depthFormat), mStencilFormat(stencilFormat) {
         }
 
-        inline ArrayView<Format> getColorFormats() const { return mColorFormats; }
+        ArrayView<const Format> getColorFormats() const { return ArrayView(mColorFormats.data(), mFormatsCount); }
 
-        inline Format getDepthFormat() const { return mDepthFormat; }
+        Format getDepthFormat() const { return mDepthFormat; }
 
-        inline Format getStencilFormat() const { return mStencilFormat; }
-        inline bool operator==(const RenderingState& other) const {
+        Format getStencilFormat() const { return mStencilFormat; }
+
+        bool operator==(const RenderingState &other) const {
             bool same = mDepthFormat == other.mDepthFormat && mStencilFormat == other.mStencilFormat;
-            for(int i = 0; i < mColorFormats.size(); ++i) {
+            for (int i = 0; i < mColorFormats.size(); ++i) {
                 same = same && mColorFormats[i] == other.mColorFormats[i];
             }
             return same;
         }
     };
+
 NS_END
 
 namespace std {
     template<>
     struct hash<Vox::Render::RenderingState> {
-        inline size_t operator()(const Vox::Render::RenderingState& s) const noexcept {
-            XXH64_state_t* state = XXH64_createState();
+        inline size_t operator()(const Vox::Render::RenderingState &s) const noexcept {
+            if (s.mCachedHash != 0) return s.mCachedHash;
+            XXH64_state_t *state = XXH64_createState();
             XXH64_reset(state, 0);
 
             for (int i = 0; i < s.mColorFormats.size(); ++i) {
@@ -53,9 +57,9 @@ namespace std {
             XXH64_update(state, &s.mDepthFormat, sizeof(Vox::Render::Format));
             XXH64_update(state, &s.mStencilFormat, sizeof(Vox::Render::Format));
 
-            uint64_t h = XXH64_digest(state);
+            s.mCachedHash = XXH64_digest(state);
             XXH64_freeState(state);
-            return h;
+            return s.mCachedHash;
         }
     };
 }

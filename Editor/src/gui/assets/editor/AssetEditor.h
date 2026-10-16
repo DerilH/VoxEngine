@@ -3,16 +3,15 @@
 //
 
 #pragma once
+#include "../../components/GuiComponent.h"
 
 namespace Vox::Editor {
-    class AssetEditor {
+    class AssetEditor : public GuiComponent {
     protected:
         bool& mShouldClose;
     public:
         AssetEditor(bool& shouldClose) : mShouldClose(shouldClose) {}
         virtual ~AssetEditor() = default;
-
-        virtual void render() = 0;
 
     };
 }

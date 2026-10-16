@@ -47,7 +47,7 @@ VULKAN_NS
         VOX_CHECK(false, "Unsupported attribute type!");
     }
 
-    Vector<VkDescriptorSetLayout> VulkanRenderResourceManager::createDescriptorLayouts(const Vector<ShaderRef> &shaders) {
+    Vector<VkDescriptorSetLayout> VulkanRenderResourceManager::createDescriptorLayouts() {
         Vector<VkDescriptorSetLayout> layouts;
         layouts.resize(4);
 
@@ -62,13 +62,13 @@ VULKAN_NS
         return layouts;
     }
 
-    Ref<PipelineState> VulkanRenderResourceManager::createPSO(PipelineStateDesc &desc) {
+    Ref<PipelineState> VulkanRenderResourceManager::createPSO(ConstRef<PipelineStateDesc> desc) {
         VOX_ASSERT(mCachePrepared, "Render resources cache not prepared")
         VkGraphicsPipelineCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 
         //BLEND STATE
-        auto &blend = desc.getBlend();
+        auto &blend = desc->getBlend();
         VkPipelineColorBlendStateCreateInfo blendState = {};
         createInfo.pColorBlendState = &blendState;
 
@@ -90,7 +90,7 @@ VULKAN_NS
         blendState.pAttachments = byAttachment;
 
         //MSAA
-        auto &msaa = desc.getMSAA();
+        auto &msaa = desc->getMSAA();
         VkPipelineMultisampleStateCreateInfo msaaState = {};
         createInfo.pMultisampleState = &msaaState;
 
@@ -99,7 +99,7 @@ VULKAN_NS
         msaaState.sampleShadingEnable = msaa.isSampleShading();
 
         //Layout
-        auto descriptorLayouts = createDescriptorLayouts(desc.getShader().shaders());
+        auto descriptorLayouts = createDescriptorLayouts();
         VkPipelineLayoutCreateInfo layoutInfo = {};
         layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
@@ -110,7 +110,7 @@ VULKAN_NS
         vkCreatePipelineLayout(*mDevice, &layoutInfo, nullptr, &createInfo.layout);
 
         //Rasterizer
-        auto &rasterizer = desc.getRasterizer();
+        auto &rasterizer = desc->getRasterizer();
         VkPipelineRasterizationStateCreateInfo rasterizerState = {};
         createInfo.pRasterizationState = &rasterizerState;
 
@@ -127,7 +127,7 @@ VULKAN_NS
         rasterizerState.depthBiasSlopeFactor = rasterizer.getDepthBiasSlopeFactor();
 
         //Dynamic Rendering
-        auto &rendering = desc.getRenderingState();
+        auto &rendering = desc->getRenderingState();
         VkPipelineRenderingCreateInfo renderingInfo = {};
         createInfo.pNext = &renderingInfo;
 
@@ -143,16 +143,15 @@ VULKAN_NS
         }
 
         //Shader
-        auto &shaderState = desc.getShader();
+        auto &shaderState = desc->getShader();
         auto &shaders = shaderState.shaders();
 
         VkPipelineShaderStageCreateInfo stages[shaders.size() == 0 ? 1 : shaders.size()];
         createInfo.stageCount = shaders.size();
         createInfo.pStages = stages;
 
-        for (int i = 0; i < shaders.size(); i++) {
-            auto &stage = stages[i];
-            auto shader = shaders[i];
+        for (const auto& [index, shader] : shaders | std::views::values | std::views::enumerate) {
+            auto &stage = stages[index];
 
             stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
             stage.stage = toVk(shader->getStage());;
@@ -164,17 +163,14 @@ VULKAN_NS
             stage.pNext = nullptr;
         }
 
-        auto vertexShader = std::ranges::find_if(shaders, [&](const auto item) {
-            return item->getStage() == ShaderStage::VERTEX;
-        });
-        VOX_CHECK(vertexShader != shaders.end(), "Vertex shader not provided!");
-
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         createInfo.pVertexInputState = &vertexInputInfo;
 
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-        auto &inputs = (*vertexShader)->getCompiledShader()->inputs;
+        auto vertexShader = shaders.at(ShaderStage::VERTEX);
+
+        auto &inputs = vertexShader->getCompiledShader()->inputs;
 
         VkVertexInputAttributeDescription attributes[inputs.size() == 0 ? 1 : inputs.size()];
 
@@ -204,7 +200,7 @@ VULKAN_NS
         createInfo.pInputAssemblyState = &inputAssembly;
 
         inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-        inputAssembly.topology = toVk(desc.getTopology());
+        inputAssembly.topology = toVk(desc->getTopology());
         inputAssembly.primitiveRestartEnable = VK_FALSE;
 
         //RenderPass
@@ -232,7 +228,7 @@ VULKAN_NS
         viewportState.pScissors = nullptr;
 
         createInfo.pViewportState = &viewportState;
-        return mDevice->createHeap<VulkanPipelineState>(desc, createInfo);
+        return mDevice->createHeap<VulkanPipelineState>(*desc, createInfo);
     }
 
     VulkanRenderResourceManager::VulkanRenderResourceManager(Ref<RenderBackend> backend, Ref<VulkanDevice> device) : RenderResourceManager(backend), mDevice(device) {

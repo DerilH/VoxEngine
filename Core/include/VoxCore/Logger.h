@@ -10,7 +10,6 @@
 #include "quill/LogMacros.h"
 #include "quill/Logger.h"
 #include "quill/sinks/ConsoleSink.h"
-
 #include "Backward.h"
 #include "Severity.h"
 #include "Time.h"
@@ -22,17 +21,13 @@
 #define LOG_ERROR(msg, ...) QUILL_LOG_ERROR(Vox::Log::Logger::GetInternal(), msg, ##__VA_ARGS__);
 #define LOG_CRITICAL(msg, ...) QUILL_LOG_CRITICAL(Vox::Log::Logger::GetInternal(), msg, ##__VA_ARGS__);
 
-#define LOG_TRACE() {\
-            backward::StackTrace st;\
-            st.load_here(32);\
-            backward::Printer pt;\
-            pt.print(st);\
-        }\
+#define LOG_TRACE() printBacktrace();
+
 
 namespace Vox::Log {
-
     class Logger : public SingletonBase<Logger> {
         quill::Logger *mLogger;
+
     public:
         Logger() {
             quill::BackendOptions backendOptions;
@@ -55,9 +50,29 @@ namespace Vox::Log {
             return Get().mLogger;
         }
     };
-//Must stay like this for preserving order of log and error
-    inline const Logger& logger = Logger::Get();
+
+    inline const Logger &logger = Logger::Get();
     inline backward::SignalHandling sh;
+
+
+    inline void printBacktrace() {
+
+        backward::StackTrace st;
+        st.load_here(32);
+        backward::Printer p;
+        p.snippet = false;
+        p.object = false;
+
+        backward::TraceResolver tr;
+        tr.load_stacktrace(st);
+        for (size_t i = 0; i < st.size(); ++i) {
+            backward::ResolvedTrace trace = tr.resolve(st[i]);
+            for (const auto &resolved: trace.inliners) {
+                std::cout << resolved.filename << ":" << resolved.line
+                        << " in " << resolved.function << std::endl;
+            }
+        }
+    }
 
     inline void log(const std::string &msg, const Severity severity = Severity::INFO) {
         switch (severity) {

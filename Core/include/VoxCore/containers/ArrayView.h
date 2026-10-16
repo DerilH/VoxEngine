@@ -33,6 +33,13 @@ VOX_NS
         }
 
 
+        template<size_t count>
+        Array<PointerType, count> copy() {
+            Array<PointerType, count> array;
+            memcpy( data(array), static_cast<void *>(pData), count * sizeof(PointerType));
+            return array;
+        }
+
         static ArrayView Copy(Vector<PointerType> &list) {
             auto dataPtr = data(list);
             if (dataPtr == nullptr) Empty();
@@ -97,7 +104,7 @@ VOX_NS
         uint32_t size() const { return static_cast<uint32_t>(mSizeBytes); }
 
         void free() const {
-            const auto charPtr = static_cast<char*>(pData);
+            const auto charPtr = static_cast<char *>(pData);
             delete[] charPtr;
         }
 
