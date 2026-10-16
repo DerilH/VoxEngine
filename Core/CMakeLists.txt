@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.28)
 project(VoxCore)
 
-set(CMAKE_CXX_STANDARD 26)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0")
-set(CMAKE_CXX_SCAN_FOR_MODULES ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
 find_package(glm REQUIRED)
 
@@ -14,12 +14,19 @@ file(GLOB_RECURSE VOX_SOURCES CONFIGURE_DEPENDS
         include/*.h
 )
 
+FetchContent_Declare(
+        quill
+        GIT_REPOSITORY https://github.com/odygrd/quill.git
+        GIT_TAG        v8.2.0
+)
+FetchContent_MakeAvailable(quill)
+
 add_library(VoxCore ${VOX_SOURCES})
 
 target_link_libraries(VoxCore
         glm::glm
         dw
-        quill
+        quill::quill
         project_options
 )
 
