@@ -128,12 +128,11 @@ namespace Vox::Render {
         int monitorCount = 0;
         GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
         VOX_CHECK(monitorCount > 0, "Cannot create window, no monitors found");
-        if (monitorCount < targetMonitorIndex) {
+        if (targetMonitorIndex >= monitorCount) {
             LOG_WARN("Monitor with by index {} not found, fallback to first found", targetMonitorIndex)
             targetMonitorIndex = 0;
         }
         GLFWmonitor *targetMonitor = monitors[targetMonitorIndex];
-
 
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
