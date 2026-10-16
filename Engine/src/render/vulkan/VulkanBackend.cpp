@@ -22,12 +22,6 @@ VULKAN_NS
     };
 
     void VulkanBackend::createInstance() {
-#ifdef VK_ENABLE_VALIDATION
-        if (!checkValidationLayerSupport()) {
-            throw std::runtime_error("validation layers requested, but not available!");
-        }
-#endif
-
         VkApplicationInfo appInfo{};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         appInfo.pApplicationName = "Hello Triangle";
@@ -48,14 +42,17 @@ VULKAN_NS
         VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
 
 #ifdef VK_ENABLE_VALIDATION
+        if (checkValidationLayerSupport()) {
             createInfo.enabledLayerCount = static_cast<uint32_t>(VALIDATION_LAYERS.size());
             createInfo.ppEnabledLayerNames = VALIDATION_LAYERS.data();
 
             populateDebugMessengerCreateInfo(debugCreateInfo);
             createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT *) &debugCreateInfo;
+        } else
+            LOG_WARN("Validation layers requested but not supported");
 #else
-            createInfo.enabledLayerCount = 0;
-            createInfo.pNext = nullptr;
+        createInfo.enabledLayerCount = 0;
+        createInfo.pNext = nullptr;
 #endif
 
         VK_CHECK(vkCreateInstance(&createInfo, nullptr, &mInstance), "Failed to create vulkan instance!");
@@ -68,7 +65,7 @@ VULKAN_NS
         setupDebugMessenger(mInstance, mDebugMessenger);
 
         std::vector<std::string> extensions;
-        for (const char* ext : deviceExtensions) {
+        for (const char *ext: deviceExtensions) {
             extensions.emplace_back(ext);
         }
 
@@ -87,13 +84,13 @@ VULKAN_NS
     }
 
     RenderTargetRef VulkanBackend::createWindowTarget(Ref<Window> window) const {
-        Surface* surface = Surface::Create(window, mInstance);
+        Surface *surface = Surface::Create(window, mInstance);
         surface->setDevice(ResourceCast(mCurrentDevice));
         return surface;
     }
 
     RenderTargetRef VulkanBackend::createTextureTarget(Extent extent, Format format) const {
-        return new VulkanTextureRenderTarget(createTexture(format,extent),  ResourceCast(mCurrentDevice));
+        return new VulkanTextureRenderTarget(createTexture(format, extent), ResourceCast(mCurrentDevice));
     }
 
     CommandPoolRef VulkanBackend::createCommandPool() {
@@ -105,20 +102,20 @@ VULKAN_NS
 
     TextureRef VulkanBackend::createTexture(Format format, Extent extent) const {
         VOX_ASSERT(isInitialized(), "Render backend not initialized");
-        const VulkanDevice* device = ResourceCast(mCurrentDevice);
+        const VulkanDevice *device = ResourceCast(mCurrentDevice);
         return device->createHeap<VulkanTexture>(format, extent, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_2_TRANSFER_DST_BIT_KHR);
     }
 
     TextureRef VulkanBackend::createTexture(Format format, Extent extent, const void *data, uint32_t size) const {
-        const VulkanDevice* device = ResourceCast(mCurrentDevice);
+        const VulkanDevice *device = ResourceCast(mCurrentDevice);
         auto staging = device->create<VulkanTransferBuffer>(size);
 
-        const Queue& queue = device->getQueue(TRANSFER_QUEUE);
-        CommandPool& pool = device->getCmdPool(TRANSFER_QUEUE);
+        const Queue &queue = device->getQueue(TRANSFER_QUEUE);
+        CommandPool &pool = device->getCmdPool(TRANSFER_QUEUE);
 
         auto texture = createTexture(format, extent);
 
-        VulkanCommandBuffer* cmdBuffer = ResourceCast(pool.allocBuffer());
+        VulkanCommandBuffer *cmdBuffer = ResourceCast(pool.allocBuffer());
         cmdBuffer->begin();
         staging.write(data, size);
         staging.copy(cmdBuffer, texture, size);
@@ -128,21 +125,21 @@ VULKAN_NS
     }
 
     // PipelineStateRef VulkanBackend::createPSO(const PipelineStateDesc& desc) {
-        // VOX_ASSERT(isInitialized(), "Render backend not initialized");
-        // const VulkanDevice* device = ResourceCast(mCurrentDevice);
-        // return device->createHeap<VulkanPipelineState>(desc);
+    // VOX_ASSERT(isInitialized(), "Render backend not initialized");
+    // const VulkanDevice* device = ResourceCast(mCurrentDevice);
+    // return device->createHeap<VulkanPipelineState>(desc);
     // }
 
-    IndexBufferRef VulkanBackend::createIndexBuffer(const void* data, uint32_t size, IndexType type) {
-        const VulkanDevice* device = ResourceCast(mCurrentDevice);
+    IndexBufferRef VulkanBackend::createIndexBuffer(const void *data, uint32_t size, IndexType type) {
+        const VulkanDevice *device = ResourceCast(mCurrentDevice);
         auto staging = device->create<VulkanTransferBuffer>(size);
 
-        const Queue& queue = device->getQueue(TRANSFER_QUEUE);
-        CommandPool& pool = device->getCmdPool(TRANSFER_QUEUE);
+        const Queue &queue = device->getQueue(TRANSFER_QUEUE);
+        CommandPool &pool = device->getCmdPool(TRANSFER_QUEUE);
 
         auto buffer = device->createHeap<VulkanIndexBuffer>(size, type);
 
-        VulkanCommandBuffer* cmdBuffer = ResourceCast(pool.allocBuffer());
+        VulkanCommandBuffer *cmdBuffer = ResourceCast(pool.allocBuffer());
         cmdBuffer->begin();
         staging.write(data, size);
         staging.copy(cmdBuffer, buffer, size);
@@ -151,16 +148,16 @@ VULKAN_NS
         return buffer;
     }
 
-    VertexBufferRef VulkanBackend::createVertexBuffer(const void* data, uint32_t size, BufferUsage usage) {
-        VulkanDevice* device = ResourceCast(mCurrentDevice);
+    VertexBufferRef VulkanBackend::createVertexBuffer(const void *data, uint32_t size, BufferUsage usage) {
+        VulkanDevice *device = ResourceCast(mCurrentDevice);
         auto staging = device->create<VulkanTransferBuffer>(size);
 
-        const Queue& queue = device->getQueue(TRANSFER_QUEUE);
-        CommandPool& pool = device->getCmdPool(TRANSFER_QUEUE);
+        const Queue &queue = device->getQueue(TRANSFER_QUEUE);
+        CommandPool &pool = device->getCmdPool(TRANSFER_QUEUE);
 
         auto buffer = device->createHeap<VulkanVertexBuffer>(size);
 
-        VulkanCommandBuffer* cmdBuffer = ResourceCast(pool.allocBuffer());
+        VulkanCommandBuffer *cmdBuffer = ResourceCast(pool.allocBuffer());
         cmdBuffer->begin();
         staging.write(data, size);
         staging.copy(cmdBuffer, buffer, size);
@@ -170,11 +167,9 @@ VULKAN_NS
     }
 
     UniformBufferRef VulkanBackend::createUniformBuffer(uint32_t size) {
-        VulkanDevice* device = ResourceCast(mCurrentDevice);
+        VulkanDevice *device = ResourceCast(mCurrentDevice);
         return device->createHeap<VulkanUniformBuffer>(size);
     }
 
 
-
 NS_END
-

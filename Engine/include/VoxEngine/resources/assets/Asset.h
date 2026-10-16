@@ -20,10 +20,12 @@ RESOURCES_NS
         uint32_t mNestedAssetsCount;
 
         NO_MOVE_DEFAULT(Asset);
-        explicit Asset(const Asset& asset) = default;
-        Asset& operator=(const Asset& asset) = default;
-    public:
 
+        explicit Asset(const Asset &asset) = default;
+
+        Asset &operator=(const Asset &asset) = default;
+
+    public:
         explicit Asset(InternedString path, Asset **nested = nullptr, uint32_t nestedCount = 0);
 
         InternedString getPath() const {
@@ -36,13 +38,21 @@ RESOURCES_NS
 
         virtual ~Asset() = 0;
 
-        template<typename AssetType, typename = std::enable_if_t<std::is_base_of_v<Asset, AssetType>>>
-        AssetType *getNested(int id) const {
-            VOX_CHECK(id < getNestedCount(), "Nested asset index out of bound");
+        template<typename AssetType, typename = std::enable_if_t<std::is_base_of_v<Asset, AssetType> > >
+        AssetType *getNestedUnsafe(int id) const {
             return reinterpret_cast<AssetType *>(mNestedAssets[id]);
         }
 
-        Asset** getNested() const {
+        template<typename AssetType, typename = std::enable_if_t<std::is_base_of_v<Asset, AssetType> > >
+        Expected<Ref<AssetType>> getNested(int id) const {
+            VOX_EXPECT(id < mNestedAssetsCount, "Nested id({}) is out of bounds", id);
+            auto asset = mNestedAssets[id];
+            VOX_EXPECT(asset->type() == AssetType::StaticType(), "Nested asset type mismatch, expected {}, actual {}", AssetType::StaticType(), asset->type());
+            return reinterpret_cast<AssetType *>(mNestedAssets[id]);
+        }
+
+
+        Asset **getNested() const {
             return mNestedAssets;
         }
 
@@ -53,8 +63,10 @@ RESOURCES_NS
         virtual AssetType type() const = 0;
 
         virtual UPtr<Asset> clone() const;
-        virtual void cloneTo(void* ptr) const;
-        void serialize(FILE *file) override;
 
+        virtual void cloneTo(void *ptr) const;
+
+        void serialize(FILE *file) override;
     };
+
 NS_END

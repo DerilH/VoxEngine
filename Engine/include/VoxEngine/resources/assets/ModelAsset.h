@@ -5,12 +5,18 @@
 #pragma once
 
 #include "Asset.h"
+#include "MeshAsset.h"
 
 RESOURCES_NS
+    class MeshAsset;
+
     class ModelAsset : public Asset {
     public:
         ModelAsset(InternedString path, Asset **nested, uint32_t nestedCount);
 
+        Expected<Ref<MeshAsset>> getMesh(int index) const {
+            return getNestedUnsafe<MeshAsset>(index);
+        }
 
         AssetType type() const override {
             return StaticType();

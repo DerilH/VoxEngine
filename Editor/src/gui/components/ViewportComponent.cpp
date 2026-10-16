@@ -7,6 +7,10 @@
 #include <imgui_impl_vulkan.h>
 #include <VoxEngine/render/Renderer.h>
 #include <VoxEngine/render/vulkan/VulkanResourceCast.h>
+#include <VoxEngine/resources/ResourceManager.h>
+#include <VoxEngine/scene/GameObject.h>
+#include <VoxEngine/scene/components/MeshRendererComponent.h>
+#include <VoxEngine/scene/components/Transform.h>
 #include <vulkan/vulkan_core.h>
 
 namespace Vox::Editor {
@@ -45,7 +49,28 @@ namespace Vox::Editor {
         ImGui::Begin("Viewport", nullptr, flags);
         const ImVec2 viewportSize = ImGui::GetContentRegionAvail();
 
-        ImGui::Image(mTextureId,viewportSize);
+        ImGui::Image(mTextureId, viewportSize);
+
+
+        if (ImGui::BeginDragDropTarget()) {
+            if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_ITEM")) {
+                buffer.assign(static_cast<const char *>(payload->Data), payload->DataSize);
+                auto asset = context.renderer->getResourceManager()->get<Resources::ModelAsset>(buffer);
+                if (asset) {
+                    for (int i = 0; i < asset.value()->getNestedCount(); ++i) {
+                        auto mesh = asset.value()->getNestedUnsafe<Resources::MeshAsset>(i);
+                        auto obj = mEngine->scene->createObject(mesh->getName());
+                        auto render = new Scene::MeshRendererComponent(obj);
+                        auto asset = context.renderer->getResourceManager()->getDefault<Resources::MaterialAsset>();
+                        render->setMaterial(asset);
+                        render->setMeshProvider([mesh]() {
+                            return mesh;
+                        });
+                    }
+                }
+            }
+            ImGui::EndDragDropTarget();
+        }
         ImGui::End();
     }
 }

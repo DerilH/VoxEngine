@@ -49,7 +49,7 @@ VOX_NS
         const auto t = mResourceManager->get<Resources::ModelAsset>("fbx.fbx");
         if (t) {
             meshComp.setMeshProvider([this, t]() {
-                return (*t)->getNested<Resources::MeshAsset>(0);
+                return (*t)->getNestedUnsafe<Resources::MeshAsset>(0);
             });
         }
 

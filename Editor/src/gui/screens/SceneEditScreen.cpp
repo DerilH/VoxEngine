@@ -24,7 +24,7 @@ namespace Vox::Editor {
         mChilds.emplace("Hierarchy", hie);
         mChilds.emplace("Inspector", inspector);
         mChilds.emplace("Assets", new AssetExplorer(engine));
-        mChilds.emplace("Viewport", new ViewportComponent());
+        mChilds.emplace("Viewport", new ViewportComponent(engine));
     }
 
     void SceneEditScreen::renderInternal(Render::RenderContext context) {

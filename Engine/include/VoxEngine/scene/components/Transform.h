@@ -59,8 +59,6 @@ SCENE_NS
             mRotation = rot;
         }
 
-        NO_COPY_MOVE_DEFAULT(Transform);
-
         ComponentType type() override {
             return StaticType();
         }
@@ -72,5 +70,7 @@ SCENE_NS
         static ComponentType StaticType() {
             return ComponentType::TRANSFORM;
         }
+
+        NO_COPY_MOVE_DEFAULT(Transform);
     };
 NS_END;
