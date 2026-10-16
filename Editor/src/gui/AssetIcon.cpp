@@ -5,11 +5,12 @@
 #include "AssetIcon.h"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 namespace Vox::Editor {
     AssetIcon::AssetIcon(const ConstRef<Resources::Asset> asset) : mAsset(asset) {
         auto nested = mAsset->getNested();
-        for (int i = 0;i < mAsset->getNestedCount(); i++) {
+        for (int i = 0; i < mAsset->getNestedCount(); i++) {
             auto icon = new AssetIcon(nested[i]);
             mNestedIcons.emplace_back(icon);
         }
@@ -22,12 +23,10 @@ namespace Vox::Editor {
 
         std::string fileName = mAsset->getName();
         auto iconSymbol = "[F]";
-
         bool hasNested = mAsset->hasNested();
 
         ImGui::BeginGroup(); {
             ImVec2 iconSize(64.0f, 64.0f);
-
             ImVec2 iconStartPos = ImGui::GetCursorScreenPos();
 
             if (hasNested) {
@@ -52,7 +51,6 @@ namespace Vox::Editor {
                 }
 
                 ImGui::PopStyleColor(3);
-
                 ImGui::SetCursorPos(currentCursorPos);
             }
 
@@ -71,9 +69,33 @@ namespace Vox::Editor {
                 ImGui::EndDragDropSource();
             }
 
-            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + iconSize.x);
-            ImGui::TextUnformatted(fileName.c_str());
-            ImGui::PopTextWrapPos();
+            ImVec2 textPos = ImGui::GetCursorScreenPos();
+            ImVec2 textSize = ImGui::CalcTextSize(fileName.c_str());
+
+            float maxTextHeight = ImGui::GetTextLineHeightWithSpacing() * 2.0f;
+            ImVec2 clipMax = ImVec2(textPos.x + iconSize.x, textPos.y + maxTextHeight);
+
+            ImFont* font = ImGui::GetFont();
+            float oldScale = font->Scale;
+            font->Scale = 0.5f;
+            ImGui::PushFont(font);
+
+            ImGui::RenderTextClipped(
+                textPos,
+                clipMax,
+                fileName.c_str(),
+                nullptr,
+                &textSize,
+                ImVec2(0.5f, 0.0f)
+            );
+            ImGui::PopFont();
+            font->Scale = oldScale;
+            float renderedHeight = std::min(textSize.y, maxTextHeight);
+            ImGui::Dummy(ImVec2(iconSize.x, renderedHeight));
+
+            if (ImGui::IsItemHovered()) {
+                ImGui::SetTooltip("%s", fileName.c_str());
+            }
         }
         ImGui::EndGroup();
         ImGui::PopID();
