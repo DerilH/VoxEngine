@@ -34,7 +34,9 @@ RENDER_NS
     RenderGraph::RenderGraph(RenderGraph *old) {
         if (old) {
             for (auto const el: old->mSlots) {
-                auto tex = new GraphTexture(mTextures.size(), el.second->getFormat());
+                auto oldTex = el.second;
+                auto tex = new GraphTexture(mTextures.size(), oldTex->getFormat());
+                tex->setExact([oldTex]() { return oldTex->getExact(); });
                 mTextures.emplace_back(tex);
                 mSlots.emplace(el.first, tex);
             }
@@ -105,8 +107,14 @@ RENDER_NS
         return mEntryNodes;
     }
 
-    // GraphTextureRef RenderGraph::importTexture(InternedString slot, Ref<Texture> texture) {
-    // }
+    GraphTextureRef RenderGraph::importTexture(InternedString slot, const std::function<Ref<Texture>()> &provider) {
+        mDirty = true;
+        auto tex = new GraphTexture(mTextures.size(), provider);
+        mTextures.emplace_back(tex);
+        if (!slot.empty())
+            mSlots.emplace(slot, tex);
+        return tex;
+    }
 
     GraphTextureRef Vox::Render::RenderGraph::createTexture(InternedString slot, Format format) {
         mDirty = true;

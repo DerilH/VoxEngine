@@ -96,10 +96,10 @@ namespace Vox::Editor {
         init_info.PipelineInfoMain.PipelineRenderingCreateInfo = {.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
         init_info.PipelineInfoMain.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
 
-        auto targets = mRenderer->getPresentTargets();
+        auto targets = mRenderer->getPresentTargets() | std::views::values;
         VkFormat _swapchainImageFormat = VK_FORMAT_UNDEFINED;
-        if (!targets.empty()) {
-            _swapchainImageFormat = Render::Vulkan::toVk(targets[0]->getBackBuffer()->getFormat());
+        for (const auto &target: targets) {
+            _swapchainImageFormat = Render::Vulkan::toVk(target->getBackBuffer()->getFormat());
         }
         init_info.PipelineInfoMain.PipelineRenderingCreateInfo.pColorAttachmentFormats = &_swapchainImageFormat;
 
@@ -107,7 +107,7 @@ namespace Vox::Editor {
 
         auto &graph = mRenderer->getGraph();
 
-        auto guiPass = new GuiRenderPass(Render::RenderPassType::UI_PASS, {{graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_R_SHADER}}, {{graph.getTexture("Out"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT}}, this);
+        auto guiPass = new GuiRenderPass(Render::RenderPassType::UI_PASS, {{graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_R_SHADER}}, {{graph.getTexture("MainWindow"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT}}, this);
         graph.addPass(guiPass);
 
         mScreens["SceneEdit"] = makeUPtr<SceneEditScreen>(mEngine);

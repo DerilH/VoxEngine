@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <VoxEngine/render/buffers/UniformBuffer.h>
+#include <VoxEngine/render/vulkan/VulkanResourceCast.h>
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/scene/components/MeshRendererComponent.h>
 #include <VoxEngine/scene/components/Transform.h>
@@ -28,6 +29,8 @@ RENDER_NS
         setBuffering(3);
         createGraph();
         mRenderResourceManager->prepareCache();
+
+
     }
 
     void Renderer::render(Ref<Scene::RendererComponent> el) {
@@ -48,10 +51,14 @@ RENDER_NS
         }
 
         if (!mPresentTargets.empty()) {
-            for (const auto &presenter: mPresentTargets) {
+            for (const auto &presenter: mPresentTargets | std::views::values) {
                 for (const auto &target: mViewportTargets | std::ranges::views::values) {
+
                     if (presenter->beginFrame() == -1) continue;
                     drawFrame(target, presenter->getCmdBuffer());
+
+
+
                     presenter->endFrame();
                 }
             }
@@ -74,12 +81,14 @@ RENDER_NS
         int i = 0;
         auto viewportTextures = (AttachmentDesc *) malloc(sizeof(AttachmentDesc) * mViewportTargets.size());
         for (const auto target: mViewportTargets) {
-            const auto text = mGraph->createTexture(target.first, target.second->getBackBuffer()->getFormat());
+            const auto text = mGraph->importTexture(target.first, [target]() { return target.second->getBackBuffer(); });
             new(&viewportTextures[i]) AttachmentDesc{text, DISCARD_W_ATTACHMENT};
-            text->setExact([target]() { return target.second->getBackBuffer(); });
             i++;
         }
 
+        for (const auto& target: mPresentTargets) {
+            mGraph->importTexture(target.first, [target]() { return target.second->getBackBuffer(); });
+        }
         auto geometry = new GeometryPass(GBUFFER_PASS, true, {{}}, ArrayView(viewportTextures, mViewportTargets.size()));
         mGraph->addPass(geometry);
     }
@@ -118,8 +127,8 @@ RENDER_NS
         mViewportTargets[name] = viewport;
     }
 
-    void Renderer::addPresentTarget(Ref<RenderTarget> target) {
-        mPresentTargets.emplace_back(target);
+    void Renderer::addPresentTarget(InternedString name, Ref<RenderTarget> target) {
+        mPresentTargets.emplace(name, target);
     }
 
     void Renderer::drawFrame(RenderTargetRef target, Ref<CommandBuffer> cmdBuffer) {

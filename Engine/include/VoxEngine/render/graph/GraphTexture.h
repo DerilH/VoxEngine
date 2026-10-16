@@ -7,34 +7,43 @@
 
 #include <cstdint>
 #include <VoxCore/render/Enums.h>
+#include <VoxEngine/render/Texture.h>
 
 #include "VoxCore/Define.h"
 #include "VoxCore/Pointers.h"
 #include "VoxEngine/render/Types.h"
 
 RENDER_NS
+    class GraphTexture {
+        std::function<Ref<Texture>()> mTextureProvider = []() {
+            return static_cast<Ref<Texture>>(nullptr);
+        };
 
-class GraphTexture {
-    std::function<Ref<Texture>()> mTextureProvider = []() {
-        return static_cast<Ref<Texture>>(nullptr);
+        std::function<Format()> mFormatProvider;
+
+        bool isImported = false;
+    public:
+        const uint32_t id;
+
+        GraphTexture(uint32_t id, Format format) : mFormatProvider([format]() { return format; }), id(id) {
+        }
+
+        GraphTexture(uint32_t id, std::function<Ref<Texture>()> textureProvider) : mTextureProvider(textureProvider), mFormatProvider([this]() { return mTextureProvider()->getFormat(); }), isImported(true), id(id) {
+        }
+
+        TextureRef getExact() const {
+            return mTextureProvider();
+        }
+
+        inline void setExact(const std::function<Ref<Texture>()> &provider) {
+            mTextureProvider = provider;
+        }
+
+        Format getFormat() const {
+            return mFormatProvider();
+        }
+
+        NO_COPY_MOVE(GraphTexture)
     };
-    Format mFormat;
-public:
-    const uint32_t id;
-    GraphTexture(uint32_t id, Format format) : mFormat(format), id(id) {}
 
-    TextureRef getExact() const {
-        return mTextureProvider();
-    }
-
-    inline void setExact(const std::function<Ref<Texture>()> &provider) {
-        mTextureProvider = provider;
-    }
-
-    Format getFormat() const {
-        return mFormat;
-    }
-
-    NO_COPY_MOVE(GraphTexture)
-};
 NS_END

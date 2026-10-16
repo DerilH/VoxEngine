@@ -31,7 +31,7 @@ RENDER_NS
 
     protected:
         HashMap<InternedString, Ref<RenderTarget> > mViewportTargets;
-        Vector<Ref<RenderTarget> > mPresentTargets;
+        HashMap<InternedString, Ref<RenderTarget> > mPresentTargets;
         Ref<FrameSync> mHeadlessFrame;
 
         int mBufferingLevel = 0;
@@ -63,7 +63,7 @@ RENDER_NS
 
         void addViewportTarget(InternedString name, RenderTargetRef target);
 
-        void addPresentTarget(Ref<RenderTarget> target);
+        void addPresentTarget(InternedString name, Ref<RenderTarget> target);
 
         void createGraph();
 
@@ -83,7 +83,8 @@ RENDER_NS
         Ref<Resources::ResourceManager> getResourceManager() const { return mResourceManager; }
         Ref<RenderResourceManager> getRenderResourceManager() const { return mRenderResourceManager; }
         const HashMap<InternedString, RenderTargetRef> &getViewportTargets() const { return mViewportTargets; }
-        const Vector<RenderTargetRef> &getPresentTargets() const { return mPresentTargets; }
+        const HashMap<InternedString, Ref<RenderTarget>> & getPresentTargets() const {return mPresentTargets;}
+
         RenderGraph &getGraph() const { return *mGraph; }
 
         NO_COPY_MOVE_DEFAULT(Renderer);

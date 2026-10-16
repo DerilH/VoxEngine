@@ -20,22 +20,29 @@ RENDER_NS
 
         Vector<RenderPassRef> mPasses;
         Vector<RenderPassRef> mEntryNodes;
-        HashMap<AttachmentDesc, Vector<RenderPassRef>> mReadDeps;
-        HashMap<AttachmentDesc, Vector<RenderPassRef>> mWriteDeps;
+        HashMap<AttachmentDesc, Vector<RenderPassRef> > mReadDeps;
+        HashMap<AttachmentDesc, Vector<RenderPassRef> > mWriteDeps;
 
         bool mDirty = true;
+
     public:
-        explicit RenderGraph(RenderGraph* old);
+        explicit RenderGraph(RenderGraph *old);
+
         NO_COPY_MOVE(RenderGraph);
 
-        void addPass(RenderPass* pass);
+        void addPass(RenderPass *pass);
 
         GraphTextureRef createTexture(InternedString slot = "", Format format = {});
 
+        GraphTextureRef importTexture(InternedString slot, const std::function<Ref<Texture>()> &provider);
+
         GraphTextureRef getTexture(InternedString slot);
+
         Vector<GraphTextureRef> getTextures();
-        const Vector<RenderPassRef>& compile(RenderTargetRef endTarget);
+
+        const Vector<RenderPassRef> &compile(RenderTargetRef endTarget);
 
         void execute(RenderContext context, const RenderTargetRef target);
     };
+
 NS_END

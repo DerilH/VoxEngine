@@ -38,9 +38,8 @@ public:
         Vox::Render::WindowManager::Get().setMainWindow(window);
         auto windowTarget = mEngine->getRenderer()->getBackend()->createWindowTarget(window);
         mEngine->getRenderer()->addViewportTarget("Scene", mEngine->getRenderer()->getBackend()->createTextureTarget(windowTarget->getSize(), Vox::Render::Format::BGRA8));
-        mEngine->getRenderer()->addPresentTarget(windowTarget);
+        mEngine->getRenderer()->addPresentTarget("MainWindow", windowTarget);
         mEngine->getRenderer()->createGraph();
-
 
         window->onKeyPressed += [this](auto w, auto key, auto action) {
             auto camera = mEngine->scene->getActiveCamera();
@@ -66,9 +65,7 @@ public:
             }
         };
 
-        auto &graph = mEngine->getRenderer()->getGraph();
-        auto outText = graph.createTexture("Out");
-        outText->setExact([windowTarget]() { return windowTarget->getBackBuffer(); });
+
 
         window->onClose += [this](auto w) { mEngine->shutdown(); };
         gui = new Vox::Editor::Gui();
