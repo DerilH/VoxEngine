@@ -13,6 +13,7 @@
 #include "BlendState.h"
 #include "RasterizerState.h"
 #include "MsaaState.h"
+#include "DepthState.h"
 #include "RenderingState.h"
 
 RENDER_NS
@@ -21,6 +22,7 @@ RENDER_NS
         RasterizerState mRasterizer;
         PrimitiveTopology mTopology;
         MSAAState mMsaa;
+        DepthState mDepthState;
         RenderingState mRenderingState;
         mutable size_t mCachedHash = 0;
         ArrayView<BlendState> mBlend;
@@ -28,7 +30,7 @@ RENDER_NS
     public:
         PipelineStateDesc() = delete;
 
-        explicit PipelineStateDesc(ShaderState shader, ArrayView<BlendState> blend, RasterizerState rasterizer, PrimitiveTopology topology, MSAAState msaa, RenderingState rendering) : mShader(std::move(shader)), mBlend(blend), mRasterizer(rasterizer), mTopology(topology), mMsaa(msaa), mRenderingState(rendering) {
+        explicit PipelineStateDesc(ShaderState shader, ArrayView<BlendState> blend, RasterizerState rasterizer, PrimitiveTopology topology, MSAAState msaa, RenderingState rendering, DepthState depth = DepthState()) : mShader(std::move(shader)), mBlend(blend), mRasterizer(rasterizer), mTopology(topology), mMsaa(msaa), mDepthState(depth), mRenderingState(rendering) {
         }
 
         inline const ShaderState& getShader() const { return mShader; }
@@ -38,6 +40,8 @@ RENDER_NS
         inline const RasterizerState& getRasterizer() const { return mRasterizer; }
 
         inline const MSAAState& getMSAA() const { return mMsaa; }
+
+        inline const DepthState& getDepth() const { return mDepthState; }
 
         inline PrimitiveTopology getTopology() const { return mTopology; }
 

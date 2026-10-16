@@ -95,6 +95,15 @@ RENDER_NS
         ASTC_4x4_SRGB
     };
 
+    constexpr inline bool isDepthFormat(Format format) {
+        return format == Format::D16 || format == Format::D32 ||
+               format == Format::D24S8 || format == Format::D32S8;
+    }
+
+    constexpr inline bool hasStencilComponent(Format format) {
+        return format == Format::D24S8 || format == Format::D32S8;
+    }
+
     enum class ShaderStage {
         VERTEX,
         FRAGMENT
@@ -141,6 +150,17 @@ RENDER_NS
         ONE_MINUS_SRC1_COLOR,
         SRC1_ALPHA,
         ONE_MINUS_SRC1_ALPHA
+    };
+
+    enum class CompareOp {
+        NEVER,
+        LESS,
+        EQUAL,
+        LESS_OR_EQUAL,
+        GREATER,
+        NOT_EQUAL,
+        GREATER_OR_EQUAL,
+        ALWAYS
     };
 
 NS_END

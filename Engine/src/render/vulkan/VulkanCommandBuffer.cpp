@@ -12,24 +12,7 @@
 #include "VoxEngine/render/vulkan/VulkanDescriptorSet.h"
 
 VULKAN_NS
-    //    VulkanCommandBuffer::CommandBuffer(VkCommandBuffer handle) : VulkanObject(handle) {
-    //        VOX_ASSERT_PTR(handle, "Command buffer is nullptr")
-    //    }
-    //
-    //    void VulkanCommandBuffer::reset(VkCommandBufferResetFlags flags) {
-    //        VK_CHECK(vkResetCommandBuffer(mHandle, flags), "Cannot reset command buffer");
-    //    }
-    //
-    //    void VulkanCommandBuffer::begin(VkCommandBufferUsageFlags flags) {
-    //        VkCommandBufferBeginInfo beginInfo{};
-    //
-    //        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    //        VK_CHECK(vkBeginCommandBuffer(mHandle, &beginInfo), "Cannot begin command buffer");
-    //    }
-    //
-    //    void VulkanCommandBuffer::end() {
-    //        VK_CHECK(vkEndCommandBuffer(mHandle), "Cannot end command buffer");
-    //    }
+    //    VulkanCommandBuffer::CommandBuffer(VkCommandBuffer handle) : VulkanObject(handle) {\n    //        VOX_ASSERT_PTR(handle, \"Command buffer is nullptr\")\n    //    }\n    //\n    //    void VulkanCommandBuffer::reset(VkCommandBufferResetFlags flags) {\n    //        VK_CHECK(vkResetCommandBuffer(mHandle, flags), \"Cannot reset command buffer\");\n    //    }\n    //\n    //    void VulkanCommandBuffer::begin(VkCommandBufferUsageFlags flags) {\n    //        VkCommandBufferBeginInfo beginInfo{};\n    //\n    //        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;\n    //        VK_CHECK(vkBeginCommandBuffer(mHandle, &beginInfo), \"Cannot begin command buffer\");\n    //    }\n    //\n    //    void VulkanCommandBuffer::end() {\n    //        VK_CHECK(vkEndCommandBuffer(mHandle), \"Cannot end command buffer\");\n    //    }\n
 
     VkImageMemoryBarrier2 createBarrier(PassTransition transition, Ref<VulkanTexture> texture);
 
@@ -102,22 +85,34 @@ VULKAN_NS
 
     void VulkanCommandBuffer::beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size, bool clear) {
         VOX_ASSERT(mStarted, "Command buffer not started")
-        VkRenderingAttachmentInfo attachmentInfo[attachments.size()];
+        VkRenderingAttachmentInfo attachmentInfo[attachments.size() == 0 ? 1 : attachments.size()];
+        uint32_t colorAttachmentCount = 0;
+
+        VkRenderingAttachmentInfo depthAttachmentInfo{};
+        bool hasDepthAttachment = false;
 
         for (int i = 0; i < attachments.size(); ++i) {
-            attachmentInfo[i] = {};
-            attachmentInfo[i].sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-            attachmentInfo[i].imageView = ResourceCast(attachments[i].texture->getExact())->getView();
-            //TODO: change layout to currently used by image
-            // auto t = ResourceCast(attachments[i].texture->getExact());
-            // if (t->currentTransition == PassTransition::DISCARD_R_SHADER){
-            // attachmentInfo[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            // } else {
-            attachmentInfo[i].imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-            // }
-            attachmentInfo[i].loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
-            attachmentInfo[i].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-            attachmentInfo[i].clearValue = {{0, 0.0f, 0.0f, 1.0f}};
+            auto tex = ResourceCast(attachments[i].texture->getExact());
+            Format fmt = attachments[i].texture->getFormat();
+            if (isDepthFormat(fmt)) {
+                hasDepthAttachment = true;
+                depthAttachmentInfo = {};
+                depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+                depthAttachmentInfo.imageView = tex->getView();
+                depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                depthAttachmentInfo.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+                depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                depthAttachmentInfo.clearValue.depthStencil = {1.0f, 0};
+            } else {
+                auto &colorInfo = attachmentInfo[colorAttachmentCount++];
+                colorInfo = {};
+                colorInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+                colorInfo.imageView = tex->getView();
+                colorInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                colorInfo.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+                colorInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+                colorInfo.clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+            }
         }
 
         VkRenderingInfo renderingInfo{};
@@ -125,8 +120,11 @@ VULKAN_NS
         renderingInfo.renderArea.offset = {0, 0};
         renderingInfo.renderArea.extent = toVk(size);
         renderingInfo.layerCount = 1;
-        renderingInfo.colorAttachmentCount = attachments.size();
-        renderingInfo.pColorAttachments = attachmentInfo;
+        renderingInfo.colorAttachmentCount = colorAttachmentCount;
+        renderingInfo.pColorAttachments = colorAttachmentCount > 0 ? attachmentInfo : nullptr;
+        if (hasDepthAttachment) {
+            renderingInfo.pDepthAttachment = &depthAttachmentInfo;
+        }
         vkCmdBeginRendering(*this, &renderingInfo);
     }
 
@@ -154,19 +152,20 @@ VULKAN_NS
 
     void VulkanCommandBuffer::bindIndexBuffer(IndexBufferRef buffer) {
         VOX_ASSERT(mStarted, "Command buffer not started")
-        vkCmdBindIndexBuffer(mHandle, *ResourceCast(buffer), 0, toVk(buffer->getIndexType()));
+        auto vkBuffer = ResourceCast(buffer);
+        vkCmdBindIndexBuffer(mHandle, *vkBuffer, 0, toVk(vkBuffer->getIndexType()));
     }
 
     void VulkanCommandBuffer::bindVertexBuffer(VertexBufferRef buffer) {
         VOX_ASSERT(mStarted, "Command buffer not started")
-        VkBuffer vertexBuffers[] = {*ResourceCast(buffer)};
-        VkDeviceSize offsets[] = {0};
-        vkCmdBindVertexBuffers(*this, 0, 1, vertexBuffers, offsets);
+        auto vkBuffer = ResourceCast(buffer);
+        VkDeviceSize offsets = 0;
+        VkBuffer buf = *vkBuffer;
+        vkCmdBindVertexBuffers(mHandle, 0, 1, &buf, &offsets);
     }
 
     void VulkanCommandBuffer::bindGroup(Ref<BindGroup> bindGroup) {
         VOX_ASSERT(mStarted, "Command buffer not started")
-
         auto set = ResourceCast(bindGroup)->getSet()->getHandle();
         vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, ResourceCast(bindGroup)->getSetId(), 1, &set, 0, nullptr);
     }
@@ -175,43 +174,50 @@ VULKAN_NS
         VkImageMemoryBarrier2 imageBarrier{};
 
         imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-
-        imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-        imageBarrier.srcAccessMask = 0;
-
-        imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-        imageBarrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-
-        imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
         imageBarrier.image = (*texture);
-        imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
         imageBarrier.subresourceRange.baseMipLevel = 0;
         imageBarrier.subresourceRange.levelCount = 1;
         imageBarrier.subresourceRange.baseArrayLayer = 0;
         imageBarrier.subresourceRange.layerCount = 1;
 
+        bool isDepth = isDepthFormat(texture->getFormat());
+        if (isDepth) {
+            VkImageAspectFlags aspect = VK_IMAGE_ASPECT_DEPTH_BIT;
+            if (hasStencilComponent(texture->getFormat())) {
+                aspect |= VK_IMAGE_ASPECT_STENCIL_BIT;
+            }
+            imageBarrier.subresourceRange.aspectMask = aspect;
+        } else {
+            imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        }
+
         switch (transition) {
             case NONE_W_ATTACHMENT:
-                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-                imageBarrier.srcAccessMask = 0;
-
-                imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-                imageBarrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
-
-                imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-                imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                if (isDepth) {
+                    imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+                    imageBarrier.srcAccessMask = 0;
+                    imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+                    imageBarrier.dstAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                    imageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                } else {
+                    imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                    imageBarrier.srcAccessMask = 0;
+                    imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                    imageBarrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                    imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                }
                 break;
 
             case W_ATTACHMENT_R_COPY:
-                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-                imageBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                imageBarrier.srcStageMask = isDepth ? (VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT) : VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.srcAccessMask = isDepth ? VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT : VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
 
                 imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_COPY_BIT;
                 imageBarrier.dstAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT;
 
-                imageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                imageBarrier.oldLayout = isDepth ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 imageBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
                 break;
             case NONE_W_COPY:
@@ -225,23 +231,23 @@ VULKAN_NS
                 imageBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
                 break;
             case W_ATTACHMENT_PRESENT:
-                imageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                imageBarrier.oldLayout = isDepth ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 imageBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.srcStageMask = isDepth ? (VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT) : VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
                 imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT;
 
-                imageBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                imageBarrier.srcAccessMask = isDepth ? VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT : VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
                 imageBarrier.dstAccessMask = VK_ACCESS_2_NONE;
                 break;
 
             case PRESENT_W_ATTACHMENT:
                 imageBarrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-                imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                imageBarrier.newLayout = isDepth ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-                imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.dstStageMask = isDepth ? (VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT) : VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
                 imageBarrier.srcAccessMask = VK_ACCESS_2_NONE;
-                imageBarrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT;
+                imageBarrier.dstAccessMask = isDepth ? (VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT) : (VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT);
                 break;
             case NONE_PRESENT:
                 imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -252,30 +258,58 @@ VULKAN_NS
                 imageBarrier.dstAccessMask = VK_ACCESS_2_NONE;
                 break;
             case DISCARD_W_ATTACHMENT:
-                imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-                imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-                imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
-                imageBarrier.srcAccessMask = VK_ACCESS_2_NONE;
-                imageBarrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                if (isDepth) {
+                    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                    imageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                    imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+                    imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+                    imageBarrier.srcAccessMask = VK_ACCESS_2_NONE;
+                    imageBarrier.dstAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                } else {
+                    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                    imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                    imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                    imageBarrier.srcAccessMask = VK_ACCESS_2_NONE;
+                    imageBarrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                }
                 break;
             case DISCARD_R_SHADER:
                 imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
                 imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.srcStageMask = isDepth ? (VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT) : VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
                 imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
 
-                imageBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                imageBarrier.srcAccessMask = isDepth ? VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT : VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
                 imageBarrier.dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT;
                 break;
             case W_ATTACHMENT_R_SHADER:
-                imageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                imageBarrier.oldLayout = isDepth ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                imageBarrier.srcStageMask = isDepth ? (VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT) : VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
                 imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
-                imageBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                imageBarrier.srcAccessMask = isDepth ? VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT : VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
                 imageBarrier.dstAccessMask = VK_ACCESS_2_SHADER_READ_BIT;
+                break;
+            case W_ATTACHMENT_W_ATTACHMENT:
+                if (isDepth) {
+                    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                    imageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+                    imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT;
+                    imageBarrier.srcAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+                    imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT;
+                    imageBarrier.dstAccessMask = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+                } else {
+                    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+                    imageBarrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                    imageBarrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                    imageBarrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                    imageBarrier.dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                }
+                break;
+            default:
                 break;
         }
         texture->currentTransition = transition;

@@ -36,6 +36,15 @@ VULKAN_NS
         VkImage image{};
         VmaAllocationInfo info{};
         VK_CHECK(vmaCreateImage(allocator, &imageInfo, &allocInfo, &image, &allocation, &info), "Cannot create VkImage");
+
+        VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        if (isDepthFormat(format)) {
+            aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+            if (hasStencilComponent(format)) {
+                aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+            }
+        }
+
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = image;
@@ -45,7 +54,7 @@ VULKAN_NS
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        createInfo.subresourceRange.aspectMask = aspectMask;
         createInfo.subresourceRange.baseMipLevel = 0;
         createInfo.subresourceRange.levelCount = 1;
         createInfo.subresourceRange.baseArrayLayer = 0;

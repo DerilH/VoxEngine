@@ -134,13 +134,30 @@ VULKAN_NS
         renderingInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
 
         auto formats = rendering.getColorFormats();
-        VkFormat vkFormats[formats.size()];
+        VkFormat vkFormats[formats.empty() ? 1 : formats.size()];
         renderingInfo.colorAttachmentCount = formats.size();
-        renderingInfo.pColorAttachmentFormats = vkFormats;
+        renderingInfo.pColorAttachmentFormats = formats.empty() ? nullptr : vkFormats;
 
         for (int i = 0; i < formats.size(); i++) {
             vkFormats[i] = toVk(formats[i]);
         }
+
+        renderingInfo.depthAttachmentFormat = toVk(rendering.getDepthFormat());
+        renderingInfo.stencilAttachmentFormat = toVk(rendering.getStencilFormat());
+
+        //Depth Stencil
+        auto &depthState = desc->getDepth();
+        VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
+        depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        bool hasDepth = rendering.getDepthFormat() != Format::UNDEFINED;
+        depthStencilState.depthTestEnable = (depthState.isDepthTestEnable() && hasDepth) ? VK_TRUE : VK_FALSE;
+        depthStencilState.depthWriteEnable = (depthState.isDepthWriteEnable() && hasDepth) ? VK_TRUE : VK_FALSE;
+        depthStencilState.depthCompareOp = toVk(depthState.getDepthCompareOp());
+        depthStencilState.depthBoundsTestEnable = VK_FALSE;
+        depthStencilState.stencilTestEnable = VK_FALSE;
+        depthStencilState.minDepthBounds = 0.0f;
+        depthStencilState.maxDepthBounds = 1.0f;
+        createInfo.pDepthStencilState = &depthStencilState;
 
         //Shader
         auto &shaderState = desc->getShader();

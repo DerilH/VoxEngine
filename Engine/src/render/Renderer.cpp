@@ -9,6 +9,7 @@
 #include "VoxEngine/render/RenderTarget.h"
 #include "VoxEngine/resources/assets/MeshAsset.h"
 #include "VoxEngine/render/state/Shader.h"
+#include "VoxEngine/render/state/DepthState.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <VoxEngine/render/buffers/UniformBuffer.h>
@@ -78,18 +79,22 @@ RENDER_NS
     void Renderer::createGraph() {
         auto old = mGraph;
         mGraph = new RenderGraph(old);
-        int i = 0;
-        auto viewportTextures = (AttachmentDesc *) malloc(sizeof(AttachmentDesc) * mViewportTargets.size());
+        Vector<AttachmentDesc> viewportTextures;
         for (const auto target: mViewportTargets) {
             const auto text = mGraph->importTexture(target.first, [target]() { return target.second->getBackBuffer(); });
-            new(&viewportTextures[i]) AttachmentDesc{text, DISCARD_W_ATTACHMENT};
-            i++;
+            viewportTextures.emplace_back(text, DISCARD_W_ATTACHMENT);
+
+            if (target.second->getDepthBuffer() != nullptr) {
+                const auto depthText = mGraph->importTexture(target.first + "_Depth", [target]() { return target.second->getDepthBuffer(); });
+                viewportTextures.emplace_back(depthText, DISCARD_W_ATTACHMENT);
+            }
         }
 
         for (const auto& target: mPresentTargets) {
             mGraph->importTexture(target.first, [target]() { return target.second->getBackBuffer(); });
         }
-        auto geometry = new GeometryPass(GBUFFER_PASS, true, {{}}, ArrayView(viewportTextures, mViewportTargets.size()));
+        auto writes = ArrayView<AttachmentDesc>::Copy(viewportTextures);
+        auto geometry = new GeometryPass(GBUFFER_PASS, true, {{}}, writes);
         mGraph->addPass(geometry);
     }
 
@@ -115,8 +120,13 @@ RENDER_NS
             Vector<BlendState> blendState = BlendState::GetBuilder().startAttachment().endAttachment().build();
             RasterizerState rasterizerState = RasterizerState::GetBuilder().cullMode(material->cullMode).polygonMode(material->polygonMode).build();
             MSAAState msaaState = MSAAState(MSAASamples::COUNT_1);
+            DepthState depthState = DepthState::GetBuilder()
+                .depthTest(material->depthTest)
+                .depthWrite(material->depthWrite)
+                .compareOp(material->depthCompareOp)
+                .build();
             auto blend = ArrayView<BlendState>::Copy(blendState);
-            PipelineStateDesc desc(shaderState.value(), blend, rasterizerState, material->topology, msaaState, *renderingState);
+            PipelineStateDesc desc(shaderState.value(), blend, rasterizerState, material->topology, msaaState, *renderingState, depthState);
             pipelines.insert({*renderingState, desc});
             return mRenderResourceManager->getPipeline(&desc);
         }
@@ -179,7 +189,7 @@ RENDER_NS
         float zFar = 100.0f;
 
         auto proj = glm::perspective(fov, aspect, zNear, zFar);
-        proj[1][1] *= -1.0f;
+        // proj[1][1] *= -1.0f;
 
         auto buff = mRenderResourceManager->getCameraBuffer();
         buff->write(&proj, sizeof(glm::mat4));

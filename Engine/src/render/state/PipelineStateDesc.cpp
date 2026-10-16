@@ -21,6 +21,8 @@ size_t PipelineStateDesc::hash() const {
     XXH64_update(state, &hash, sizeof(uint64_t));
     hash = std::hash<Vox::Render::RasterizerState>{}(mRasterizer);
     XXH64_update(state, &hash, sizeof(uint64_t));
+    hash = std::hash<Vox::Render::DepthState>{}(mDepthState);
+    XXH64_update(state, &hash, sizeof(uint64_t));
     hash = std::hash<Vox::Render::ShaderState>{}(mShader);
     XXH64_update(state, &hash, sizeof(uint64_t));
     hash = std::hash<Vox::Render::RenderingState>{}(mRenderingState);
@@ -33,12 +35,13 @@ size_t PipelineStateDesc::hash() const {
     return h;
 }
 
-    PipelineStateDesc::PipelineStateDesc(const PipelineStateDesc& desc) : mCachedHash(desc.mCachedHash), mBlend(desc.mBlend), mMsaa(desc.mMsaa), mRasterizer(desc.mRasterizer), mShader(desc.mShader), mRenderingState(desc.mRenderingState), mTopology(desc.mTopology) {
+    PipelineStateDesc::PipelineStateDesc(const PipelineStateDesc& desc) : mCachedHash(desc.mCachedHash), mBlend(desc.mBlend), mMsaa(desc.mMsaa), mRasterizer(desc.mRasterizer), mDepthState(desc.mDepthState), mShader(desc.mShader), mRenderingState(desc.mRenderingState), mTopology(desc.mTopology) {
 
     }
 
     bool PipelineStateDesc::operator==(const PipelineStateDesc& other) const {
         bool same = mMsaa == other.mMsaa;
+        same = same && mDepthState == other.mDepthState;
         same = same && mRenderingState == other.mRenderingState;
         same = same && mShader == other.mShader;
         same = same && mRasterizer == other.mRasterizer;

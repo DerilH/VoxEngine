@@ -1,9 +1,12 @@
 {
     "shaders": {
-        "FRAGMENT": "defaults/DefaultShader.frag",
-        "VERTEX": "defaults/DefaultShader.vert"
+        "VERTEX": "defaults/DefaultShader.vert",
+        "FRAGMENT": "defaults/DefaultShader.frag"
     },
     "polygonMode": "FILL",
     "cullMode": "NONE",
-    "topology": "TRIANGLE_LIST"
+    "topology": "TRIANGLE_LIST",
+    "depthTest": true,
+    "depthWrite": true,
+    "depthCompareOp": "LESS_OR_EQUAL"
 }

@@ -7,13 +7,18 @@ RENDER_NS
     class TextureRenderTarget : public RenderTarget {
     protected:
         Ref<Texture> mTexture;
+        Ref<Texture> mDepthTexture;
 
     public:
-        TextureRenderTarget(const Ref<Texture> texture) : RenderTarget(texture->getExtent()), mTexture(texture) {
+        TextureRenderTarget(const Ref<Texture> texture, const Ref<Texture> depthTexture = nullptr) : RenderTarget(texture->getExtent()), mTexture(texture), mDepthTexture(depthTexture) {
         }
 
         TextureRef getBackBuffer() override {
             return mTexture;
+        }
+
+        TextureRef getDepthBuffer() override {
+            return mDepthTexture;
         }
     };
 
