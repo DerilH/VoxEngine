@@ -105,6 +105,9 @@ RENDER_NS
         return mEntryNodes;
     }
 
+    // GraphTextureRef RenderGraph::importTexture(InternedString slot, Ref<Texture> texture) {
+    // }
+
     GraphTextureRef Vox::Render::RenderGraph::createTexture(InternedString slot, Format format) {
         mDirty = true;
         auto tex = new GraphTexture(mTextures.size(), format);

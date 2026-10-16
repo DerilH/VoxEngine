@@ -39,7 +39,7 @@ RESOURCES_NS
         template<std::derived_from<Asset> T>
         Expected<ConstRef<T>> get(const InternedString key) const {
             auto asset = mAssets.find(key);
-            VOX_EXPECT(asset != mAssets.end(), "Cannot find asset");
+            VOX_EXPECT(asset != mAssets.end(), "Cannot find asset: {}", key);
             VOX_EXPECT(asset->second->type() == T::StaticType(), "Asset type mismatch");
             return static_cast<T *>(asset->second.get());
         }

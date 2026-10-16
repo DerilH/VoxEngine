@@ -68,7 +68,7 @@ LOG_ERROR("{}: {}", error, (uint32_t)r)\
 #define VOX_EXPECT(statement, error, ...) \
 if(!(statement)) \
 {                 \
-    [[unlikely]] return std::unexpected(Error(error));\
+    [[unlikely]] return std::unexpected(Error(error __VA_OPT__(,) __VA_ARGS__));\
 }
 
 template<typename Result>

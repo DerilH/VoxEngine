@@ -95,7 +95,7 @@ RENDER_NS
             auto vert = mResourceManager->get<Resources::ShaderAsset>(vertPath);
             VOX_EXPECT(vert, vert.error());
             auto frag = mResourceManager->get<Resources::ShaderAsset>(fragPath);
-            VOX_EXPECT(frag, vert.error());
+            VOX_EXPECT(frag, frag.error());
 
             auto vertexShader = new Shader(&(*vert)->getCompiled());
             auto fragmentShader = new Shader(&(*frag)->getCompiled());

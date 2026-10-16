@@ -17,7 +17,7 @@ RENDER_NS
         for (auto &entry: context.renderer->getDrawLists()) {
             auto state = context.renderer->getPipeline(entry.first, &mRenderingState);
             if (!state) {
-                LOG_ERROR("Cannot get pipeline state");
+                LOG_ERROR("{}", state.error().format());
                 continue;
             }
             state.value()->bind(context.cmdBuffer);
