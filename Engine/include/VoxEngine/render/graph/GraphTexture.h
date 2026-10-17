@@ -32,7 +32,9 @@ RENDER_NS
         }
 
         TextureRef getExact() const {
-            return mTextureProvider();
+            Ref<Texture> text = mTextureProvider();
+            VOX_ASSERT_PTR(text, "Graph texture contains nullptr");
+            return text;
         }
 
         inline void setExact(const std::function<Ref<Texture>()> &provider) {
