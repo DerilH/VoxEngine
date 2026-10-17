@@ -37,6 +37,9 @@ namespace Vox::Editor {
     ImVec4 GetAssetTypeColor(AssetType type);
     const char *GetAssetTypeBadge(AssetType type);
 
+    void DrawBadge(const char *text, const ImVec4 &color, float minWidth = 34.0f, const char *tooltip = nullptr);
+    void DrawAssetBadge(AssetType type, float minWidth = 34.0f);
+
     bool DrawVec3Control(const char *label, glm::vec3 &values, float resetValue = 0.0f, float columnWidth = 85.0f, float speed = 0.05f);
     void DrawSectionHeader(const char *title);
 }

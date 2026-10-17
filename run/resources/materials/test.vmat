@@ -1,10 +1,10 @@
 {
     "shaders": {
-        "FRAGMENT": "shaders/baseShader.frag",
-        "VERTEX": "shaders/baseShader.vert"
+        "VERTEX": "shaders/baseShader.vert",
+        "FRAGMENT": "shaders/baseShader.frag"
     },
-    "polygonMode": "FILL",
-    "cullMode": "BACK",
+    "polygonMode": "LINE",
+    "cullMode": "NONE",
     "topology": "TRIANGLE_LIST",
     "depthTest": true,
     "depthWrite": true,

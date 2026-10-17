@@ -181,6 +181,39 @@ namespace Vox::Editor {
         }
     }
 
+    void DrawBadge(const char *text, const ImVec4 &color, float minWidth, const char *tooltip) {
+        ImVec2 textSize = ImGui::CalcTextSize(text);
+        float lineHeight = ImGui::GetFrameHeight();
+        float badgeHeight = textSize.y + 3.0f; // Compact height (~19-20px)
+        float paddingX = 6.0f;
+        float width = std::max(minWidth, textSize.x + paddingX * 2.0f);
+
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        // Vertically center the compact badge relative to the current frame line
+        float offsetY = (lineHeight - badgeHeight) * 0.5f;
+        pos.y += offsetY;
+
+        ImDrawList *drawList = ImGui::GetWindowDrawList();
+
+        ImU32 colBg = ImGui::ColorConvertFloat4ToU32(color);
+        drawList->AddRectFilled(pos, ImVec2(pos.x + width, pos.y + badgeHeight), colBg, 4.0f);
+
+        // Perfectly centered horizontally and vertically
+        float textX = pos.x + (width - textSize.x) * 0.5f;
+        float textY = pos.y + (badgeHeight - textSize.y) * 0.5f;
+        drawList->AddText(ImVec2(textX, textY), IM_COL32(255, 255, 255, 255), text);
+
+        ImGui::Dummy(ImVec2(width, lineHeight));
+
+        if (tooltip && ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", tooltip);
+        }
+    }
+
+    void DrawAssetBadge(AssetType type, float minWidth) {
+        DrawBadge(GetAssetTypeBadge(type), GetAssetTypeColor(type), minWidth);
+    }
+
     bool DrawVec3Control(const char *label, glm::vec3 &values, float resetValue, float columnWidth, float speed) {
         bool changed = false;
         ImGui::PushID(label);

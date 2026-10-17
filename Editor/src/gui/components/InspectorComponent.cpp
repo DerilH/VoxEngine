@@ -46,9 +46,7 @@ namespace Vox::Editor {
 
         // Header for selected GameObject
         ImGui::Spacing();
-        ImGui::PushStyleColor(ImGuiCol_Button, ThemeColors::Accent);
-        ImGui::Button("OBJ", ImVec2(36, 24));
-        ImGui::PopStyleColor();
+        DrawBadge("OBJ", ThemeColors::Accent);
         ImGui::SameLine();
 
         char nameBuffer[128] = "";
@@ -156,9 +154,7 @@ namespace Vox::Editor {
             ImGui::Text("Material");
             ImGui::NextColumn();
 
-            ImGui::PushStyleColor(ImGuiCol_Button, ThemeColors::AssetMaterial);
-            ImGui::Button("MAT", ImVec2(36, 0));
-            ImGui::PopStyleColor();
+            DrawAssetBadge(AssetType::MATERIAL);
             ImGui::SameLine();
 
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
@@ -194,9 +190,7 @@ namespace Vox::Editor {
             ImGui::Text("Mesh");
             ImGui::NextColumn();
 
-            ImGui::PushStyleColor(ImGuiCol_Button, ThemeColors::AssetMesh);
-            ImGui::Button("3D", ImVec2(36, 0));
-            ImGui::PopStyleColor();
+            DrawAssetBadge(AssetType::MESH);
             ImGui::SameLine();
 
             ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);

@@ -22,10 +22,6 @@ You are STRICTLY FORBIDDEN from executing or proposing the following commands an
 
 ## Allowed Terminal Operations ONLY
 You are ONLY allowed to run passive, read-only inspection commands:
-- `grep`, `ripgrep` (`rg`), `find`
-- `cat`, `head`, `tail` (with reasonable line limits)
-- `ls`, `tree`
-- `git status`, `git log`, `git diff`
 
 ## Enforcement Protocol
 If a user or task asks you to build the project, run a binary, or delete files via the terminal, you MUST decline the command execution and inform the user:

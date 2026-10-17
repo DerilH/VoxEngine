@@ -22,10 +22,9 @@ namespace Vox::Editor {
 
         ImGui::Begin("Asset Explorer###AssetExplorer", nullptr);
 
+        // Top Toolbar / Breadcrumb Bar
         ImGui::Spacing();
-        ImGui::PushStyleColor(ImGuiCol_Text, ThemeColors::AssetDir);
-        ImGui::TextUnformatted("[DIR]");
-        ImGui::PopStyleColor();
+        DrawBadge("DIR", ThemeColors::AssetDir);
         ImGui::SameLine();
 
         std::string currentPathStr = mCurrentDir ? mCurrentDir->path : "Root";

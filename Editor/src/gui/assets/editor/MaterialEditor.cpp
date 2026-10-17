@@ -61,9 +61,8 @@ void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) 
     }
 
     // Header badge
-    ImGui::PushStyleColor(ImGuiCol_Button, ThemeColors::AssetMaterial);
-    ImGui::Button("MAT", ImVec2(36, 0));
-    ImGui::PopStyleColor();
+    ImGui::Spacing();
+    DrawAssetBadge(AssetType::MATERIAL);
     ImGui::SameLine();
     ImGui::TextUnformatted(mAsset->getName().c_str());
     ImGui::TextDisabled("Path: %s", mAsset->getPath().c_str());
