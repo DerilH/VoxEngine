@@ -23,9 +23,11 @@
 #include <VoxEngine/render/vulkan/VulkanDevice.h>
 #include <VoxEngine/render/vulkan/VulkanUtil.h>
 #include <VoxEngine/scene/GameObject.h>
+#include <VoxEngine/resources/ResourceManager.h>
 #include "GuiRenderPass.h"
 #include "screens/SceneEditScreen.h"
 #include "VoxEngine/scene/components/MeshRendererComponent.h"
+#include "Theme.h"
 
 namespace Vox::Editor {
     void Gui::init(Render::Window &window, Engine &engine) {
@@ -43,13 +45,9 @@ namespace Vox::Editor {
         ImGui::CreateContext();
         ImGuiIO &io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.FontGlobalScale = 2;
-        ImGui::StyleColorsDark();
-        auto &style = ImGui::GetStyle();
-        style.Colors[ImGuiCol_WindowBg] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-        style.Colors[ImGuiCol_ChildBg] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-        style.Colors[ImGuiCol_TitleBg] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-        style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+        LoadEditorFonts(mEngine->getResourceManager()->getResourcesRoot());
+        ApplyVoxTheme();
 
         ImGui_ImplGlfw_InitForVulkan((GLFWwindow *) mWindow->getHandle(), true);
         auto device = Render::Vulkan::ResourceCast(mRenderer->getBackend()->getDevice());
@@ -141,7 +139,8 @@ namespace Vox::Editor {
                 ImGuiWindowFlags_NoMove |
                 ImGuiWindowFlags_NoBringToFrontOnFocus |
                 ImGuiWindowFlags_NoNavFocus |
-                ImGuiWindowFlags_NoBackground;
+                ImGuiWindowFlags_NoBackground |
+                ImGuiWindowFlags_MenuBar;
 
         ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
         ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
@@ -151,6 +150,129 @@ namespace Vox::Editor {
 
         ImGui::Begin("MainDockSpaceWindow", nullptr, hostWindowFlags);
         ImGui::PopStyleVar(3);
+
+        if (ImGui::BeginMenuBar()) {
+            ImGui::PushStyleColor(ImGuiCol_Text, ThemeColors::AccentHover);
+            ImGui::TextUnformatted("  VoxEngine  ");
+            ImGui::PopStyleColor();
+
+            if (ImGui::BeginMenu("File")) {
+                if (ImGui::MenuItem("New Scene", "Ctrl+N")) {}
+                if (ImGui::MenuItem("Open Scene...", "Ctrl+O")) {}
+                if (ImGui::MenuItem("Save Scene", "Ctrl+S")) {}
+                ImGui::Separator();
+                if (ImGui::MenuItem("Exit", "Alt+F4")) {
+                    mEngine->shutdown();
+                }
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Edit")) {
+                if (ImGui::MenuItem("Undo", "Ctrl+Z")) {}
+                if (ImGui::MenuItem("Redo", "Ctrl+Y")) {}
+                ImGui::Separator();
+                if (ImGui::MenuItem("Project Settings...")) {}
+                ImGui::EndMenu();
+            }
+
+            if (ImGui::BeginMenu("Help")) {
+                if (ImGui::MenuItem("About VoxEngine")) {}
+                ImGui::EndMenu();
+            }
+
+            // Right-aligned stats badge
+            float statsWidth = 220.0f;
+            float availX = ImGui::GetContentRegionAvail().x;
+            if (availX > statsWidth) {
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + availX - statsWidth);
+
+                float fps = static_cast<float>(mFpsCounter.getFps());
+                float frameMs = fps > 0.0f ? 1000.0f / fps : 0.0f;
+                ImVec4 fpsColor = (fps >= 55.0f) ? ImVec4(0.3f, 0.85f, 0.4f, 1.0f) :
+                                  (fps >= 30.0f) ? ImVec4(0.95f, 0.8f, 0.2f, 1.0f) :
+                                                   ImVec4(0.95f, 0.3f, 0.3f, 1.0f);
+
+                ImGui::TextColored(fpsColor, "%.0f FPS", fps);
+                ImGui::SameLine();
+                ImGui::TextDisabled("(%.1f ms)", frameMs);
+                ImGui::SameLine();
+                ImGui::TextDisabled("| Vulkan");
+            }
+
+            ImGui::EndMenuBar();
+        }
+
+        // Top Toolbar
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(10.0f, 4.0f));
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(4.0f, 0.0f));
+        ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(0.12f, 0.12f, 0.15f, 1.0f));
+        if (ImGui::BeginChild("##EditorToolbar", ImVec2(0, 36), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse)) {
+            // Left: Gizmo modes
+            ImGui::SetCursorPos(ImVec2(10, 5));
+            static int activeTool = 0;
+            auto ToolButton = [&](const char *label, int id, const char *tooltip) {
+                bool active = (activeTool == id);
+                if (active) {
+                    ImGui::PushStyleColor(ImGuiCol_Button, ThemeColors::Accent);
+                }
+                if (ImGui::Button(label, ImVec2(28, 26))) {
+                    activeTool = id;
+                }
+                if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", tooltip);
+                if (active) ImGui::PopStyleColor();
+                ImGui::SameLine();
+            };
+
+            ToolButton("T", 0, "Translate Tool (W)");
+            ToolButton("R", 1, "Rotate Tool (E)");
+            ToolButton("S", 2, "Scale Tool (R)");
+
+            // Center: Playback Controls
+            float toolbarWidth = ImGui::GetWindowWidth();
+            float centerButtonsWidth = 110.0f;
+            ImGui::SetCursorPos(ImVec2((toolbarWidth - centerButtonsWidth) * 0.5f, 5));
+
+            static bool isPlaying = false;
+            static bool isPaused = false;
+
+            ImGui::PushStyleColor(ImGuiCol_Button, isPlaying ? ImVec4(0.2f, 0.65f, 0.3f, 1.0f) : ImVec4(0.18f, 0.20f, 0.25f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.25f, 0.8f, 0.35f, 1.0f));
+            if (ImGui::Button(" > ", ImVec2(32, 26))) {
+                isPlaying = !isPlaying;
+                if (!isPlaying) isPaused = false;
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("%s", isPlaying ? "Stop Simulation" : "Start Simulation");
+            ImGui::PopStyleColor(2);
+            ImGui::SameLine();
+
+            ImGui::PushStyleColor(ImGuiCol_Button, isPaused ? ImVec4(0.85f, 0.65f, 0.2f, 1.0f) : ImVec4(0.18f, 0.20f, 0.25f, 1.0f));
+            if (ImGui::Button(" || ", ImVec2(32, 26))) {
+                if (isPlaying) isPaused = !isPaused;
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Pause Simulation");
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+
+            if (ImGui::Button(" [] ", ImVec2(32, 26))) {
+                isPlaying = false;
+                isPaused = false;
+            }
+            if (ImGui::IsItemHovered()) ImGui::SetTooltip("Reset Simulation");
+
+            // Right: Scene status
+            float badgeWidth = 140.0f;
+            if (toolbarWidth > 400.0f) {
+                ImGui::SetCursorPos(ImVec2(toolbarWidth - badgeWidth - 12.0f, 8));
+                ImGui::TextDisabled("Scene: ");
+                ImGui::SameLine();
+                ImGui::PushStyleColor(ImGuiCol_Text, ThemeColors::AccentHover);
+                ImGui::TextUnformatted(mEngine->scene ? "Active" : "None");
+                ImGui::PopStyleColor();
+            }
+        }
+        ImGui::EndChild();
+        ImGui::PopStyleColor();
+        ImGui::PopStyleVar(2);
 
         ImGuiID dockspaceID = ImGui::GetID("MainDockSpace");
         ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_PassthruCentralNode);

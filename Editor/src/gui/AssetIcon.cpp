@@ -6,6 +6,7 @@
 
 #include <imgui.h>
 #include <imgui_internal.h>
+#include "Theme.h"
 
 namespace Vox::Editor {
     AssetIcon::AssetIcon(const ConstRef<Resources::Asset> asset) : mAsset(asset) {
@@ -22,82 +23,99 @@ namespace Vox::Editor {
         ImGui::PushID(mAsset);
 
         std::string fileName = mAsset->getName();
-        auto iconSymbol = "[F]";
         bool hasNested = mAsset->hasNested();
+        AssetType type = mAsset->type();
+        const char *badge = GetAssetTypeBadge(type);
+        ImVec4 badgeColor = GetAssetTypeColor(type);
 
-        ImGui::BeginGroup(); {
-            ImVec2 iconSize(64.0f, 64.0f);
-            ImVec2 iconStartPos = ImGui::GetCursorScreenPos();
+        const float cardWidth = 76.0f;
+        const float cardHeight = 84.0f;
+        const float thumbHeight = 56.0f;
 
-            if (hasNested) {
-                float arrowSize = 16.0f;
+        ImVec2 startPos = ImGui::GetCursorScreenPos();
+        ImDrawList *drawList = ImGui::GetWindowDrawList();
 
-                ImVec2 arrowPos = ImVec2(
-                    iconStartPos.x + iconSize.x - arrowSize - 2.0f,
-                    iconStartPos.y + (iconSize.y - arrowSize) * 0.5f
-                );
+        // Invisible button to capture all mouse events over the card
+        ImGui::InvisibleButton("##AssetCardBtn", ImVec2(cardWidth, cardHeight));
+        bool isHovered = ImGui::IsItemHovered();
+        bool isActive = ImGui::IsItemActive();
 
-                ImVec2 currentCursorPos = ImGui::GetCursorPos();
-
-                ImGui::SetCursorScreenPos(arrowPos);
-
-                ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0.4f));
-                ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.2f, 0.5f, 0.8f, 0.8f));
-                ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.1f, 0.4f, 0.7f, 1.0f));
-
-                ImGuiDir arrowDir = expanded ? ImGuiDir_Down : ImGuiDir_Right;
-                if (ImGui::ArrowButton("##ExpandArrow", arrowDir)) {
-                    expanded = !expanded;
-                }
-
-                ImGui::PopStyleColor(3);
-                ImGui::SetCursorPos(currentCursorPos);
-            }
-
-            if (ImGui::Button(iconSymbol, iconSize)) {
-            }
-
-            if (ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
-                if (mDoubleClickCallback) {
-                    mDoubleClickCallback();
-                }
-            }
-
-            if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
-                ImGui::SetDragDropPayload("ASSET_ITEM", mAsset->getPath().c_str(), mAsset->getPath().size());
-                ImGui::Text("Move: %s", fileName.c_str());
-                ImGui::EndDragDropSource();
-            }
-
-            ImVec2 textPos = ImGui::GetCursorScreenPos();
-            ImVec2 textSize = ImGui::CalcTextSize(fileName.c_str());
-
-            float maxTextHeight = ImGui::GetTextLineHeightWithSpacing() * 2.0f;
-            ImVec2 clipMax = ImVec2(textPos.x + iconSize.x, textPos.y + maxTextHeight);
-
-            ImFont* font = ImGui::GetFont();
-            float oldScale = font->Scale;
-            font->Scale = 0.5f;
-            ImGui::PushFont(font);
-
-            ImGui::RenderTextClipped(
-                textPos,
-                clipMax,
-                fileName.c_str(),
-                nullptr,
-                &textSize,
-                ImVec2(0.5f, 0.0f)
-            );
-            ImGui::PopFont();
-            font->Scale = oldScale;
-            float renderedHeight = std::min(textSize.y, maxTextHeight);
-            ImGui::Dummy(ImVec2(iconSize.x, renderedHeight));
-
-            if (ImGui::IsItemHovered()) {
-                ImGui::SetTooltip("%s", fileName.c_str());
+        if (isHovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left)) {
+            if (mDoubleClickCallback) {
+                mDoubleClickCallback();
             }
         }
-        ImGui::EndGroup();
+
+        // Drag and drop source
+        if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
+            ImGui::SetDragDropPayload("ASSET_ITEM", mAsset->getPath().c_str(), mAsset->getPath().size());
+            ImGui::PushStyleColor(ImGuiCol_Text, badgeColor);
+            ImGui::Text("[%s]", badge);
+            ImGui::PopStyleColor();
+            ImGui::SameLine();
+            ImGui::Text("%s", fileName.c_str());
+            ImGui::EndDragDropSource();
+        }
+
+        // Draw card background
+        ImU32 bgCol = isHovered ? (isActive ? IM_COL32(45, 48, 62, 255) : IM_COL32(36, 38, 48, 255))
+                                : IM_COL32(24, 25, 31, 255);
+        ImU32 borderCol = isHovered ? IM_COL32(99, 128, 242, 230) : IM_COL32(50, 52, 64, 180);
+
+        // Thumbnail background & border
+        drawList->AddRectFilled(startPos, ImVec2(startPos.x + cardWidth, startPos.y + thumbHeight), bgCol, 5.0f);
+        drawList->AddRect(startPos, ImVec2(startPos.x + cardWidth, startPos.y + thumbHeight), borderCol, 5.0f);
+
+        // Badge pill in center of thumbnail
+        ImVec2 badgeSize = ImGui::CalcTextSize(badge);
+        float pillW = badgeSize.x + 12.0f;
+        float pillH = badgeSize.y + 6.0f;
+        ImVec2 pillPos = ImVec2(startPos.x + (cardWidth - pillW) * 0.5f, startPos.y + (thumbHeight - pillH) * 0.5f);
+
+        ImU32 badgeColU32 = ImGui::ColorConvertFloat4ToU32(badgeColor);
+        // Pill background (translucent tint)
+        ImVec4 pillBgVec = badgeColor;
+        pillBgVec.w = 0.22f;
+        drawList->AddRectFilled(pillPos, ImVec2(pillPos.x + pillW, pillPos.y + pillH), ImGui::ColorConvertFloat4ToU32(pillBgVec), 4.0f);
+        drawList->AddRect(pillPos, ImVec2(pillPos.x + pillW, pillPos.y + pillH), badgeColU32, 4.0f);
+
+        // Badge text
+        drawList->AddText(ImVec2(pillPos.x + 6.0f, pillPos.y + 3.0f), badgeColU32, badge);
+
+        // Expand arrow if has nested
+        if (hasNested) {
+            float arrowSize = 14.0f;
+            ImVec2 arrowPos = ImVec2(startPos.x + cardWidth - arrowSize - 2.0f, startPos.y + 2.0f);
+            ImGui::SetCursorScreenPos(arrowPos);
+            ImGuiDir arrowDir = expanded ? ImGuiDir_Down : ImGuiDir_Right;
+            if (ImGui::ArrowButton("##ExpandArrow", arrowDir)) {
+                expanded = !expanded;
+            }
+        }
+
+        // File label below thumbnail
+        ImVec2 textPos = ImVec2(startPos.x + 2.0f, startPos.y + thumbHeight + 4.0f);
+        ImVec2 clipMax = ImVec2(startPos.x + cardWidth - 2.0f, startPos.y + cardHeight);
+        ImVec2 textSize = ImGui::CalcTextSize(fileName.c_str());
+
+        ImGui::RenderTextClipped(
+            textPos,
+            clipMax,
+            fileName.c_str(),
+            nullptr,
+            &textSize,
+            ImVec2(0.5f, 0.0f)
+        );
+
+        if (isHovered) {
+            ImGui::BeginTooltip();
+            ImGui::TextColored(badgeColor, "[%s]", badge);
+            ImGui::SameLine();
+            ImGui::Text("%s", fileName.c_str());
+            ImGui::TextDisabled("Path: %s", mAsset->getPath().c_str());
+            ImGui::EndTooltip();
+        }
+
         ImGui::PopID();
     }
 }

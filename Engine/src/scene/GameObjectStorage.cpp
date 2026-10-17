@@ -18,6 +18,6 @@ void Vox::Scene::GameObjectStorage::removeObject(GameObjectRef object) {
     }
 }
 
-const Vox::Vector<Vox::Scene::GameObjectRef> & Vox::Scene::GameObjectStorage::getAll() {
+const Vox::Vector<Vox::Scene::GameObjectRef> & Vox::Scene::GameObjectStorage::getAll() const {
     return mObjects;
 }

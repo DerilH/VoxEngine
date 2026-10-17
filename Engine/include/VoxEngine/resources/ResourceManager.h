@@ -73,6 +73,10 @@ RESOURCES_NS
             return mRootDir.get();
         }
 
+        const std::filesystem::path &getResourcesRoot() const {
+            return mResourcesRoot;
+        }
+
         Vector<ConstRef<Asset> > listDirAssets(InternedString path) const;
 
         void setRoot(std::filesystem::path path);

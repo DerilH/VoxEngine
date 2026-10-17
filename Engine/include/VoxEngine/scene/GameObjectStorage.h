@@ -19,7 +19,7 @@ SCENE_NS
 
         void removeObject(GameObjectRef object);
 
-        const Vector<GameObjectRef> &getAll();
+        const Vector<GameObjectRef> &getAll() const;
 
         uint32_t count() const {
             return mObjects.size();

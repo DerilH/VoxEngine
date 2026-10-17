@@ -8,12 +8,14 @@
 #include <magic_enum/magic_enum.hpp>
 #include <VoxEngine/resources/ResourceManager.h>
 #include <VoxEngine/resources/assets/MaterialAsset.h>
+#include "../../Theme.h"
 
 namespace Vox::Editor {
     class MaterialAsset;
 }
 
-Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, ConstRef<Resources::MaterialAsset> asset, bool &shouldClose) : AssetEditor(shouldClose), mEngine(engine), mOriginalAsset(asset), mAsset(std::move(asset->cloneTyped())) {
+Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, ConstRef<Resources::MaterialAsset> asset, bool &shouldClose)
+    : AssetEditor(shouldClose), mEngine(engine), mOriginalAsset(asset), mAsset(std::move(asset->cloneTyped())) {
 }
 
 template<typename Enum>
@@ -43,14 +45,37 @@ bool RenderEnumCombo(const char *label, Enum &currentValue) {
     return changed;
 }
 
-
 void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) {
     if (!mAsset) return;
+
     bool isOpen = true;
-    if (!isOpen) {
-        mShouldClose = true;
+    std::string winTitle = "Material Editor - " + std::string(mAsset->getName().c_str()) + "###MaterialEditor";
+    ImGui::SetNextWindowSize(ImVec2(360, 420), ImGuiCond_FirstUseEver);
+
+    if (!ImGui::Begin(winTitle.c_str(), &isOpen)) {
+        ImGui::End();
+        if (!isOpen) {
+            mShouldClose = true;
+        }
+        return;
     }
+
+    // Header badge
+    ImGui::PushStyleColor(ImGuiCol_Button, ThemeColors::AssetMaterial);
+    ImGui::Button("MAT", ImVec2(36, 0));
+    ImGui::PopStyleColor();
+    ImGui::SameLine();
+    ImGui::TextUnformatted(mAsset->getName().c_str());
+    ImGui::TextDisabled("Path: %s", mAsset->getPath().c_str());
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
     bool changed = false;
+
+    DrawSectionHeader("Rasterizer State");
+
     auto polyMode = mAsset->polygonMode;
     if (RenderEnumCombo("Polygon Mode", polyMode)) {
         mAsset->polygonMode = polyMode;
@@ -68,6 +93,8 @@ void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) 
         mAsset->topology = topology;
         changed = true;
     }
+
+    DrawSectionHeader("Depth Testing");
 
     bool depthTest = mAsset->depthTest;
     if (ImGui::Checkbox("Depth Test", &depthTest)) {
@@ -87,14 +114,16 @@ void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) 
         changed = true;
     }
 
-    ImGui::Separator();
-    ImGui::Text("Shaders");
-
-
     if (changed) {
         auto path = mAsset->getPath();
         auto clone = mAsset->cloneTyped();
         mEngine->getResourceManager()->update(path, std::move(mAsset));
         mAsset = std::move(clone);
+    }
+
+    ImGui::End();
+
+    if (!isOpen) {
+        mShouldClose = true;
     }
 }

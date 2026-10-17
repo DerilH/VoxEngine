@@ -9,6 +9,11 @@ namespace Vox::Editor {
         Ref<Scene::GameObject> mSelected = nullptr;
         Ref<Scene::Scene> mScene = nullptr;
         Ref<Engine> mEngine;
+        char mFilterBuffer[64] = "";
+
+        void renderNode(Scene::GameObjectRef el);
+        void duplicateObject(Scene::GameObjectRef orig);
+
     protected:
         void renderInternal(Render::RenderContext context) override;
 

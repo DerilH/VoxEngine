@@ -12,6 +12,7 @@
 #include <VoxEngine/scene/components/MeshRendererComponent.h>
 #include <VoxEngine/scene/components/Transform.h>
 #include <vulkan/vulkan_core.h>
+#include "../Theme.h"
 
 namespace Vox::Editor {
     void ViewportComponent::renderInternal(Render::RenderContext context) {
@@ -45,12 +46,30 @@ namespace Vox::Editor {
             );
             mRegistered = true;
         }
+
         constexpr ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
         ImGui::Begin("Viewport", nullptr, flags);
+        ImGui::PopStyleVar();
+
         const ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+        ImVec2 screenPos = ImGui::GetCursorScreenPos();
 
-        ImGui::Image(mTextureId, viewportSize);
+        if (viewportSize.x > 0 && viewportSize.y > 0) {
+            ImGui::Image(mTextureId, viewportSize);
+        }
 
+        // Overlay HUD
+        ImDrawList *drawList = ImGui::GetWindowDrawList();
+        ImVec2 hudPos = ImVec2(screenPos.x + 12.0f, screenPos.y + 12.0f);
+        char hudText[128];
+        snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: WASD Fly ", (int)viewportSize.x, (int)viewportSize.y);
+        ImVec2 hudTextSize = ImGui::CalcTextSize(hudText);
+        ImVec2 hudBgMax = ImVec2(hudPos.x + hudTextSize.x + 8.0f, hudPos.y + hudTextSize.y + 8.0f);
+
+        drawList->AddRectFilled(hudPos, hudBgMax, IM_COL32(18, 19, 24, 200), 5.0f);
+        drawList->AddRect(hudPos, hudBgMax, IM_COL32(50, 52, 65, 200), 5.0f);
+        drawList->AddText(ImVec2(hudPos.x + 4.0f, hudPos.y + 4.0f), IM_COL32(200, 205, 220, 240), hudText);
 
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_ITEM")) {
@@ -61,8 +80,8 @@ namespace Vox::Editor {
                         auto mesh = asset.value()->getNestedUnsafe<Resources::MeshAsset>(i);
                         auto obj = mEngine->scene->createObject(mesh->getName());
                         auto render = new Scene::MeshRendererComponent(obj);
-                        auto asset = context.renderer->getResourceManager()->getDefault<Resources::MaterialAsset>();
-                        render->setMaterial(asset);
+                        auto defaultMat = context.renderer->getResourceManager()->getDefault<Resources::MaterialAsset>();
+                        render->setMaterial(defaultMat);
                         render->setMeshProvider([mesh]() {
                             return mesh;
                         });
@@ -71,6 +90,7 @@ namespace Vox::Editor {
             }
             ImGui::EndDragDropTarget();
         }
+
         ImGui::End();
     }
 }

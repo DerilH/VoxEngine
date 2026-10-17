@@ -7,6 +7,7 @@
 #include "assets/editor/MaterialEditor.h"
 #include <VoxEngine/resources/assets/MaterialAsset.h>
 #include <VoxEngine/Engine.h>
+#include "Theme.h"
 
 namespace Vox::Editor {
     void AssetExplorer::renderInternal(Render::RenderContext context) {
@@ -14,23 +15,46 @@ namespace Vox::Editor {
             if (mShouldCloseEditor) {
                 mShouldCloseEditor = false;
                 mAssetEditor = nullptr;
-            } else mAssetEditor->render(context);
+            } else {
+                mAssetEditor->render(context);
+            }
         }
 
-        ImGui::Begin("AssetExplorer", nullptr);
+        ImGui::Begin("Asset Explorer###AssetExplorer", nullptr);
+
+        ImGui::Spacing();
+        ImGui::PushStyleColor(ImGuiCol_Text, ThemeColors::AssetDir);
+        ImGui::TextUnformatted("[DIR]");
+        ImGui::PopStyleColor();
+        ImGui::SameLine();
+
+        std::string currentPathStr = mCurrentDir ? mCurrentDir->path : "Root";
+        ImGui::Text("Resources / %s", currentPathStr.c_str());
+
+        ImGui::SameLine();
+        float availX = ImGui::GetContentRegionAvail().x;
+        float counterWidth = 80.0f;
+        if (availX > counterWidth) {
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + availX - counterWidth);
+            ImGui::TextDisabled("%zu items", mIcons.size());
+        }
+
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
 
         ImGuiTableFlags tableFlags = ImGuiTableFlags_Resizable
                                      | ImGuiTableFlags_BordersInnerV
                                      | ImGuiTableFlags_SizingFixedFit;
 
         if (ImGui::BeginTable("AssetExplorerTable", 2, tableFlags, ImGui::GetContentRegionAvail())) {
-            ImGui::TableSetupColumn("TreeColumn", ImGuiTableColumnFlags_WidthFixed, 250.0f);
+            ImGui::TableSetupColumn("TreeColumn", ImGuiTableColumnFlags_WidthFixed, 220.0f);
             ImGui::TableSetupColumn("ContentColumn", ImGuiTableColumnFlags_WidthStretch);
 
             ImGui::TableNextRow();
 
+            // Left Tree Column
             ImGui::TableSetColumnIndex(0);
-
             ImGuiWindowFlags treeChildFlags = ImGuiWindowFlags_HorizontalScrollbar
                                               | ImGuiWindowFlags_AlwaysVerticalScrollbar;
 
@@ -39,8 +63,8 @@ namespace Vox::Editor {
             }
             ImGui::EndChild();
 
+            // Right Content Column
             ImGui::TableSetColumnIndex(1);
-
             if (ImGui::BeginChild("RightContentPanel", ImVec2(-1.0f, 0.0f), false)) {
                 renderContent();
             }
@@ -65,7 +89,7 @@ namespace Vox::Editor {
 
         ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow
                                    | ImGuiTreeNodeFlags_OpenOnDoubleClick
-                                   | ImGuiTreeNodeFlags_SpanFullWidth;
+                                   | ImGuiTreeNodeFlags_SpanAvailWidth;
 
         const auto &nestedDirs = dirNode->getNested();
         if (nestedDirs.empty()) {
@@ -96,9 +120,19 @@ namespace Vox::Editor {
     }
 
     void AssetExplorer::renderContent() {
-        if (!mCurrentDir) return;
+        if (!mCurrentDir) {
+            ImGui::Spacing();
+            ImGui::TextDisabled("Select a folder in the tree to view assets.");
+            return;
+        }
 
-        float cellSize = 74.0f;
+        if (mIcons.empty()) {
+            ImGui::Spacing();
+            ImGui::TextDisabled("This folder is empty.");
+            return;
+        }
+
+        float cellSize = 88.0f;
         float availWidth = ImGui::GetContentRegionAvail().x;
 
         int columnCount = static_cast<int>(availWidth / cellSize);
@@ -111,7 +145,7 @@ namespace Vox::Editor {
                 ImGui::TableSetupColumn(nullptr, ImGuiTableColumnFlags_WidthFixed, cellSize);
             }
 
-            auto renderIconItem = [&](auto& iconPtr) {
+            auto renderIconItem = [&](auto &iconPtr) {
                 ImGui::TableNextColumn();
                 iconPtr->render();
             };
@@ -137,18 +171,12 @@ namespace Vox::Editor {
         const auto &assets = mResManager->listDirAssets(mCurrentDir->path);
         if (assets.empty()) return;
 
-        float cellSize = 74.0f;
-        float availWidth = ImGui::GetContentRegionAvail().x;
-
-        int columnCount = static_cast<int>(availWidth / cellSize);
-        if (columnCount < 1) columnCount = 1;
-
         for (auto &asset: assets) {
             auto icon = new AssetIcon(asset);
 
             icon->setOnDoubleClick([asset, this, icon]() {
                 if (asset->type() == AssetType::MATERIAL) {
-                    mAssetEditor = makeUPtr<MaterialEditor>(mEngine, static_cast<ConstRef<Resources::MaterialAsset>>(asset),mShouldCloseEditor);
+                    mAssetEditor = makeUPtr<MaterialEditor>(mEngine, static_cast<ConstRef<Resources::MaterialAsset>>(asset), mShouldCloseEditor);
                 }
             });
             mIcons.emplace_back(icon);
