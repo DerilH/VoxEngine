@@ -8,6 +8,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(SPIRV_CROSS_CLI              OFF CACHE BOOL "" FORCE)
+set(SPIRV_CROSS_ENABLE_TESTS     OFF CACHE BOOL "" FORCE)
 
 find_package(Vulkan REQUIRED)
 find_package(glfw3 REQUIRED)
@@ -48,10 +50,6 @@ target_include_directories(stb INTERFACE ${stb_SOURCE_DIR})
 
 file(GLOB_RECURSE VOX_SOURCES CONFIGURE_DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/*.h"
-        "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp"
 )
 
 add_library(VoxEngine ${VOX_SOURCES})
