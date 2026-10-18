@@ -47,6 +47,10 @@ SCENE_NS
             return RIGHT_VECTOR * mRotation;
         }
 
+        Vec3 getUp() const {
+            return UP_VECTOR * mRotation;
+        }
+
         void setPos(const Vec3 pos) {
             mPosition = pos;
         }

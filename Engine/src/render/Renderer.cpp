@@ -179,7 +179,7 @@ RENDER_NS
         //TODO make proper cameras
         glm::vec3 cameraPos = camera->gameObject->transform->getPos();
         glm::vec3 cameraTarget = cameraPos + camera->gameObject->transform->getForward();
-        glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+        glm::vec3 cameraUp = camera->gameObject->transform->getUp();
 
         auto view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
 
