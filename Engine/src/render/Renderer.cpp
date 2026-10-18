@@ -30,8 +30,6 @@ RENDER_NS
         setBuffering(3);
         createGraph();
         mRenderResourceManager->prepareCache();
-
-
     }
 
     void Renderer::render(Ref<Scene::RendererComponent> el) {
@@ -67,8 +65,8 @@ RENDER_NS
             VOX_CHECK(false, "Headless render mode is not implemented")
         }
 
-        for (auto &list: mDrawListByStateHash | std::views::values) {
-            list.clear();
+        for (auto &list: mLayerDrawListByMaterial | std::views::keys) {
+            clearDrawList(list);
         }
     }
 
@@ -150,15 +148,17 @@ RENDER_NS
     }
 
     void Renderer::clearDrawList(ConstRef<Resources::MaterialAsset> state) {
-        mDrawListByStateHash[state].clear();
+        for (auto& val: mLayerDrawListByMaterial[state] | std::views::values) {
+            val.clear();
+        }
     }
 
-    const HashMap<ConstRef<Resources::MaterialAsset>, Vector<DrawItem> > &Renderer::getDrawLists() const {
-        return mDrawListByStateHash;
+    const HashMap<ConstRef<Resources::MaterialAsset>, HashMap<uint8_t, Vector<DrawItem>>> &Renderer::getDrawLists() const {
+        return mLayerDrawListByMaterial;
     }
 
-    const Vector<DrawItem> &Renderer::getDrawList(const ConstRef<Resources::MaterialAsset> &state) const {
-        return mDrawListByStateHash.at(state);
+    const HashMap<uint8_t, Vector<DrawItem>> &Renderer::getLayerDrawList(const ConstRef<Resources::MaterialAsset> &state) const {
+        return mLayerDrawListByMaterial.at(state);
     }
 
     void Renderer::draw(Ref<Scene::MeshRendererComponent> component) {
@@ -172,7 +172,7 @@ RENDER_NS
         modelMat = modelMat * glm::mat4_cast(t->transform->getRotation());
         modelMat = glm::scale(modelMat, t->transform->getScale());
 
-        mDrawListByStateHash[mat].emplace_back(mesh, modelMat);
+        mLayerDrawListByMaterial[mat][static_cast<uint8_t>(component->getLayer())].emplace_back(mesh, modelMat);
     }
 
     void Renderer::updateCamera(Ref<Scene::CameraComponent> camera) {

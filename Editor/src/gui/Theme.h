@@ -2,8 +2,10 @@
 
 #include <filesystem>
 #include <string>
+#include <string_view>
 #include <glm/vec3.hpp>
 #include <imgui.h>
+#include <magic_enum/magic_enum.hpp>
 #include <VoxEngine/resources/assets/AssetType.h>
 
 namespace Vox::Editor {
@@ -42,4 +44,31 @@ namespace Vox::Editor {
 
     bool DrawVec3Control(const char *label, glm::vec3 &values, float resetValue = 0.0f, float columnWidth = 85.0f, float speed = 0.05f);
     void DrawSectionHeader(const char *title);
+
+    template<typename Enum>
+    requires std::is_enum_v<Enum>
+    bool RenderEnumCombo(const char *label, Enum &currentValue) {
+        constexpr auto values = magic_enum::enum_values<Enum>();
+        bool changed = false;
+
+        std::string_view currentName = magic_enum::enum_name(currentValue);
+
+        if (ImGui::BeginCombo(label, currentName.data())) {
+            for (const auto &value: values) {
+                const bool isSelected = (currentValue == value);
+                std::string_view name = magic_enum::enum_name(value);
+
+                if (ImGui::Selectable(name.data(), isSelected)) {
+                    currentValue = value;
+                    changed = true;
+                }
+
+                if (isSelected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
+        }
+        return changed;
+    }
 }

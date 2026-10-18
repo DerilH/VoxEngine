@@ -24,7 +24,7 @@ namespace Vox::Editor {
 
         auto renderer = orig->findComponent<Scene::MeshRendererComponent>();
         if (renderer) {
-            auto cloneRenderer = new Scene::MeshRendererComponent(clone);
+            auto cloneRenderer = new Scene::MeshRendererComponent(clone, renderer->getLayer());
             cloneRenderer->setMaterial(renderer->getMaterial());
             auto mesh = renderer->getMesh();
             if (mesh) {

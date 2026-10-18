@@ -142,6 +142,22 @@ namespace Vox::Editor {
 
             bool changed = false;
 
+            // Layer Slot
+            ImGui::Columns(2, nullptr, false);
+            ImGui::SetColumnWidth(0, 80.0f);
+            ImGui::AlignTextToFramePadding();
+            ImGui::Text("Layer");
+            ImGui::NextColumn();
+
+            auto currentLayer = renderer->getLayer();
+            ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+            if (RenderEnumCombo("##Layer", currentLayer)) {
+                renderer->setLayer(currentLayer);
+            }
+            ImGui::Columns(1);
+
+            ImGui::Spacing();
+
             // Material Slot
             static char materialBuffer[512] = "";
             if (renderer->getMaterial()) {

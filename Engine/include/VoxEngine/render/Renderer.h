@@ -36,7 +36,7 @@ RENDER_NS
 
         int mBufferingLevel = 0;
         RenderGraph *mGraph = nullptr;
-        HashMap<ConstRef<Resources::MaterialAsset>, Vector<DrawItem> > mDrawListByStateHash;
+        HashMap<ConstRef<Resources::MaterialAsset>, HashMap<uint8_t, Vector<DrawItem>>> mLayerDrawListByMaterial;
         HashMap<ConstRef<Resources::MaterialAsset>, MaterialPipelines> mPipelinesByMaterial;
 
         Ref<RenderBackend> mBackend;
@@ -67,9 +67,9 @@ RENDER_NS
 
         void createGraph();
 
-        const HashMap<ConstRef<Resources::MaterialAsset>, Vector<DrawItem> > &getDrawLists() const;
+        const HashMap<ConstRef<Resources::MaterialAsset>, HashMap<uint8_t, Vector<DrawItem>>> &getDrawLists() const;
 
-        const Vector<DrawItem> &getDrawList(const ConstRef<Resources::MaterialAsset> &state) const;
+        const HashMap<uint8_t, Vector<DrawItem>> &getLayerDrawList(const ConstRef<Resources::MaterialAsset> &state) const;
 
         void clearDrawList(ConstRef<Resources::MaterialAsset> state);
 

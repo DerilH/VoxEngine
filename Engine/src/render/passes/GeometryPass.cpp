@@ -8,14 +8,17 @@
 #include <VoxEngine/render/state/PipelineState.h>
 #include <VoxEngine/resources/ResourceManager.h>
 #include <VoxEngine/resources/assets/TextureAsset.h>
+#include <VoxEngine/scene/components/RenderLayer.h>
 
 #include "VoxEngine/render/Renderer.h"
 
 RENDER_NS
     void GeometryPass::execute(RenderContext context) {
         auto resManager = context.renderer->getRenderResourceManager();
-        for (auto &entry: context.renderer->getDrawLists()) {
-            auto state = context.renderer->getPipeline(entry.first, &mRenderingState);
+        for (auto &map: context.renderer->getDrawLists()) {
+            auto entry = map.second.at(static_cast<uint8_t>(Scene::RenderLayer::WORLD));
+
+            auto state = context.renderer->getPipeline(map.first, &mRenderingState);
             if (!state) {
                 LOG_ERROR("{}", state.error().format());
                 continue;
@@ -26,7 +29,7 @@ RENDER_NS
             context.cmdBuffer->bindGroup(resManager->getModelGroup());
             context.cmdBuffer->bindGroup(resManager->getSamplerGroup());
 
-            for (const auto &item: entry.second) {
+            for (const auto &item: entry) {
                 static Ref<Texture> text = nullptr;
                 if (!text) {
                     auto t = context.renderer->getResourceManager()->get<Resources::TextureAsset>("textures/Wood.png");

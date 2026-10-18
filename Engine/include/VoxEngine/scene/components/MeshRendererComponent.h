@@ -5,6 +5,7 @@
 #include <VoxEngine/resources/assets/MeshAsset.h>
 #include <VoxEngine/resources/assets/ShaderAsset.h>
 #include <VoxEngine/scene/Types.h>
+#include "RenderLayer.h"
 #include "RendererComponent.h"
 
 namespace Vox::Render {
@@ -17,9 +18,10 @@ SCENE_NS
         ConstRef<Resources::MaterialAsset> mMaterial;
         ConstRef<Resources::ShaderAsset> mVertexShader;
         ConstRef<Resources::ShaderAsset> mFragmentShader;
+        RenderLayer mLayer = RenderLayer::WORLD;
 
     public:
-        explicit MeshRendererComponent(GameObjectRef gameObject);
+        explicit MeshRendererComponent(GameObjectRef gameObject, RenderLayer layer = RenderLayer::WORLD);
 
         void setMeshProvider(const std::function<ConstRef<Resources::MeshAsset>()> &meshProvider) {
             mMeshProvider = meshProvider;
@@ -27,6 +29,14 @@ SCENE_NS
 
         void setMaterial(ConstRef<Resources::MaterialAsset> material) {
             mMaterial = material;
+        }
+
+        void setLayer(const RenderLayer layer) {
+            mLayer = layer;
+        }
+
+        RenderLayer getLayer() const {
+            return mLayer;
         }
 
         void OnAddedToScene(Ref<Scene> scene) override;

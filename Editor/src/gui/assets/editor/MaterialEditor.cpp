@@ -18,33 +18,6 @@ Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, ConstRef<Resourc
     : AssetEditor(shouldClose), mEngine(engine), mOriginalAsset(asset), mAsset(std::move(asset->cloneTyped())) {
 }
 
-template<typename Enum>
-requires std::is_enum_v<Enum>
-bool RenderEnumCombo(const char *label, Enum &currentValue) {
-    constexpr auto values = magic_enum::enum_values<Enum>();
-    bool changed = false;
-
-    std::string_view currentName = magic_enum::enum_name(currentValue);
-
-    if (ImGui::BeginCombo(label, currentName.data())) {
-        for (const auto &value: values) {
-            const bool isSelected = (currentValue == value);
-            std::string_view name = magic_enum::enum_name(value);
-
-            if (ImGui::Selectable(name.data(), isSelected)) {
-                currentValue = value;
-                changed = true;
-            }
-
-            if (isSelected) {
-                ImGui::SetItemDefaultFocus();
-            }
-        }
-        ImGui::EndCombo();
-    }
-    return changed;
-}
-
 void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) {
     if (!mAsset) return;
 
