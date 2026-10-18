@@ -3,6 +3,7 @@
 #include <VoxEngine/Engine.h>
 #include <VoxEngine/render/RenderContext.h>
 #include <VoxEngine/scene/GameObject.h>
+#include "AssetLinkComponent.h"
 #include "GuiComponent.h"
 
 namespace Vox::Editor {
@@ -11,13 +12,18 @@ namespace Vox::Editor {
         Vec3 mMeshRotation{};
         Ref<Engine> mEngine;
 
-        void renderComponents();
+        UPtr<AssetLinkComponent> mMaterialLink;
+        UPtr<AssetLinkComponent> mMeshLink;
+
+        void renderComponents(Render::RenderContext context);
         void renderTransformOptions();
 
     protected:
         void renderInternal(Render::RenderContext context) override;
 
     public:
+        Event<InternedString> onOpenAsset;
+
         explicit InspectorComponent(Ref<Engine> engine);
 
         void setObject(Ref<Scene::GameObject> gameObject);

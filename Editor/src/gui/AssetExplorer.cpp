@@ -184,4 +184,58 @@ namespace Vox::Editor {
 
     AssetExplorer::AssetExplorer(Ref<Engine> engine) : mEngine(engine), mResManager(engine->getResourceManager()) {
     }
+
+    void AssetExplorer::openAsset(InternedString path) {
+        if (path.empty()) return;
+        auto asset = mResManager->getAsset(path);
+        if (!asset) return;
+
+        std::filesystem::path p(path.c_str());
+
+        std::function<ConstRef<Resources::AssetDirectory>(ConstRef<Resources::AssetDirectory>, const std::string &)> findDir =
+            [&](ConstRef<Resources::AssetDirectory> node, const std::string &dirPath) -> ConstRef<Resources::AssetDirectory> {
+                if (!node) return nullptr;
+                if (node->path == dirPath || (dirPath == "." && node->path == ".")) return node;
+                for (const auto &child: node->getNested()) {
+                    auto found = findDir(child.get(), dirPath);
+                    if (found) return found;
+                }
+                return nullptr;
+            };
+
+        ConstRef<Resources::AssetDirectory> targetDir = nullptr;
+        std::filesystem::path currentPath = p.parent_path();
+        while (!targetDir && !currentPath.empty() && currentPath != ".") {
+            targetDir = findDir(mResManager->getRootDir(), currentPath.string());
+            currentPath = currentPath.parent_path();
+        }
+        if (!targetDir) {
+            targetDir = findDir(mResManager->getRootDir(), ".");
+        }
+
+        if (targetDir) {
+            mCurrentDir = targetDir;
+            createContentIcons();
+
+            for (auto &icon: mIcons) {
+                for (auto &nested: icon->getNested()) {
+                    if (nested->mAsset && nested->mAsset->getPath() == path) {
+                        icon->expanded = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // if (asset->type() == AssetType::MATERIAL) {
+            // mAssetEditor = makeUPtr<MaterialEditor>(mEngine, static_cast<ConstRef<Resources::MaterialAsset>>(asset), mShouldCloseEditor);
+        // }
+
+        ImGui::SetWindowFocus("Asset Explorer###AssetExplorer");
+    }
+
+    void AssetExplorer::openAsset(ConstRef<Resources::Asset> asset) {
+        if (!asset) return;
+        openAsset(asset->getPath());
+    }
 }

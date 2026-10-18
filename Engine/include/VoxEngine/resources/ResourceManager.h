@@ -44,6 +44,14 @@ RESOURCES_NS
             return static_cast<T *>(asset->second.get());
         }
 
+        ConstRef<Asset> getAsset(const InternedString key) const {
+            auto asset = mAssets.find(key);
+            if (asset != mAssets.end()) {
+                return asset->second.get();
+            }
+            return nullptr;
+        }
+
         template<std::derived_from<Asset> T>
         ConstRef<T> getDefault() const {
             static_assert(false, "No default value for provided asset type");

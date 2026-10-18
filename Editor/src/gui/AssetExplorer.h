@@ -23,6 +23,9 @@ namespace Vox::Editor {
     public:
         AssetExplorer(Ref<Engine> engine);
 
+        void openAsset(InternedString path);
+        void openAsset(ConstRef<Resources::Asset> asset);
+
     protected:
         void renderInternal(Render::RenderContext context) override;
     };

@@ -60,7 +60,7 @@ RESOURCES_NS
     Asset *FbxLoader::load(std::string path, ArrayView<void> data) {
         Assimp::Importer importer{};
 
-        const aiScene *scene = importer.ReadFileFromMemory(data.pData, data.size(), aiPostProcessSteps::aiProcess_Triangulate, "fbx");
+        const aiScene *scene = importer.ReadFileFromMemory(data.pData, data.size(), aiPostProcessSteps::aiProcess_Triangulate);
         auto **nested = static_cast<Asset **>(malloc(scene->mNumMeshes * sizeof(MeshAsset)));
         LOG_VERBOSE("Loading model {}", path);
         LOG_VERBOSE("Loading {} meshes", scene->mNumMeshes);

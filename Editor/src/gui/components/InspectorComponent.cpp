@@ -9,6 +9,63 @@
 
 namespace Vox::Editor {
     InspectorComponent::InspectorComponent(Ref<Engine> engine) : mEngine(engine) {
+        mMaterialLink = makeUPtr<AssetLinkComponent>("Material", AssetType::MATERIAL, [this]() -> InternedString {
+            if (!mGameObject) return "";
+            auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
+            if (renderer && renderer->getMaterial()) {
+                return renderer->getMaterial()->getPath();
+            }
+            return "";
+        });
+
+        mMaterialLink->onChanged += [this](InternedString path) {
+            if (!mGameObject) return;
+            auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
+            if (!renderer) return;
+            try {
+                auto newMat = mEngine->getResourceManager()->get<Resources::MaterialAsset>(path);
+                if (newMat) {
+                    renderer->setMaterial(*newMat);
+                }
+            } catch (const std::exception &) {
+            }
+        };
+
+        mMaterialLink->onDoubleClicked += [this](InternedString path) {
+            if (!path.empty()) {
+                onOpenAsset.invoke(path);
+            }
+        };
+
+        mMeshLink = makeUPtr<AssetLinkComponent>("Mesh", AssetType::MESH, [this]() -> InternedString {
+            if (!mGameObject) return "";
+            auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
+            if (renderer && renderer->getMesh()) {
+                return renderer->getMesh()->getPath();
+            }
+            return "";
+        });
+
+        mMeshLink->onChanged += [this](InternedString path) {
+            if (!mGameObject) return;
+            auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
+            if (!renderer) return;
+            try {
+                auto mesh = mEngine->getResourceManager()->get<Resources::MeshAsset>(path);
+                if (mesh.has_value()) {
+                    renderer->setMeshProvider([mesh]() {
+                        return *mesh;
+                    });
+                }
+            } catch (const std::exception &) {
+            }
+        };
+
+        mMeshLink->onDoubleClicked += [this](InternedString path) {
+            if (!path.empty()) {
+                onOpenAsset.invoke(path);
+            }
+        };
     }
 
     void InspectorComponent::setObject(Ref<Scene::GameObject> gameObject) {
@@ -62,7 +119,7 @@ namespace Vox::Editor {
         ImGui::Spacing();
 
         renderTransformOptions();
-        renderComponents();
+        renderComponents(context);
 
         ImGui::End();
     }
@@ -98,7 +155,7 @@ namespace Vox::Editor {
         }
     }
 
-    void InspectorComponent::renderComponents() {
+    void InspectorComponent::renderComponents(Render::RenderContext context) {
         if (!mGameObject) return;
 
         auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
@@ -140,8 +197,6 @@ namespace Vox::Editor {
         if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen)) {
             ImGui::Spacing();
 
-            bool changed = false;
-
             // Layer Slot
             ImGui::Columns(2, nullptr, false);
             ImGui::SetColumnWidth(0, 80.0f);
@@ -158,91 +213,13 @@ namespace Vox::Editor {
 
             ImGui::Spacing();
 
-            // Material Slot
-            static char materialBuffer[512] = "";
-            if (renderer->getMaterial()) {
-                strncpy(materialBuffer, renderer->getMaterial()->getPath().c_str(), sizeof(materialBuffer) - 1);
-            }
-
-            ImGui::Columns(2, nullptr, false);
-            ImGui::SetColumnWidth(0, 80.0f);
-            ImGui::AlignTextToFramePadding();
-            ImGui::Text("Material");
-            ImGui::NextColumn();
-
-            DrawAssetBadge(AssetType::MATERIAL);
-            ImGui::SameLine();
-
-            ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-            if (ImGui::InputText("##Material", materialBuffer, IM_ARRAYSIZE(materialBuffer))) {
-                changed = true;
-            }
-
-            if (ImGui::BeginDragDropTarget()) {
-                if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_ITEM")) {
-                    const char *draggedPath = static_cast<const char *>(payload->Data);
-                    size_t dataSize = static_cast<size_t>(payload->DataSize);
-                    size_t stringLen = (dataSize > 0 && draggedPath[dataSize - 1] == '\0') ? dataSize - 1 : dataSize;
-                    if (stringLen >= sizeof(materialBuffer)) stringLen = sizeof(materialBuffer) - 1;
-                    memcpy(materialBuffer, draggedPath, stringLen);
-                    materialBuffer[stringLen] = '\0';
-                    changed = true;
-                }
-                ImGui::EndDragDropTarget();
-            }
-            ImGui::Columns(1);
+            // Material Slot (via AssetLinkComponent)
+            mMaterialLink->render(context);
 
             ImGui::Spacing();
 
-            // Mesh Slot
-            static char meshBuffer[512] = "";
-            if (renderer->getMesh()) {
-                strncpy(meshBuffer, renderer->getMesh()->getPath().c_str(), sizeof(meshBuffer) - 1);
-            }
-
-            ImGui::Columns(2, nullptr, false);
-            ImGui::SetColumnWidth(0, 80.0f);
-            ImGui::AlignTextToFramePadding();
-            ImGui::Text("Mesh");
-            ImGui::NextColumn();
-
-            DrawAssetBadge(AssetType::MESH);
-            ImGui::SameLine();
-
-            ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-            if (ImGui::InputText("##Mesh", meshBuffer, IM_ARRAYSIZE(meshBuffer))) {
-                changed = true;
-            }
-
-            if (ImGui::BeginDragDropTarget()) {
-                if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_ITEM")) {
-                    const char *draggedPath = static_cast<const char *>(payload->Data);
-                    size_t dataSize = static_cast<size_t>(payload->DataSize);
-                    size_t stringLen = (dataSize > 0 && draggedPath[dataSize - 1] == '\0') ? dataSize - 1 : dataSize;
-                    if (stringLen >= sizeof(meshBuffer)) stringLen = sizeof(meshBuffer) - 1;
-                    memcpy(meshBuffer, draggedPath, stringLen);
-                    meshBuffer[stringLen] = '\0';
-                    changed = true;
-                }
-                ImGui::EndDragDropTarget();
-            }
-            ImGui::Columns(1);
-
-            if (changed) {
-                try {
-                    auto newMat = mEngine->getResourceManager()->get<Resources::MaterialAsset>(InternedString(materialBuffer));
-                    if (newMat) {
-                        renderer->setMaterial(*newMat);
-                    }
-                    auto mesh = mEngine->getResourceManager()->get<Resources::MeshAsset>(InternedString(meshBuffer));
-                    if (mesh.has_value()) {
-                        renderer->setMeshProvider([mesh]() {
-                            return *mesh;
-                        });
-                    }
-                } catch (const std::exception &) {
-                }
-            }
+            // Mesh Slot (via AssetLinkComponent)
+            mMeshLink->render(context);
 
             ImGui::Spacing();
         }

@@ -85,6 +85,7 @@ namespace Vox::Editor {
                         render->setMeshProvider([mesh]() {
                             return mesh;
                         });
+                        obj->attachComponent(render);
                     }
                 }
             }

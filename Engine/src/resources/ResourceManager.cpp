@@ -22,6 +22,7 @@ RESOURCES_NS
     const HashMap<InternedString, UPtr<AssetLoader> > ResourceManager::sLoaderByExtension = []() {
         HashMap<InternedString, UPtr<AssetLoader> > map;
         map.emplace(".fbx", makeUPtr<FbxLoader>());
+        map.emplace(".glb", makeUPtr<FbxLoader>());
         map.emplace(".vert", makeUPtr<ShaderLoader>());
         map.emplace(".frag", makeUPtr<ShaderLoader>());
         map.emplace(".vmat", makeUPtr<MaterialLoader>());
