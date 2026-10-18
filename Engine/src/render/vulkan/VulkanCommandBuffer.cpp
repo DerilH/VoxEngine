@@ -170,6 +170,12 @@ VULKAN_NS
         vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, ResourceCast(bindGroup)->getSetId(), 1, &set, 0, nullptr);
     }
 
+    void VulkanCommandBuffer::bindGroup(Ref<BindGroup> bindGroup, uint32_t dynamicOffset) {
+        VOX_ASSERT(mStarted, "Command buffer not started")
+        auto set = ResourceCast(bindGroup)->getSet()->getHandle();
+        vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, ResourceCast(bindGroup)->getSetId(), 1, &set, 1, &dynamicOffset);
+    }
+
     VkImageMemoryBarrier2 createBarrier(PassTransition transition, Ref<VulkanTexture> texture) {
         VkImageMemoryBarrier2 imageBarrier{};
 

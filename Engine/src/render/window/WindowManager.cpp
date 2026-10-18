@@ -4,7 +4,7 @@ RENDER_NS
     bool WindowManager::sGlfwInitialized = false;
 
 
-    Window *WindowManager::createWindow(InternedString title, Extent size, int targetMonitorIndex, bool maximized) {
+    Window *WindowManager::createWindow(InternedString title, Extent size, uint32_t targetMonitorIndex, bool maximized) {
         VOX_CHECK(sGlfwInitialized, "Windowing backend is not initialized");
         auto window = Window::Create(title, size, targetMonitorIndex, maximized);
         mWindows.emplace_back(window);

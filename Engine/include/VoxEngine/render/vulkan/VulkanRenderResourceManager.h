@@ -22,7 +22,7 @@ VULKAN_NS
     public:
         explicit VulkanRenderResourceManager(Ref<RenderBackend> backend, Ref<VulkanDevice> device);
 
-        void updateSample(Ref<Texture> texture) override;
+        void updateSampler(Ref<Texture> texture) override;
 
         void prepareCache() override;
     };

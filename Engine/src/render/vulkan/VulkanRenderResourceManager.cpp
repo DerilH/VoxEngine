@@ -251,12 +251,21 @@ VULKAN_NS
     VulkanRenderResourceManager::VulkanRenderResourceManager(Ref<RenderBackend> backend, Ref<VulkanDevice> device) : RenderResourceManager(backend), mDevice(device) {
     }
 
-    void VulkanRenderResourceManager::updateSample(Ref<Texture> texture) {
+    void VulkanRenderResourceManager::updateSampler(Ref<Texture> texture) {
         mSamplerDescSet->update(*mDevice, SAMPLER_BINDING, *ResourceCast(texture));
     }
 
     void VulkanRenderResourceManager::prepareCache() {
-        mGlobalDescPool = mDevice->createHeap<VulkanDescriptorPool>(100, ArrayView<VkDescriptorPoolSize>({{toVk(ShaderResourceType::COMBINED_IMAGE_SAMPLER), 100}, {toVk(ShaderResourceType::UNIFORM_BUFFER), 100}})); {
+        VkDeviceSize minAlign = mDevice->getPhysicalDevice().getMinUniformBufferOffsetAlignment();
+        mModelAlignment = sizeof(glm::mat4);
+        if (minAlign > 0) {
+            mModelAlignment = (mModelAlignment + minAlign - 1) & ~(minAlign - 1);
+        }
+
+        constexpr size_t MAX_MODELS = 4096;
+        VkDeviceSize modelBufferSize = MAX_MODELS * mModelAlignment;
+
+        mGlobalDescPool = mDevice->createHeap<VulkanDescriptorPool>(100, ArrayView<VkDescriptorPoolSize>({{toVk(ShaderResourceType::COMBINED_IMAGE_SAMPLER), 100}, {toVk(ShaderResourceType::UNIFORM_BUFFER), 100}, {toVk(ShaderResourceType::UNIFORM_BUFFER_DYNAMIC), 100}})); {
             VkDescriptorSetLayoutCreateInfo createInfo{};
             createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
             createInfo.bindingCount = 1;
@@ -280,15 +289,15 @@ VULKAN_NS
             VkDescriptorSetLayoutBinding binding{};
             binding.binding = 0;
             binding.descriptorCount = 1;
-            binding.descriptorType = toVk(ShaderResourceType::UNIFORM_BUFFER);
+            binding.descriptorType = toVk(ShaderResourceType::UNIFORM_BUFFER_DYNAMIC);
             binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
             createInfo.pBindings = &binding;
 
             VkDescriptorSetLayout layout;
             vkCreateDescriptorSetLayout(*mDevice, &createInfo, nullptr, &layout);
             mModelDescSet = mDevice->createHeap<VulkanDescriptorSet>(mGlobalDescPool, layout);
-            mModelBuffer = mDevice->createHeap<VulkanUniformBuffer>(MODEL_MATRICES_SIZE);
-            mModelDescSet->update(*mDevice, MODEL_MATRICES_BINDING, *ResourceCast(mModelBuffer));
+            mModelBuffer = mDevice->createHeap<VulkanUniformBuffer>(modelBufferSize);
+            mModelDescSet->updateDynamic(*mDevice, MODEL_MATRICES_BINDING, *ResourceCast(mModelBuffer), sizeof(glm::mat4));
             mModelGroup = new VulkanBindGroup(mModelDescSet, MODEL_MATRICES_SET);
         } {
             VkDescriptorSetLayoutCreateInfo createInfo{};

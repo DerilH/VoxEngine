@@ -39,6 +39,7 @@ VULKAN_NS
             }
         }
         mTotalMemory = totalMemory;
+        mMinUniformBufferOffsetAlignment = deviceProperties.limits.minUniformBufferOffsetAlignment;
         mRate += static_cast<int>(totalMemory / (1024 * 1024 * 256));
 
         mQueueFamilies = QueueFamilyRepository::findFamilies(handle, {GRAPHICS_QUEUE, TRANSFER_QUEUE});

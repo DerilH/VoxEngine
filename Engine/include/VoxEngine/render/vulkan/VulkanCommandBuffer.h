@@ -50,6 +50,7 @@ VULKAN_NS
         void bindVertexBuffer(VertexBufferRef buffer) override;
 
         void bindGroup(Ref<BindGroup> bindGroup) override;
+        void bindGroup(Ref<BindGroup> bindGroup, uint32_t dynamicOffset) override;
 
         VkPipelineLayout getCurrentLayout() const { return mCurrentLayout; }
     private:

@@ -56,6 +56,7 @@ RENDER_NS
         virtual void bindVertexBuffer(VertexBufferRef buffer) = 0;
 
         virtual void bindGroup(Ref<BindGroup> bindGroup) = 0;
+        virtual void bindGroup(Ref<BindGroup> bindGroup, uint32_t dynamicOffset) = 0;
 
         static PassTransition deduceNextTransition(PassTransition lastTransition, TargetUsage nextTarget) {
             switch (nextTarget) {

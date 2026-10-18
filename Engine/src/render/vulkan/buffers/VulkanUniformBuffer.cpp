@@ -33,7 +33,9 @@ VULKAN_NS
 
     void VulkanUniformBuffer::write(const void *data, uint32_t size, uint32_t offset) {
         if (void *mappedData = mAllocInfo.pMappedData) {
-            memcpy(static_cast<char8_t *>(mappedData) + offset, data, std::min(static_cast<uint32_t>(mAllocInfo.size), size));
+            if (offset < mAllocInfo.size) {
+                memcpy(static_cast<char8_t *>(mappedData) + offset, data, std::min(static_cast<uint32_t>(mAllocInfo.size - offset), size));
+            }
         }
     }
 

@@ -20,6 +20,7 @@ RENDER_NS
         Ref<UniformBuffer> mCameraBuffer;
         Ref<UniformBuffer> mModelBuffer;
         Ref<Texture> mSamplerTexture;
+        size_t mModelAlignment = sizeof(glm::mat4);
 
     private:
         virtual Ref<PipelineState> createPSO(ConstRef<PipelineStateDesc> desc) = 0;
@@ -43,7 +44,7 @@ RENDER_NS
             return mSamplerGroup;
         }
 
-        virtual void updateSample(Ref<Texture> texture) = 0;
+        virtual void updateSampler(Ref<Texture> texture) = 0;
 
         Ref<UniformBuffer> getCameraBuffer() const {
             return mCameraBuffer;
@@ -51,6 +52,10 @@ RENDER_NS
 
         Ref<UniformBuffer> getModelBuffer() const {
             return mModelBuffer;
+        }
+
+        size_t getModelMatrixAlignment() const {
+            return mModelAlignment;
         }
 
         Ref<PipelineState> getPipeline(ConstRef<Resources::MaterialAsset> material, ConstRef<RenderingState> renderingState);

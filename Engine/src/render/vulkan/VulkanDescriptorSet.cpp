@@ -35,6 +35,24 @@ VULKAN_NS
 
         vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
     }
+
+    void VulkanDescriptorSet::updateDynamic(const VulkanDevice &device, uint32_t binding, const VulkanUniformBuffer &buffer, VkDeviceSize range) {
+        VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = buffer.getHandle();
+        bufferInfo.offset = 0;
+        bufferInfo.range = range;
+
+        VkWriteDescriptorSet descriptorWrite{};
+        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet = mHandle;
+        descriptorWrite.dstBinding = binding;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pBufferInfo = &bufferInfo;
+
+        vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+    }
     VkSampler createDefaultSampler(VkDevice device);
 
     void VulkanDescriptorSet::update(const VulkanDevice &device, uint32_t binding, const VulkanTexture &buffer) {

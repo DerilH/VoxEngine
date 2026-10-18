@@ -17,7 +17,7 @@ namespace Vox::Render {
         InternedString mTitle;
         Extent mExtent;
         Window(InternedString title, Extent size, GLFWwindow* handle);
-        static Window* Create(InternedString title, Extent size, int targetMonitorIndex, bool maximized);
+        static Window* Create(InternedString title, Extent size, uint32_t targetMonitorIndex, bool maximized);
     public:
         Event<Ref<Window>> onClose;
         Event<Extent> onResize;

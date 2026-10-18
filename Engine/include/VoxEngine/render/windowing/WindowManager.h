@@ -13,7 +13,7 @@ RENDER_NS
         Vector<UPtr<Window>> mWindows;
         Ref<Window> mMainWindow = nullptr;
     public:
-        Window * createWindow(InternedString title, Extent size, int targetMonitorIndex, bool maximized);
+        Window * createWindow(InternedString title, Extent size, uint32_t targetMonitorIndex, bool maximized);
         const Vector<UPtr<Window>>& getWindows() {
             return mWindows;
         }

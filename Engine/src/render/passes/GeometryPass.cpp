@@ -15,6 +15,17 @@
 RENDER_NS
     void GeometryPass::execute(RenderContext context) {
         auto resManager = context.renderer->getRenderResourceManager();
+        auto align = resManager->getModelMatrixAlignment();
+        uint32_t modelIndex = 0;
+        static Ref<Texture> text = nullptr;
+        if (!text) {
+            auto t = context.renderer->getResourceManager()->get<Resources::TextureAsset>("textures/Wood.png");
+            if (t.has_value()) {
+                text = context.renderer->getBackend()->createTexture(Format::RGBA8, (*t)->getExtent(), (*t)->getPixels().pData, (*t)->getPixels().size());
+            }
+            resManager->updateSampler(text);
+        }
+
         for (auto &map: context.renderer->getDrawLists()) {
             auto entry = map.second.at(static_cast<uint8_t>(Scene::RenderLayer::WORLD));
 
@@ -25,21 +36,16 @@ RENDER_NS
             }
             state.value()->bind(context.cmdBuffer);
 
+
             context.cmdBuffer->bindGroup(resManager->getCameraGroup());
-            context.cmdBuffer->bindGroup(resManager->getModelGroup());
             context.cmdBuffer->bindGroup(resManager->getSamplerGroup());
 
             for (const auto &item: entry) {
-                static Ref<Texture> text = nullptr;
-                if (!text) {
-                    auto t = context.renderer->getResourceManager()->get<Resources::TextureAsset>("textures/Wood.png");
-                    if (t.has_value()) {
-                        text = context.renderer->getBackend()->createTexture(Format::RGBA8, (*t)->getExtent(), (*t)->getPixels().pData, (*t)->getPixels().size());
-                    }
-                }
-                resManager->updateSample(text);
-                resManager->getModelBuffer()->write(&item.modelMat, sizeof(glm::mat4));
+                uint32_t offset = modelIndex * align;
+                resManager->getModelBuffer()->write(&item.modelMat, sizeof(glm::mat4), offset);
+                context.cmdBuffer->bindGroup(resManager->getModelGroup(), offset);
                 item.execute(context.cmdBuffer);
+                modelIndex++;
             }
         }
     }

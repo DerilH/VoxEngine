@@ -14,6 +14,7 @@ VULKAN_NS
         QueueFamilyRepository mQueueFamilies;
         int mRate = 0;
         unsigned long mTotalMemory = 0;
+        VkDeviceSize mMinUniformBufferOffsetAlignment = 256;
 
         explicit PhysicalDevice(VkPhysicalDevice handle);
     public:
@@ -25,6 +26,7 @@ VULKAN_NS
         QueueFamilyRepository getQueueFamilies() const;
         int getRate() const;
         VkDeviceSize getTotalMemory() const;
+        VkDeviceSize getMinUniformBufferOffsetAlignment() const { return mMinUniformBufferOffsetAlignment; }
         uint32_t findMemoryType(uint32_t typeBits, VkMemoryPropertyFlags properties) const;
     };
 NS_END

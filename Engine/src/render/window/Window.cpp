@@ -124,7 +124,7 @@ namespace Vox::Render {
         });
     }
 
-    Window *Window::Create(InternedString title, Extent size, int targetMonitorIndex, bool maximized) {
+    Window *Window::Create(InternedString title, Extent size, uint32_t targetMonitorIndex, bool maximized) {
         int monitorCount = 0;
         GLFWmonitor **monitors = glfwGetMonitors(&monitorCount);
         VOX_CHECK(monitorCount > 0, "Cannot create window, no monitors found");
