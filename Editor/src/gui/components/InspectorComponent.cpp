@@ -37,6 +37,42 @@ namespace Vox::Editor {
             }
         };
 
+        mTextureLink = makeUPtr<AssetLinkComponent>("Texture", AssetType::TEXTURE, [this]() -> InternedString {
+            if (!mGameObject) return "";
+            auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
+            if (renderer && renderer->getMaterial()) {
+                return renderer->getMaterial()->texture;
+            }
+            return "";
+        });
+
+        mTextureLink->onChanged += [this](InternedString path) {
+            if (!mGameObject) return;
+            auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
+            if (!renderer || !renderer->getMaterial()) return;
+
+            auto oldMat = renderer->getMaterial();
+            auto newMat = oldMat->cloneTyped();
+            newMat->texture = path;
+            newMat->albedo = path;
+            auto matPath = oldMat->getPath();
+            // if (!matPath.empty()) {
+                mEngine->getResourceManager()->update(matPath, std::move(newMat));
+                auto updated = mEngine->getResourceManager()->get<Resources::MaterialAsset>(matPath);
+                if (updated) {
+                    renderer->setMaterial(*updated);
+                }
+            // } else {
+                // renderer->setMaterial(newMat);
+            // }
+        };
+
+        mTextureLink->onDoubleClicked += [this](InternedString path) {
+            if (!path.empty()) {
+                onOpenAsset.invoke(path);
+            }
+        };
+
         mMeshLink = makeUPtr<AssetLinkComponent>("Mesh", AssetType::MESH, [this]() -> InternedString {
             if (!mGameObject) return "";
             auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
@@ -217,6 +253,12 @@ namespace Vox::Editor {
             mMaterialLink->render(context);
 
             ImGui::Spacing();
+
+            // Texture Slot (via AssetLinkComponent)
+            if (renderer->getMaterial()) {
+                mTextureLink->render(context);
+                ImGui::Spacing();
+            }
 
             // Mesh Slot (via AssetLinkComponent)
             mMeshLink->render(context);

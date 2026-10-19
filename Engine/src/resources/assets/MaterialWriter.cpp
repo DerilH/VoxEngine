@@ -41,6 +41,10 @@ void Vox::Resources::MaterialWriter::writeToFile(const std::filesystem::path &pa
     yyjson_mut_obj_add_bool(doc, root, "depthWrite", material->depthWrite);
     writeEnumProp("depthCompareOp", material->depthCompareOp);
 
+    if (!material->texture.empty()) {
+        yyjson_mut_obj_add_strn(doc, root, "texture", material->texture.c_str(), material->texture.size());
+    }
+
     yyjson_write_err writeErr;
     size_t jsonSize = 0;
     char *jsonStr = yyjson_mut_write_opts(

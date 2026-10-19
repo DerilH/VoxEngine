@@ -27,6 +27,7 @@ RESOURCES_NS
         map.emplace(".frag", makeUPtr<ShaderLoader>());
         map.emplace(".vmat", makeUPtr<MaterialLoader>());
         map.emplace(".png", makeUPtr<TextureLoader>());
+        map.emplace(".jpg", makeUPtr<TextureLoader>());
         return map;
     }();
 

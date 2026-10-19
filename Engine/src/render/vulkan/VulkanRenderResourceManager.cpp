@@ -529,6 +529,10 @@ VULKAN_NS
             VK_CHECK(vkCreateDescriptorSetLayout(*mDevice, &createInfo, nullptr, &layout), "Failed to create sampler descriptor layout");
             mSamplerDescSet = mDevice->createHeap<VulkanDescriptorSet>(pool, layout);
             mSamplerGroup = new VulkanBindGroup(mSamplerDescSet, SAMPLER_SET);
+
+            uint32_t whitePixel = 0xFFFFFFFF;
+            mDefaultTexture = mBackend->createTexture(Format::RGBA8, Extent(1, 1), &whitePixel, sizeof(whitePixel));
+            mSamplerDescSet->update(*mDevice, SAMPLER_BINDING, *ResourceCast(mDefaultTexture));
         }
 
         mCachePrepared = true;

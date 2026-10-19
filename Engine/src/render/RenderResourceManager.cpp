@@ -1,4 +1,6 @@
 #include "VoxEngine/render/RenderResourceManager.h"
+#include <VoxEngine/resources/ResourceManager.h>
+#include <VoxEngine/resources/assets/TextureAsset.h>
 
 Vox::Render::RenderResourceManager::RenderResourceManager(const Ref<RenderBackend> backend)
     : mBackend(backend), mUniformAllocator(backend) {
@@ -36,4 +38,79 @@ Vox::Ref<Vox::Render::RenderMesh> Vox::Render::RenderResourceManager::getMesh(Co
         mesh = new RenderMesh(vBuff, iBuff);
     }
     return mesh;
+}
+
+Vox::Ref<Vox::Render::Texture> Vox::Render::RenderResourceManager::getTexture(InternedString path, Ref<Resources::ResourceManager> resourceManager) {
+    if (path.empty()) {
+        return mDefaultTexture;
+    }
+
+    auto it = mLoadedTextures.find(path);
+    if (it != mLoadedTextures.end() && it->second) {
+        return it->second;
+    }
+
+    if (!resourceManager) {
+        return mDefaultTexture;
+    }
+
+    try {
+        auto texAsset = resourceManager->get<Resources::TextureAsset>(path);
+        if (texAsset.has_value()) {
+            auto pixels = (*texAsset)->getPixels();
+            auto extent = (*texAsset)->getExtent();
+            auto gpuTex = mBackend->createTexture(Format::RGBA8, extent, pixels.pData, pixels.size());
+            mLoadedTextures[path] = gpuTex;
+            return gpuTex;
+        }
+    } catch (const std::exception& e) {
+        LOG_WARN("Failed to load texture '{}': {}", path.c_str(), e.what());
+    }
+
+    return mDefaultTexture;
+}
+
+Vox::Ref<Vox::Render::BindGroup> Vox::Render::RenderResourceManager::getMaterialTextureGroup(
+    ConstRef<Resources::MaterialAsset> material,
+    Ref<PipelineState> pso,
+    Ref<Resources::ResourceManager> resourceManager
+) {
+    if (!material) {
+        return mSamplerGroup;
+    }
+
+    auto gpuTex = getTexture(material->texture, resourceManager);
+    if (!gpuTex) {
+        gpuTex = mDefaultTexture;
+    }
+
+    auto it = mMaterialTextureBindings.find(material);
+    if (it != mMaterialTextureBindings.end()) {
+        if (it->second.bindGroup) {
+            if (it->second.texturePath != material->texture || it->second.texture != gpuTex) {
+                if (gpuTex) {
+                    updateBindGroup(it->second.bindGroup, 0, gpuTex);
+                }
+                it->second.texturePath = material->texture;
+                it->second.texture = gpuTex;
+            }
+            return it->second.bindGroup;
+        }
+    }
+
+    if (!pso || !gpuTex) {
+        return mSamplerGroup;
+    }
+
+    auto bindGroup = createTextureBindGroup(pso, 1, 0, gpuTex);
+    if (!bindGroup) {
+        return mSamplerGroup;
+    }
+
+    MaterialTextureBinding binding{};
+    binding.texturePath = material->texture;
+    binding.texture = gpuTex;
+    binding.bindGroup = bindGroup;
+    mMaterialTextureBindings[material] = binding;
+    return bindGroup;
 }

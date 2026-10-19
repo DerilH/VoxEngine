@@ -13,6 +13,7 @@ namespace Vox::Editor {
         Ref<Engine> mEngine;
 
         UPtr<AssetLinkComponent> mMaterialLink;
+        UPtr<AssetLinkComponent> mTextureLink;
         UPtr<AssetLinkComponent> mMeshLink;
 
         void renderComponents(Render::RenderContext context);

@@ -17,14 +17,6 @@ RENDER_NS
         auto resManager = context.renderer->getRenderResourceManager();
         auto align = resManager->getModelMatrixAlignment();
         uint32_t modelIndex = 0;
-        static Ref<Texture> text = nullptr;
-        if (!text) {
-            auto t = context.renderer->getResourceManager()->get<Resources::TextureAsset>("textures/Wood.png");
-            if (t.has_value()) {
-                text = context.renderer->getBackend()->createTexture(Format::RGBA8, (*t)->getExtent(), (*t)->getPixels().pData, (*t)->getPixels().size());
-            }
-            resManager->updateSampler(text);
-        }
 
         for (auto &map: context.renderer->getDrawLists()) {
             auto entry = map.second.find(static_cast<uint8_t>(Scene::RenderLayer::WORLD));
@@ -37,7 +29,10 @@ RENDER_NS
             state.value()->bind(context.cmdBuffer);
 
             context.cmdBuffer->bindGroup(resManager->getCameraGroup());
-            context.cmdBuffer->bindGroup(resManager->getSamplerGroup());
+            auto texGroup = resManager->getMaterialTextureGroup(map.first, state.value(), context.renderer->getResourceManager());
+            if (texGroup) {
+                context.cmdBuffer->bindGroup(texGroup);
+            }
 
             for (const auto &item: entry->second) {
                 uint32_t offset = modelIndex * align;

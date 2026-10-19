@@ -9,6 +9,10 @@
 #include "RenderMesh.h"
 #include "buffers/UniformBufferAllocator.h"
 
+namespace Vox::Resources {
+    class ResourceManager;
+}
+
 RENDER_NS
     class RenderResourceManager {
     protected:
@@ -23,7 +27,17 @@ RENDER_NS
         Ref<UniformBuffer> mCameraBuffer;
         Ref<UniformBuffer> mModelBuffer;
         Ref<Texture> mSamplerTexture;
+        Ref<Texture> mDefaultTexture;
         size_t mModelAlignment = sizeof(glm::mat4);
+
+        HashMap<InternedString, Ref<Texture>> mLoadedTextures;
+
+        struct MaterialTextureBinding {
+            InternedString texturePath;
+            Ref<Texture> texture;
+            Ref<BindGroup> bindGroup;
+        };
+        HashMap<ConstRef<Resources::MaterialAsset>, MaterialTextureBinding> mMaterialTextureBindings;
 
     private:
         virtual Ref<PipelineState> createPSO(ConstRef<PipelineStateDesc> desc) = 0;
@@ -80,7 +94,14 @@ RENDER_NS
             return mSamplerGroup;
         }
 
+        Ref<Texture> getDefaultTexture() const {
+            return mDefaultTexture;
+        }
+
         virtual void updateSampler(Ref<Texture> texture) = 0;
+
+        Ref<Texture> getTexture(InternedString path, Ref<Resources::ResourceManager> resourceManager);
+        Ref<BindGroup> getMaterialTextureGroup(ConstRef<Resources::MaterialAsset> material, Ref<PipelineState> pso, Ref<Resources::ResourceManager> resourceManager);
 
         Ref<UniformBuffer> getCameraBuffer() const {
             return mCameraBuffer;

@@ -13,7 +13,8 @@ RESOURCES_NS
     public:
         MaterialAsset(InternedString path, HashMap<Render::ShaderStage, InternedString> &shaders,
                       Render::PolygonMode polygonMode, Render::CullMode cullMode, Render::PrimitiveTopology topology,
-                      bool depthTest = true, bool depthWrite = true, Render::CompareOp depthCompareOp = Render::CompareOp::LESS_OR_EQUAL);
+                      bool depthTest = true, bool depthWrite = true, Render::CompareOp depthCompareOp = Render::CompareOp::LESS_OR_EQUAL,
+                      InternedString texture = "");
 
         HashMap<Render::ShaderStage, InternedString> shaders;
         Render::PolygonMode polygonMode;
@@ -22,6 +23,7 @@ RESOURCES_NS
         bool depthTest = true;
         bool depthWrite = true;
         Render::CompareOp depthCompareOp = Render::CompareOp::LESS_OR_EQUAL;
+        InternedString texture;
         InternedString albedo;
 
         ~MaterialAsset() override;

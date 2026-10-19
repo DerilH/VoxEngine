@@ -16,6 +16,20 @@ namespace Vox::Editor {
 
 Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, ConstRef<Resources::MaterialAsset> asset, bool &shouldClose)
     : AssetEditor(shouldClose), mEngine(engine), mOriginalAsset(asset), mAsset(std::move(asset->cloneTyped())) {
+    mTextureLink = makeUPtr<AssetLinkComponent>("Texture", AssetType::TEXTURE, [this]() -> InternedString {
+        if (!mAsset) return "";
+        return mAsset->texture;
+    });
+
+    mTextureLink->onChanged += [this](InternedString path) {
+        if (!mAsset) return;
+        mAsset->texture = path;
+        mAsset->albedo = path;
+        auto matPath = mAsset->getPath();
+        auto clone = mAsset->cloneTyped();
+        mEngine->getResourceManager()->update(matPath, std::move(mAsset));
+        mAsset = std::move(clone);
+    };
 }
 
 void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) {
@@ -23,7 +37,7 @@ void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) 
 
     bool isOpen = true;
     std::string winTitle = "Material Editor - " + std::string(mAsset->getName().c_str()) + "###MaterialEditor";
-    ImGui::SetNextWindowSize(ImVec2(360, 420), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(360, 480), ImGuiCond_FirstUseEver);
 
     if (!ImGui::Begin(winTitle.c_str(), &isOpen)) {
         ImGui::End();
@@ -45,6 +59,15 @@ void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) 
     ImGui::Spacing();
 
     bool changed = false;
+
+    DrawSectionHeader("Textures");
+    if (mTextureLink) {
+        mTextureLink->render(context);
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
 
     DrawSectionHeader("Rasterizer State");
 

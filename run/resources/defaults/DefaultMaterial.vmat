@@ -8,5 +8,6 @@
     "topology": "TRIANGLE_LIST",
     "depthTest": true,
     "depthWrite": true,
-    "depthCompareOp": "LESS_OR_EQUAL"
+    "depthCompareOp": "LESS_OR_EQUAL",
+    "texture": "textures/testBricks.jpg"
 }

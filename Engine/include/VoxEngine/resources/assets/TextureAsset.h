@@ -30,7 +30,7 @@ RESOURCES_NS
         }
 
         static AssetType StaticType() {
-            return AssetType::MODEL;
+            return AssetType::TEXTURE;
         }
     };
 

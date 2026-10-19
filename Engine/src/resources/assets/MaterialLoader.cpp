@@ -76,6 +76,17 @@ Vox::Ref<Vox::Resources::Asset> Vox::Resources::MaterialLoader::load(InternedStr
         depthCompareOp = castEnum<Render::CompareOp>(yyjson_get_str(dcoVal));
     }
 
+    InternedString texturePath;
+    auto texVal = yyjson_obj_get(root, "texture");
+    if (texVal && yyjson_is_str(texVal)) {
+        texturePath = InternedString(yyjson_get_str(texVal));
+    } else {
+        auto albVal = yyjson_obj_get(root, "albedo");
+        if (albVal && yyjson_is_str(albVal)) {
+            texturePath = InternedString(yyjson_get_str(albVal));
+        }
+    }
+
     yyjson_doc_free(doc);
-    return new MaterialAsset(path, shaders, polygonMode, cullMode, topology, depthTest, depthWrite, depthCompareOp);
+    return new MaterialAsset(path, shaders, polygonMode, cullMode, topology, depthTest, depthWrite, depthCompareOp, texturePath);
 }
