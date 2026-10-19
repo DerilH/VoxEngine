@@ -51,6 +51,7 @@ namespace Vox::Editor {
         Ref<Engine> mEngine;
 
         bool mIsCaptured = false;
+        bool mIsPanning = false;
         bool mJustWarped = false;
         float mYaw = 0.0f;
         float mPitch = 0.0f;
@@ -88,6 +89,10 @@ namespace Vox::Editor {
 
         bool isDraggingGizmo() const {
             return mIsDraggingGizmo;
+        }
+
+        bool isPanning() const {
+            return mIsPanning;
         }
     protected:
         void renderInternal(Render::RenderContext context) override;

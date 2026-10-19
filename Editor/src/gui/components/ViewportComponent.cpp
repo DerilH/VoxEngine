@@ -183,8 +183,12 @@ namespace Vox::Editor {
             mJustStartedDrag = false;
         }
 
+        if (!ImGui::IsMouseDown(ImGuiMouseButton_Middle)) {
+            mIsPanning = false;
+        }
+
         if (isImageHovered) {
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !mIsDraggingGizmo) {
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !mIsDraggingGizmo && !mIsPanning) {
                 mClickMousePos = ImGui::GetMousePos();
                 ImVec2 mousePos = mClickMousePos;
                 auto extent = Render::Vulkan::ResourceCast(context.renderer->getGraph().getTexture("Scene")->getExact())->getExtent();
@@ -196,11 +200,56 @@ namespace Vox::Editor {
                     LOG_VERBOSE("Viewport pick at: {}, {}", pickX, pickY);
                 }
             }
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Middle)) {
+                mIsPanning = true;
+                mIsCaptured = false;
+                mIsDraggingGizmo = false;
+                mActiveGizmoElement = GizmoElement::None;
+            }
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
                 mIsCaptured = true;
+                mIsPanning = false;
                 mJustWarped = false;
                 mIsDraggingGizmo = false;
                 mActiveGizmoElement = GizmoElement::None;
+            }
+        }
+
+        if (mIsPanning) {
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Middle)) {
+                ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+
+                ImVec2 mouseDelta = ImGui::GetIO().MouseDelta;
+                if (mouseDelta.x != 0.0f || mouseDelta.y != 0.0f) {
+                    auto camera = mEngine->scene ? mEngine->scene->getActiveCamera() : nullptr;
+                    if (camera && camera->gameObject && camera->gameObject->transform) {
+                        auto transform = camera->gameObject->transform;
+
+                        float dist = 10.0f;
+                        if (mSelectedObj && mSelectedObj->transform) {
+                            dist = glm::length(mSelectedObj->transform->getPos() - transform->getPos());
+                            dist = std::clamp(dist, 1.0f, 500.0f);
+                        }
+                        float fov = glm::radians(45.0f);
+                        float worldHeightAtDist = 2.0f * dist * std::tan(fov * 0.5f);
+                        float panSpeed = (viewportSize.y > 0.0f) ? (worldHeightAtDist / viewportSize.y) : 0.015f;
+
+                        if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift)) {
+                            panSpeed *= 2.5f;
+                        } else if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl)) {
+                            panSpeed *= 0.2f;
+                        }
+
+                        glm::vec3 right = transform->getRight();
+                        glm::vec3 up = transform->getUp();
+                        glm::vec3 pos = transform->getPos();
+
+                        pos += (-right * mouseDelta.x + -up * mouseDelta.y) * panSpeed;
+                        transform->setPos(pos);
+                    }
+                }
+            } else {
+                mIsPanning = false;
             }
         }
 
@@ -547,6 +596,8 @@ namespace Vox::Editor {
         char hudText[128];
         if (mIsCaptured) {
             snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: [Captured] Mouse Look + WASD ", (int) viewportSize.x, (int) viewportSize.y);
+        } else if (mIsPanning) {
+            snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: [Pan] MMB Drag (Shift: Fast, Ctrl: Fine) ", (int) viewportSize.x, (int) viewportSize.y);
         } else if (mIsDraggingGizmo) {
             const char *elemName = "Gizmo";
             const char *actionName = "Transform";
@@ -566,7 +617,7 @@ namespace Vox::Editor {
                 snprintf(hudText, sizeof(hudText), " %dx%d  |  %s: [%s] Dragging (Shift for precision) ", (int) viewportSize.x, (int) viewportSize.y, actionName, elemName);
             }
         } else {
-            snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: Hold RMB to Look + WASD ", (int) viewportSize.x, (int) viewportSize.y);
+            snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: RMB to Look + WASD, MMB to Pan ", (int) viewportSize.x, (int) viewportSize.y);
         }
         ImVec2 hudTextSize = ImGui::CalcTextSize(hudText);
         ImVec2 hudBgMax = ImVec2(hudPos.x + hudTextSize.x + 8.0f, hudPos.y + hudTextSize.y + 8.0f);
