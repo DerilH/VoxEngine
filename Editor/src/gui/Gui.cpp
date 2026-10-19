@@ -110,7 +110,7 @@ namespace Vox::Editor {
         auto gizmoPass = new GizmoPass(Render::RenderPassType::GIZMO_PASS, {}, {graph.getTexture("GizmoID"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT, true}, {graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_W_ATTACHMENT});
         graph.addPass(gizmoPass);
 
-        auto guiPass = new GuiRenderPass(Render::RenderPassType::UI_PASS, {{graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_R_SHADER}}, {{graph.getTexture("MainWindow"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT}}, this);
+        auto guiPass = new GuiRenderPass(Render::RenderPassType::UI_PASS, {{graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_R_SHADER}}, {{graph.getTexture("MainWindow"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT, true}}, this);
         graph.addPass(guiPass);
 
         mScreens["SceneEdit"] = makeUPtr<SceneEditScreen>(mEngine, gizmoPass);

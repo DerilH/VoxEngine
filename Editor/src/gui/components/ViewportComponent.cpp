@@ -186,7 +186,15 @@ namespace Vox::Editor {
         if (isImageHovered) {
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !mIsDraggingGizmo) {
                 mClickMousePos = ImGui::GetMousePos();
+                ImVec2 mousePos = mClickMousePos;
+                auto extent = Render::Vulkan::ResourceCast(context.renderer->getGraph().getTexture("Scene")->getExact())->getExtent();
+                uint32_t pickX = std::clamp((mousePos.x - screenPos.x) / viewportSize.x, 0.0f, 1.0f) * extent.width;
+                uint32_t pickY = std::clamp((mousePos.y - screenPos.y) / viewportSize.y, 0.0f, 1.0f) * extent.height;
 
+                if (mGizmoPass) {
+                    mGizmoPass->schedulePick(true, {pickX, pickY});
+                    LOG_VERBOSE("Viewport pick at: {}, {}", pickX, pickY);
+                }
             }
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
                 mIsCaptured = true;
@@ -195,15 +203,7 @@ namespace Vox::Editor {
                 mActiveGizmoElement = GizmoElement::None;
             }
         }
-        ImVec2 mousePos = mClickMousePos;
-        auto extent = Render::Vulkan::ResourceCast(context.renderer->getGraph().getTexture("Scene")->getExact())->getExtent();
-        uint32_t pickX = std::clamp((mousePos.x - screenPos.x) / viewportSize.x, 0.0f, 1.0f) * extent.width;
-        uint32_t pickY = std::clamp((mousePos.y - screenPos.y) / viewportSize.y, 0.0f, 1.0f) * extent.height;
 
-        if (mGizmoPass) {
-            mGizmoPass->schedulePick(true, {pickX, pickY});
-            LOG_VERBOSE("Viewport pick at: {}, {}", pickX, pickY);
-        }
         if (mIsDraggingGizmo && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
 

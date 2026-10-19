@@ -1,7 +1,7 @@
 {
     "shaders": {
         "VERTEX": "editor/gizmoShader.vert",
-        "FRAGMENT": "editor/gizmoIDShader.frag"
+        "FRAGMENT": "editor/gizmoShader.frag"
     },
     "polygonMode": "FILL",
     "cullMode": "NONE",
