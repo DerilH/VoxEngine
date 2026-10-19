@@ -22,5 +22,6 @@ namespace Vox::Editor {
         void init(Render::Window& window, Engine& engine);
 
         void render(Render::RenderContext context);
+        Extent getMousePosition() const;
     };
 }

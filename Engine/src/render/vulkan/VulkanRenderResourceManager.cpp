@@ -167,7 +167,7 @@ VULKAN_NS
         createInfo.stageCount = shaders.size();
         createInfo.pStages = stages;
 
-        for (const auto& [index, shader] : shaders | std::views::values | std::views::enumerate) {
+        for (const auto &[index, shader]: shaders | std::views::values | std::views::enumerate) {
             auto &stage = stages[index];
 
             stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -262,8 +262,17 @@ VULKAN_NS
             mModelAlignment = (mModelAlignment + minAlign - 1) & ~(minAlign - 1);
         }
 
+        mAdditionalAlignment = sizeof(uint64_t);
+        if (minAlign > 0) {
+            mAdditionalAlignment = (mAdditionalAlignment + minAlign - 1) & ~(minAlign - 1);
+        }
+
+
         constexpr size_t MAX_MODELS = 4096;
         VkDeviceSize modelBufferSize = MAX_MODELS * mModelAlignment;
+
+
+        VkDeviceSize additionalBufferSize = MAX_MODELS * mAdditionalAlignment;
 
         mGlobalDescPool = mDevice->createHeap<VulkanDescriptorPool>(100, ArrayView<VkDescriptorPoolSize>({{toVk(ShaderResourceType::COMBINED_IMAGE_SAMPLER), 100}, {toVk(ShaderResourceType::UNIFORM_BUFFER), 100}, {toVk(ShaderResourceType::UNIFORM_BUFFER_DYNAMIC), 100}})); {
             VkDescriptorSetLayoutCreateInfo createInfo{};
@@ -285,20 +294,30 @@ VULKAN_NS
         } {
             VkDescriptorSetLayoutCreateInfo createInfo{};
             createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-            createInfo.bindingCount = 1;
-            VkDescriptorSetLayoutBinding binding{};
-            binding.binding = 0;
-            binding.descriptorCount = 1;
-            binding.descriptorType = toVk(ShaderResourceType::UNIFORM_BUFFER_DYNAMIC);
-            binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
-            createInfo.pBindings = &binding;
+            createInfo.bindingCount = 2;
+            VkDescriptorSetLayoutBinding bindings[2]{};
+            bindings[0].binding = 0;
+            bindings[0].descriptorCount = 1;
+            bindings[0].descriptorType = toVk(ShaderResourceType::UNIFORM_BUFFER_DYNAMIC);
+            bindings[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
+
+            bindings[1].binding = 1;
+            bindings[1].descriptorCount = 1;
+            bindings[1].descriptorType = toVk(ShaderResourceType::UNIFORM_BUFFER_DYNAMIC);
+            bindings[1].stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+            createInfo.pBindings = &bindings[0];
 
             VkDescriptorSetLayout layout;
             vkCreateDescriptorSetLayout(*mDevice, &createInfo, nullptr, &layout);
+
             mModelDescSet = mDevice->createHeap<VulkanDescriptorSet>(mGlobalDescPool, layout);
             mModelBuffer = mDevice->createHeap<VulkanUniformBuffer>(modelBufferSize);
             mModelDescSet->updateDynamic(*mDevice, MODEL_MATRICES_BINDING, *ResourceCast(mModelBuffer), sizeof(glm::mat4));
             mModelGroup = new VulkanBindGroup(mModelDescSet, MODEL_MATRICES_SET);
+
+            mAdditionalBuffer = mDevice->createHeap<VulkanUniformBuffer>(additionalBufferSize);
+            mModelDescSet->updateDynamic(*mDevice, 1, *ResourceCast(mAdditionalBuffer), sizeof(uint64_t));
         } {
             VkDescriptorSetLayoutCreateInfo createInfo{};
             createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

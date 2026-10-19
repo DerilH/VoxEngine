@@ -9,6 +9,7 @@
 #include "Device.h"
 #include "VoxCore/render/Enums.h"
 #include "RenderCore.h"
+#include "buffers/TransferBuffer.h"
 #include "VoxEngine/render/state/PipelineStateDesc.h"
 #include "VoxCore/math/Extent.h"
 
@@ -38,6 +39,7 @@ RENDER_NS
 
         virtual IndexBufferRef createIndexBuffer(const void* data, uint32_t size, IndexType type) = 0;
         virtual VertexBufferRef createVertexBuffer(const void* data, uint32_t size, BufferUsage usage) = 0;
+        virtual Ref<TransferBuffer> createTransferBuffer(uint32_t size) = 0;
         virtual UniformBufferRef createUniformBuffer(uint32_t size) = 0;
 
         DeviceRef getDevice() const {return mCurrentDevice;}

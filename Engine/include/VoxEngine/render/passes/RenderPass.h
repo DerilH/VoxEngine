@@ -52,8 +52,6 @@ RENDER_NS
         ConstRef<RenderingState> getState() const {
             return &mRenderingState;
         }
-
-        virtual bool shouldClear() {return false;}
     };
 
 NS_END

@@ -35,7 +35,7 @@ VULKAN_NS
 
         void setBarriers(ArrayView<PassTransition> transitions, ArrayView<TextureRef> textures) override;
 
-        void beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size, bool clear = true) override;
+        void beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size) override;
 
         void endRenderPass() override;
 
@@ -50,7 +50,9 @@ VULKAN_NS
         void bindVertexBuffer(VertexBufferRef buffer) override;
 
         void bindGroup(Ref<BindGroup> bindGroup) override;
-        void bindGroup(Ref<BindGroup> bindGroup, uint32_t dynamicOffset) override;
+        void bindGroup(Ref<BindGroup> bindGroup, ArrayView<uint32_t> dynamicOffset) override;
+
+        void copyTextureToBuffer(Ref<Texture> texture, Ref<TransferBuffer> buffer, Extent offset, Extent size) override;
 
         VkPipelineLayout getCurrentLayout() const { return mCurrentLayout; }
     private:

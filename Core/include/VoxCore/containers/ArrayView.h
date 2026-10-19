@@ -36,7 +36,7 @@ VOX_NS
         template<size_t count>
         Array<PointerType, count> copy() {
             Array<PointerType, count> array;
-            memcpy( data(array), static_cast<void *>(pData), count * sizeof(PointerType));
+            memcpy(data(array), static_cast<void *>(pData), count * sizeof(PointerType));
             return array;
         }
 

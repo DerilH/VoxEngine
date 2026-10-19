@@ -3,9 +3,11 @@
 #include <VoxCore/Pointers.h>
 #include <VoxCore/containers/Containers.h>
 
+#include "GameObjectRegistry.h"
 #include "Types.h"
 #include "components/CameraComponent.h"
 #include "components/RendererComponent.h"
+
 SCENE_NS
     class Scene {
         Vector<GameObjectRef> mRootObjects;
@@ -13,9 +15,10 @@ SCENE_NS
         HashSet<Ref<RendererComponent> > mRenderables;
         HashSet<Ref<CameraComponent> > mCameras;
         Ref<CameraComponent> mActiveCamera = nullptr;
+        Ref<GameObjectRegistry> mObjectRegistry;
 
     public:
-        explicit Scene(InternedString name);
+        explicit Scene(InternedString name, Ref<GameObjectRegistry> objectRegistry);
 
         GameObjectRef createObject(InternedString name);
 

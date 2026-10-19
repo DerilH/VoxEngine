@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <oneapi/tbb/parallel_reduce.h>
+
 #include "VoxCore/containers/Containers.h"
 #include "VoxEngine/render/Texture.h"
 #include "VoxCore/math/Extent3D.h"
@@ -12,6 +14,7 @@
 #include "VoxEngine/render/passes/RenderPass.h"
 #include "GraphTexture.h"
 #include <VoxCore/containers/Graph.h>
+#include <VoxEngine/render/RenderBackend.h>
 
 RENDER_NS
     class RenderGraph {
@@ -22,11 +25,13 @@ RENDER_NS
         Vector<RenderPassRef> mEntryNodes;
         HashMap<AttachmentDesc, Vector<RenderPassRef> > mReadDeps;
         HashMap<AttachmentDesc, Vector<RenderPassRef> > mWriteDeps;
+        Ref<RenderBackend> mBackend;
+        Extent mViewportSize{};
 
         bool mDirty = true;
 
     public:
-        explicit RenderGraph(RenderGraph *old);
+        explicit RenderGraph(Ref<RenderBackend> renderBackend, RenderGraph *old);
 
         NO_COPY_MOVE(RenderGraph);
 
@@ -38,7 +43,16 @@ RENDER_NS
 
         GraphTextureRef getTexture(InternedString slot);
 
-        Vector<GraphTextureRef> getTextures();
+        Vector<GraphTextureRef> getTextures() {
+            return mTextures;
+        }
+
+        void setViewportSize(Extent size) {
+            if (mViewportSize != size) {
+                mDirty = true;
+            }
+            mViewportSize = size;
+        }
 
         const Vector<RenderPassRef> &compile(RenderTargetRef endTarget);
 

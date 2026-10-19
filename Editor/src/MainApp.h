@@ -51,46 +51,6 @@ public:
         mEngine->getRenderer()->addPresentTarget("MainWindow", windowTarget);
         mEngine->getRenderer()->createGraph();
 
-        // window->onKeyPressed += [this](auto w, auto key, auto action) {
-        //     auto camera = mEngine->scene->getActiveCamera();
-        //     if (camera) {
-        //         if (action == Vox::Input::KeyAction::RELEASE) return;
-        //         auto transform = camera->gameObject->transform;
-        //         auto pos = transform->getPos();
-        //
-        //         switch (key) {
-        //             case Vox::Input::Key::W:
-        //                 transform->setPos(pos + transform->getForward());
-        //                 break;
-        //             case Vox::Input::Key::S:
-        //                 transform->setPos(pos + -transform->getForward());
-        //                 break;
-        //             case Vox::Input::Key::A:
-        //                 transform->setPos(pos + -transform->getRight());
-        //                 break;
-        //             case Vox::Input::Key::D:
-        //                 transform->setPos(pos + transform->getRight());
-        //                 break;
-        //             case Vox::Input::Key::Left:
-        //             case Vox::Input::Key::Q:
-        //                 transform->setRotation(glm::angleAxis(glm::radians(-5.0f), glm::vec3(0, 1, 0)) * transform->getRotation());
-        //                 break;
-        //             case Vox::Input::Key::Right:
-        //             case Vox::Input::Key::E:
-        //                 transform->setRotation(glm::angleAxis(glm::radians(5.0f), glm::vec3(0, 1, 0)) * transform->getRotation());
-        //                 break;
-        //             case Vox::Input::Key::Up:
-        //                 transform->setRotation(glm::rotate(transform->getRotation(), glm::radians(-5.0f), glm::vec3(1, 0, 0)));
-        //                 break;
-        //             case Vox::Input::Key::Down:
-        //                 transform->setRotation(glm::rotate(transform->getRotation(), glm::radians(5.0f), glm::vec3(1, 0, 0)));
-        //                 break;
-        //         }
-        //     }
-        // };
-
-
-
         window->onClose += [this](auto w) { mEngine->shutdown(); };
         gui = new Vox::Editor::Gui();
         gui->init(*Vox::Render::WindowManager::Get().getMainWindow(), *mEngine);

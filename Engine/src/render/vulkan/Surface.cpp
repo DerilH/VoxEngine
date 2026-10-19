@@ -167,11 +167,21 @@ namespace Vox::Render::Vulkan {
         frame->setRenderWaitSemaphore(*mRenderFinishedSemaphores[index]);
         frame->getCmdBuffer()->reset();
         frame->getCmdBuffer()->begin();
+
+        VkDebugUtilsLabelEXT label{};
+        label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;
+        label.pLabelName = "Frame";
+        // VulkanBackend::pfnBeginLabel(ResourceCast(frame->getCmdBuffer())->getHandle(), &label);
+
         return 0;
     }
 
     void Surface::endFrame() {
         auto currentFrame = mFrames[mCurrentFrame];
+
+
+        // VulkanBackend::pfnEndLabel(ResourceCast(getCurrentFrame().getCmdBuffer())->getHandle());
+
         auto texture = mCurrentSwapChain->getTexture(currentFrame->getCurrentImageIndex());
         getCurrentFrame().getCmdBuffer()->setBarriers({CommandBuffer::deduceNextTransition(texture->currentTransition, TargetUsage::PRESENT)}, {texture});
 

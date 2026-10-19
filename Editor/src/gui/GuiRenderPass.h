@@ -15,8 +15,5 @@ namespace Vox::Editor {
         void execute(Render::RenderContext context) override {
             mGui->render(context);
         }
-        bool shouldClear() override {
-            return true;
-        }
     };
 }

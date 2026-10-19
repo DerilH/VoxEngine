@@ -19,8 +19,10 @@ RENDER_NS
         Ref<BindGroup> mSamplerGroup;
         Ref<UniformBuffer> mCameraBuffer;
         Ref<UniformBuffer> mModelBuffer;
+        Ref<UniformBuffer> mAdditionalBuffer;
         Ref<Texture> mSamplerTexture;
         size_t mModelAlignment = sizeof(glm::mat4);
+        size_t mAdditionalAlignment = sizeof(uint64_t);
 
     private:
         virtual Ref<PipelineState> createPSO(ConstRef<PipelineStateDesc> desc) = 0;
@@ -40,7 +42,11 @@ RENDER_NS
             return mModelGroup;
         }
 
-        Ref<BindGroup> getSamplerGroup() const {
+        Ref<BindGroup> getAdditionalGroup() const {
+            return mModelGroup;
+        }
+
+    Ref<BindGroup> getSamplerGroup() const {
             return mSamplerGroup;
         }
 
@@ -54,8 +60,16 @@ RENDER_NS
             return mModelBuffer;
         }
 
+        Ref<UniformBuffer> getAdditionalBuffer() const {
+            return mAdditionalBuffer;
+        }
+
         size_t getModelMatrixAlignment() const {
             return mModelAlignment;
+        }
+
+        size_t getAdditionalAlignment() const {
+            return mAdditionalAlignment;
         }
 
         Ref<PipelineState> getPipeline(ConstRef<Resources::MaterialAsset> material, ConstRef<RenderingState> renderingState);

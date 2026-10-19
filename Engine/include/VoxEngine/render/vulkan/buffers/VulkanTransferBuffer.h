@@ -21,10 +21,17 @@ VULKAN_NS
         NO_COPY_MOVE_DEFAULT(VulkanTransferBuffer)
 
         explicit VulkanTransferBuffer(VkBuffer buffer, VmaAllocation alloc, const VmaAllocationInfo &allocInfo);
+
     public:
-        void write(const void* data, size_t size);
+        void write(const void *data, size_t size);
+
         void copy(CommandBufferRef cmdBuffer, RenderBufferRef buffer, VkDeviceSize size);
+
         void copy(CommandBufferRef cmdBuffer, Ref<Texture> buffer, VkDeviceSize size);
+
+        ArrayView<void> getSpan(size_t size) const override {
+            return ArrayView(mAllocInfo.pMappedData, size);
+        }
     };
 
 NS_END

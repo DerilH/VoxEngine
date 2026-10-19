@@ -13,7 +13,8 @@ RENDER_NS
 struct AttachmentDesc {
     GraphTextureRef texture;
     PassTransition transition;
-    AttachmentDesc(GraphTextureRef handle, PassTransition trans) : texture(handle), transition(trans) {
+    bool shouldClear;
+    AttachmentDesc(GraphTextureRef handle, PassTransition trans, bool shouldClear = false) : texture(handle), transition(trans), shouldClear(shouldClear) {
 
     }
 

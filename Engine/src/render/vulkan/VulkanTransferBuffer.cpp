@@ -61,4 +61,6 @@ VULKAN_NS
         vkCmdCopyBufferToImage(*ResourceCast(cmdBuffer), *this, ResourceCast(image)->getHandle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
     }
 
+
+
 NS_END

@@ -15,6 +15,7 @@ VOX_NS
     class Engine {
         Ref<Render::Renderer> mRenderer = nullptr;
         Ref<Resources::ResourceManager> mResourceManager = nullptr;
+        UPtr<Scene::GameObjectRegistry> mGameObjectRegistry = nullptr;
 
         bool mInitialized = false;
         bool mShouldClose = false;
@@ -22,7 +23,6 @@ VOX_NS
         Render::RenderAPI mRenderApi;
 
         NO_COPY_MOVE_DEFAULT(Engine)
-
     public:
         UPtr<Scene::Scene> scene;
         Event<Ref<Scene::Scene>> onSceneChanged;
@@ -41,6 +41,10 @@ VOX_NS
 
         Ref<Resources::ResourceManager> getResourceManager() const {
             return mResourceManager;
+        }
+
+        Ref<Scene::GameObjectRegistry> getGameObjectsRegistry() const {
+            return mGameObjectRegistry.get();
         }
 
         void shutdown() {

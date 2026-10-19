@@ -45,6 +45,8 @@ RENDER_NS
         for (const auto el: scene->getAllRenderables()) {
             render(el);
         }
+        onCollect.invoke(this);
+
         if (const auto activeCamera = scene->getActiveCamera()) {
             updateCamera(activeCamera);
         }
@@ -52,10 +54,8 @@ RENDER_NS
         if (!mPresentTargets.empty()) {
             for (const auto &presenter: mPresentTargets | std::views::values) {
                 for (const auto &target: mViewportTargets | std::ranges::views::values) {
-
                     if (presenter->beginFrame() == -1) continue;
                     drawFrame(target, presenter->getCmdBuffer());
-
 
 
                     presenter->endFrame();
@@ -76,23 +76,23 @@ RENDER_NS
 
     void Renderer::createGraph() {
         auto old = mGraph;
-        mGraph = new RenderGraph(old);
+        mGraph = new RenderGraph(mBackend, old);
         Vector<AttachmentDesc> viewportTextures;
         for (const auto target: mViewportTargets) {
             const auto text = mGraph->importTexture(target.first, [target]() { return target.second->getBackBuffer(); });
-            viewportTextures.emplace_back(text, DISCARD_W_ATTACHMENT);
+            viewportTextures.emplace_back(text, DISCARD_W_ATTACHMENT, true);
 
             if (target.second->getDepthBuffer() != nullptr) {
                 const auto depthText = mGraph->importTexture(target.first + "_Depth", [target]() { return target.second->getDepthBuffer(); });
-                viewportTextures.emplace_back(depthText, DISCARD_W_ATTACHMENT);
+                viewportTextures.emplace_back(depthText, DISCARD_W_ATTACHMENT, true);
             }
         }
 
-        for (const auto& target: mPresentTargets) {
+        for (const auto &target: mPresentTargets) {
             mGraph->importTexture(target.first, [target]() { return target.second->getBackBuffer(); });
         }
         auto writes = ArrayView<AttachmentDesc>::Copy(viewportTextures);
-        auto geometry = new GeometryPass(GBUFFER_PASS, true, {{}}, writes);
+        auto geometry = new GeometryPass(GBUFFER_PASS, {{}}, writes);
         mGraph->addPass(geometry);
     }
 
@@ -119,10 +119,10 @@ RENDER_NS
             RasterizerState rasterizerState = RasterizerState::GetBuilder().cullMode(material->cullMode).polygonMode(material->polygonMode).build();
             MSAAState msaaState = MSAAState(MSAASamples::COUNT_1);
             DepthState depthState = DepthState::GetBuilder()
-                .depthTest(material->depthTest)
-                .depthWrite(material->depthWrite)
-                .compareOp(material->depthCompareOp)
-                .build();
+                    .depthTest(material->depthTest)
+                    .depthWrite(material->depthWrite)
+                    .compareOp(material->depthCompareOp)
+                    .build();
             auto blend = ArrayView<BlendState>::Copy(blendState);
             PipelineStateDesc desc(shaderState.value(), blend, rasterizerState, material->topology, msaaState, *renderingState, depthState);
             pipelines.insert({*renderingState, desc});
@@ -144,35 +144,36 @@ RENDER_NS
     }
 
     void Renderer::executeGraph(RenderTargetRef target, CommandBufferRef cmdBuffer) {
+        mGraph->setViewportSize(target->getSize());
         mGraph->execute({this, cmdBuffer}, target);
     }
 
     void Renderer::clearDrawList(ConstRef<Resources::MaterialAsset> state) {
-        for (auto& val: mLayerDrawListByMaterial[state] | std::views::values) {
+        for (auto &val: mLayerDrawListByMaterial[state] | std::views::values) {
             val.clear();
         }
     }
 
-    const HashMap<ConstRef<Resources::MaterialAsset>, HashMap<uint8_t, Vector<DrawItem>>> &Renderer::getDrawLists() const {
+    const HashMap<ConstRef<Resources::MaterialAsset>, HashMap<uint8_t, Vector<DrawItem> > > &Renderer::getDrawLists() const {
         return mLayerDrawListByMaterial;
     }
 
-    const HashMap<uint8_t, Vector<DrawItem>> &Renderer::getLayerDrawList(const ConstRef<Resources::MaterialAsset> &state) const {
+    const HashMap<uint8_t, Vector<DrawItem> > &Renderer::getLayerDrawList(const ConstRef<Resources::MaterialAsset> &state) const {
         return mLayerDrawListByMaterial.at(state);
     }
 
     void Renderer::draw(Ref<Scene::MeshRendererComponent> component) {
         auto mesh = mRenderResourceManager->getMesh(component->getMesh());
-        glm::mat4 modelMat(1.0f);
 
         auto mat = component->getMaterial();
 
         auto t = component->gameObject;
-        modelMat = glm::translate(modelMat, t->transform->getPos());
-        modelMat = modelMat * glm::mat4_cast(t->transform->getRotation());
-        modelMat = glm::scale(modelMat, t->transform->getScale());
+        mLayerDrawListByMaterial[mat][static_cast<uint8_t>(component->getLayer())].emplace_back(mesh, t->transform->computeWorldMatrix(), t->id);
+    }
 
-        mLayerDrawListByMaterial[mat][static_cast<uint8_t>(component->getLayer())].emplace_back(mesh, modelMat);
+    void Renderer::draw(ConstRef<Resources::MeshAsset> mesh, ConstRef<Resources::MaterialAsset> material, glm::mat4 modelMat, uint8_t layer, uint64_t id) {
+        auto m = mRenderResourceManager->getMesh(mesh);
+        mLayerDrawListByMaterial[material][layer].emplace_back(m, modelMat, id);
     }
 
     void Renderer::updateCamera(Ref<Scene::CameraComponent> camera) {

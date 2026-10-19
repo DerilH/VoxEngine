@@ -15,6 +15,8 @@ VULKAN_NS
 #define VK_FORMAT_MAPPING_LIST(M)\
     M(Format, UNDEFINED,          VK_FORMAT_UNDEFINED)\
     M(Format, RGBA8,              VK_FORMAT_R8G8B8A8_UNORM)\
+    M(Format, R32_UINT,           VK_FORMAT_R32_UINT)\
+    M(Format, R32G32_UINT,        VK_FORMAT_R32G32_UINT)\
     M(Format, BGRA8,              VK_FORMAT_B8G8R8A8_UNORM)\
     M(Format, RGBA8_SRGB,         VK_FORMAT_R8G8B8A8_SRGB)\
     M(Format, BGRA8_SRGB,         VK_FORMAT_B8G8R8A8_SRGB)\

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <VoxCore/Pointers.h>
+#include <VoxCore/signal/Event.h>
 #include <VoxEngine/resources/assets/MaterialAsset.h>
 #include <VoxEngine/resources/assets/ModelAsset.h>
 #include <VoxEngine/scene/Scene.h>
@@ -52,6 +53,7 @@ RENDER_NS
 
     public:
         const RenderAPI backendApi;
+        Event<Ref<Renderer>> onCollect;
 
         void init();
 
@@ -74,7 +76,7 @@ RENDER_NS
         void clearDrawList(ConstRef<Resources::MaterialAsset> state);
 
         void draw(Ref<Scene::MeshRendererComponent> component);
-
+        void draw(ConstRef<Resources::MeshAsset> mesh, ConstRef<Resources::MaterialAsset> material, glm::mat4 modelMat, uint8_t layer, uint64_t id);
         void updateCamera(Ref<Scene::CameraComponent> camera);
 
         Expected<Ref<PipelineState> > getPipeline(ConstRef<Resources::MaterialAsset> material, ConstRef<RenderingState> renderingState);

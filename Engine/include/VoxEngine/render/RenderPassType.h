@@ -12,6 +12,7 @@ RENDER_NS
         FORWARD_PASS,
         POSTPROCESS_PASS,
         UI_PASS,
+        GIZMO_PASS,
         RESOLVE_PASS,
         TRANSPARENCY_PASS,
         PRESENT_PASS

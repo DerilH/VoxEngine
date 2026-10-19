@@ -59,6 +59,8 @@ RENDER_NS
 
     enum class Format {
         UNDEFINED,
+        R32_UINT,
+        R32G32_UINT,
         RGBA8,
         BGRA8,
         RGBA8_SRGB,

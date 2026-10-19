@@ -1,4 +1,5 @@
 #pragma once
+#include <glm/fwd.hpp>
 #include <VoxCore/Define.h>
 #include <VoxCore/Pointers.h>
 #include <VoxCore/containers/Containers.h>
@@ -18,8 +19,8 @@ SCENE_NS
 
     public:
         const Ref<Transform> transform;
-
-        explicit GameObject(InternedString name);
+        const uint64_t id;
+        explicit GameObject(InternedString name, uint64_t id);
 
         InternedString getName();
 
@@ -32,7 +33,6 @@ SCENE_NS
         void OnAddedToScene(Ref<Scene> scene);
 
         void setScene(Ref<Scene> scene);
-
 
         //Returns pointer to found component or nullptr if not exists
         template<typename T>

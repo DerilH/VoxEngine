@@ -15,10 +15,13 @@
 #include <vulkan/vulkan.h>
 
 VULKAN_NS
+    PFN_vkCmdBeginDebugUtilsLabelEXT VulkanBackend::pfnBeginLabel = nullptr;
+    PFN_vkCmdEndDebugUtilsLabelEXT VulkanBackend::pfnEndLabel = nullptr;
+
     const std::vector<const char *> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME,
         VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME,
-        VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME
+        VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME,
     };
 
     void VulkanBackend::createInstance() {
@@ -61,6 +64,11 @@ VULKAN_NS
     void VulkanBackend::init() {
         VOX_CHECK(mInstance == nullptr, "Attempt to reinitialize render backend")
         createInstance();
+
+        pfnBeginLabel =(PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(mInstance, "vkCmdBeginDebugUtilsLabelEXT");
+
+        pfnEndLabel =(PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(mInstance, "vkCmdEndDebugUtilsLabelEXT");
+
 
         setupDebugMessenger(mInstance, mDebugMessenger);
 
@@ -173,8 +181,13 @@ VULKAN_NS
         return buffer;
     }
 
+    Ref<TransferBuffer> VulkanBackend::createTransferBuffer(uint32_t size) {
+        return ResourceCast(mCurrentDevice)->createHeap<VulkanTransferBuffer>(size);
+    }
+
     UniformBufferRef VulkanBackend::createUniformBuffer(uint32_t size) {
         VulkanDevice *device = ResourceCast(mCurrentDevice);
         return device->createHeap<VulkanUniformBuffer>(size);
     }
+
 NS_END

@@ -21,6 +21,8 @@ VULKAN_NS
         explicit VulkanBackend(RenderAPI api);
 
     public:
+        static PFN_vkCmdBeginDebugUtilsLabelEXT pfnBeginLabel;
+        static PFN_vkCmdEndDebugUtilsLabelEXT pfnEndLabel;
 
         explicit VulkanBackend() = delete;
 
@@ -45,6 +47,8 @@ VULKAN_NS
         IndexBufferRef createIndexBuffer(const void *data, uint32_t size, IndexType type) override;
 
         VertexBufferRef createVertexBuffer(const void *data, uint32_t size, BufferUsage usage) override;
+
+        Ref<TransferBuffer> createTransferBuffer(uint32_t size) override;
 
         UniformBufferRef createUniformBuffer(uint32_t size) override;
 

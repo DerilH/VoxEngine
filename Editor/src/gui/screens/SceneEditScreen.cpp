@@ -8,15 +8,17 @@
 #include "../components/ViewportComponent.h"
 
 namespace Vox::Editor {
-    SceneEditScreen::SceneEditScreen(Ref<Engine> engine) : Screen(engine){
+    SceneEditScreen::SceneEditScreen(Ref<Engine> engine, Ref<GizmoPass> gizmoPass) : Screen(engine) {
         auto hie = new HierarchyComponent(engine);
         auto inspector = new InspectorComponent(engine);
         auto assetExplorer = new AssetExplorer(engine);
+        auto view = new ViewportComponent(engine, gizmoPass);
 
-        hie->onSelectedChanged += [this, inspector](auto obj) {
+        hie->onSelectedChanged += [this, inspector, view](auto obj) {
             mSelectedObject = obj;
             onSelectedChanged.invoke(obj);
             inspector->setObject(mSelectedObject);
+            view->setSelected(obj);
         };
 
         inspector->onOpenAsset += [assetExplorer](InternedString path) {
@@ -30,7 +32,14 @@ namespace Vox::Editor {
         mChilds.emplace("Hierarchy", hie);
         mChilds.emplace("Inspector", inspector);
         mChilds.emplace("Assets", assetExplorer);
-        mChilds.emplace("Viewport", new ViewportComponent(engine));
+        mChilds.emplace("Viewport", view);
+        view->onObjectPicked += [this, inspector, hie, view](Ref<Scene::GameObject> obj) {
+            mSelectedObject = obj;
+            onSelectedChanged.invoke(obj);
+            hie->setSelected(obj);
+            inspector->setObject(mSelectedObject);
+            view->setSelected(obj);
+        };
     }
 
     void SceneEditScreen::renderInternal(Render::RenderContext context) {

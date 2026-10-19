@@ -24,6 +24,8 @@
 #include <VoxEngine/render/vulkan/VulkanUtil.h>
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/resources/ResourceManager.h>
+
+#include "GizmoPass.h"
 #include "GuiRenderPass.h"
 #include "screens/SceneEditScreen.h"
 #include "VoxEngine/scene/components/MeshRendererComponent.h"
@@ -104,11 +106,14 @@ namespace Vox::Editor {
         ImGui_ImplVulkan_Init(&init_info);
 
         auto &graph = mRenderer->getGraph();
+        graph.createTexture("GizmoID", Render::Format::R32G32_UINT);
+        auto gizmoPass = new GizmoPass(Render::RenderPassType::GIZMO_PASS, {}, {graph.getTexture("GizmoID"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT, true}, {graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_W_ATTACHMENT});
+        graph.addPass(gizmoPass);
 
         auto guiPass = new GuiRenderPass(Render::RenderPassType::UI_PASS, {{graph.getTexture("Scene"), Vox::Render::PassTransition::W_ATTACHMENT_R_SHADER}}, {{graph.getTexture("MainWindow"), Vox::Render::PassTransition::DISCARD_W_ATTACHMENT}}, this);
         graph.addPass(guiPass);
 
-        mScreens["SceneEdit"] = makeUPtr<SceneEditScreen>(mEngine);
+        mScreens["SceneEdit"] = makeUPtr<SceneEditScreen>(mEngine, gizmoPass);
 
         mInitialized = true;
     }

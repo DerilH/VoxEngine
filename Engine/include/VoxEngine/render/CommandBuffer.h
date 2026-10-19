@@ -13,6 +13,7 @@
 
 RENDER_NS
     class BindGroup;
+    class TransferBuffer;
 
     class CommandBuffer : RenderResource {
     protected:
@@ -39,7 +40,7 @@ RENDER_NS
         //COMMON
         virtual void setBarriers(ArrayView<PassTransition> transitions, ArrayView<TextureRef> textures) = 0;
 
-        virtual void beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size, bool clear = true) = 0;
+        virtual void beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size) = 0;
 
         virtual void endRenderPass() = 0;
 
@@ -56,7 +57,10 @@ RENDER_NS
         virtual void bindVertexBuffer(VertexBufferRef buffer) = 0;
 
         virtual void bindGroup(Ref<BindGroup> bindGroup) = 0;
-        virtual void bindGroup(Ref<BindGroup> bindGroup, uint32_t dynamicOffset) = 0;
+        virtual void bindGroup(Ref<BindGroup> bindGroup, ArrayView<uint32_t> dynamicOffset) = 0;
+
+        virtual void copyTextureToBuffer(Ref<Texture> texture, Ref<TransferBuffer> buffer, Extent offset, Extent size) = 0;
+
 
         static PassTransition deduceNextTransition(PassTransition lastTransition, TargetUsage nextTarget) {
             switch (nextTarget) {

@@ -19,12 +19,10 @@
 #include "VoxEngine/render/RenderBackend.h"
 #include "VoxEngine/resources/assets/MeshAsset.h"
 #include "VoxEngine/scene/components/CameraComponent.h"
+#include "VoxEngine/scene/GameObjectRegistry.h"
 
 VOX_NS
-    constexpr const char *SHADERS_SRC_PATH = "./resources/shaders";
-    constexpr const char *SHADERS_BIN_PATH = "./resources/shadersCache";
-
-    Engine::Engine(std::string mTitle, const Render::RenderAPI renderApi) : mTitle(std::move(mTitle)), mRenderApi(renderApi), mResourceManager(new Resources::ResourceManager()) {
+    Engine::Engine(std::string mTitle, const Render::RenderAPI renderApi) : mTitle(std::move(mTitle)), mRenderApi(renderApi), mResourceManager(new Resources::ResourceManager()), mGameObjectRegistry(new Scene::GameObjectRegistry()) {
         VOX_CHECK(mRenderApi == Render::VULKAN_API, "Unsupported execute api");
     }
 
@@ -39,9 +37,8 @@ VOX_NS
     }
 
     void Engine::run() {
-        scene = makeUPtr<Scene::Scene>("Test");
+        scene = makeUPtr<Scene::Scene>("Test", mGameObjectRegistry.get());
         onSceneChanged.invoke(scene.get());
-
 
         const auto obj = scene->createObject("TestTeapot");
         auto meshComp = Scene::MeshRendererComponent(obj);

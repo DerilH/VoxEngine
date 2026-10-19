@@ -27,6 +27,10 @@ namespace Vox::Editor {
         void setScene(Ref<Scene::Scene> scene) {
             mScene = scene;
         }
+
+        void setSelected(Ref<Scene::GameObject> selected) {
+            mSelected = selected;
+        }
         NO_COPY_MOVE_DEFAULT(HierarchyComponent);
     };
 }

@@ -2,11 +2,12 @@
 
 #include <VoxEngine/scene/GameObject.h>
 
-Vox::Scene::Scene::Scene(InternedString name) : mName(name) {
+Vox::Scene::Scene::Scene(InternedString name, Ref<GameObjectRegistry> objectRegistry) : mName(name), mObjectRegistry(objectRegistry) {
 }
 
 Vox::Scene::GameObjectRef Vox::Scene::Scene::createObject(InternedString name) {
-    const auto object = new GameObject(name);
+    const auto object = new GameObject(name, mObjectRegistry->allocGameObjectId());
+    mObjectRegistry->add(object->id, object);
     object->setScene(this);
     object->OnAddedToScene(this);
     mRootObjects.emplace_back(object);

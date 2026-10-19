@@ -6,6 +6,8 @@
 #include "../AssetExplorer.h"
 
 namespace Vox::Editor {
+    class GizmoPass;
+
     class SceneEditScreen : public Screen {
         Ref<Scene::GameObject> mSelectedObject = nullptr;
     protected:
@@ -13,7 +15,7 @@ namespace Vox::Editor {
 
     public:
         Event<Ref<Scene::GameObject>> onSelectedChanged;
-        explicit SceneEditScreen(Ref<Engine> engine);
+        explicit SceneEditScreen(Ref<Engine> engine, Ref<GizmoPass> gizmoPass);
         NO_COPY_MOVE_DEFAULT(SceneEditScreen);
     };
 }

@@ -31,7 +31,7 @@ RENDER_NS
         return false;
     }
 
-    RenderGraph::RenderGraph(RenderGraph *old) {
+    RenderGraph::RenderGraph(Ref<RenderBackend> renderBackend, RenderGraph *old) : mBackend(renderBackend) {
         if (old) {
             for (auto const el: old->mSlots) {
                 auto oldTex = el.second;
@@ -103,6 +103,15 @@ RENDER_NS
             }
         }
 
+
+        for (const auto &text: mTextures) {
+            //TODO add relative and rule based sizes
+            auto texture = mBackend->createTexture(text->getFormat(), mViewportSize);
+            if (!text->isExternal) {
+                text->setExact([texture](){return texture;});
+            }
+        }
+
         mDirty = false;
         return mEntryNodes;
     }
@@ -132,16 +141,6 @@ RENDER_NS
     }
 
     void Execute(RenderContext context, RenderPassRef pass, RenderTargetRef viewport) {
-        Vector<AttachmentDesc> attachments;
-        for (int i = 0; i < pass->getReads().size(); i++) {
-            attachments.emplace_back(pass->getReads()[i]);;
-        }
-
-        for (int i = 0; i < pass->getWrites().size(); i++) {
-            attachments.emplace_back(pass->getWrites()[i]);
-        }
-
-        bool clear = pass->shouldClear();
         for (int i = 0; i < pass->getReads().size(); i++) {
             AttachmentDesc attachment = pass->getReads()[i];
             context.cmdBuffer->setBarriers({attachment.transition}, {attachment.texture->getExact()});
@@ -152,13 +151,13 @@ RENDER_NS
             context.cmdBuffer->setBarriers({attachment.transition}, {attachment.texture->getExact()});
         }
 
-        if (!pass->isControlPass && pass->getWrites().size() != 0) {
+        if (!pass->isControlPass && !pass->getWrites().empty()) {
             auto size = pass->getWrites()[0].texture->getExact()->getExtent();
 
             context.cmdBuffer->setViewportState(0, 0, size);
             context.cmdBuffer->setScissor(0, 0, size);
 
-            context.cmdBuffer->beginRenderPass(pass->getWrites(), size, clear);
+            context.cmdBuffer->beginRenderPass(pass->getWrites(), size);
             pass->setExtent(viewport->getSize());
             pass->execute(context);
             context.cmdBuffer->endRenderPass();
@@ -194,10 +193,6 @@ RENDER_NS
                 }
             }
         }
-    }
-
-    Vector<GraphTextureRef> RenderGraph::getTextures() {
-        return mTextures;
     }
 
 NS_END

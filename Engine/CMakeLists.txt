@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 project(VoxEngine)
 
-option(VK_ENABLE_VALIDATION "Enable Vulkan validation layers" ON)
-
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
@@ -71,7 +69,3 @@ target_link_libraries(VoxEngine
 )
 
 target_include_directories(VoxEngine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-if(VK_ENABLE_VALIDATION)
-    target_compile_definitions(VoxEngine PRIVATE VK_ENABLE_VALIDATION)
-endif()

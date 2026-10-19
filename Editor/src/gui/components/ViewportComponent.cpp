@@ -23,6 +23,53 @@
 #include "../Theme.h"
 
 namespace Vox::Editor {
+    ViewportComponent::ViewportComponent(Ref<Engine> mEngine, Ref<GizmoPass> gizmoPass) : mEngine(mEngine), mGizmoPass(gizmoPass) {
+        mGizmoPass->onPickComplete += [mEngine, this](auto index) {
+            LOG_VERBOSE("Picked: {}", index);
+            auto obj = mEngine->getGameObjectsRegistry()->find(index);
+            onObjectPicked.invoke(obj);
+        };
+
+        mEngine->getRenderer()->onCollect += [this](Ref<Render::Renderer> a) {
+            auto obj = mSelectedObj;
+            if (!obj) return;
+
+            auto gizmoModel = a->getResourceManager()->get<Resources::ModelAsset>("editor/gizmo.fbx");
+            if (!gizmoModel) return;
+
+            auto gizmoMat = a->getResourceManager()->get<Resources::MaterialAsset>("editor/gizmo.vmat");
+            if (!gizmoMat) return;
+
+            auto mat = obj->transform->computeWorldMatrix();
+            for (int i = 0; i < gizmoModel.value()->getNestedCount(); ++i) {
+                auto gizmoMesh = gizmoModel.value()->getMesh(i);
+                if (!gizmoMesh) continue;
+                auto name = gizmoMesh.value()->getName();
+                uint64_t index = 0;
+                if (name == "Arrow_X") {
+                    index = -1ULL;
+                } else if (name == "Arrow_Y") {
+                    index = -1ULL - 1;
+                } else if (name == "Arrow_Z") {
+                    index = -1ULL - 2;
+                } else if (name == "Ring_X") {
+                    index = -1ULL - 3;
+                } else if (name == "Ring_Y") {
+                    index = -1ULL - 4;
+                } else if (name == "Ring_Z") {
+                    index = -1ULL - 5;
+                } else if (name == "Cube_X") {
+                    index = -1ULL - 6;
+                } else if (name == "Cube_Y") {
+                    index = -1ULL - 7;
+                } else if (name == "Cube_Z") {
+                    index = -1ULL - 8;
+                }
+                a->draw(gizmoMesh.value(), gizmoMat.value(), mat, static_cast<uint8_t>(Scene::RenderLayer::GIZMO), index);
+            }
+        };
+    }
+
     void ViewportComponent::renderInternal(Render::RenderContext context) {
         if (!mRegistered) {
             VkSamplerCreateInfo samplerInfo{};
@@ -90,14 +137,28 @@ namespace Vox::Editor {
             ImGui::EndDragDropTarget();
         }
 
-        if (isImageHovered && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-            mIsCaptured = true;
-            mJustWarped = false;
+        if (isImageHovered) {
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+                ImVec2 mousePos = ImGui::GetMousePos();
+                auto extent = Render::Vulkan::ResourceCast(context.renderer->getGraph().getTexture("Scene")->getExact())->getExtent();
+                uint32_t pickX = std::clamp((mousePos.x - screenPos.x) / viewportSize.x, 0.0f, 1.0f) * extent.width;
+                uint32_t pickY = std::clamp((mousePos.y - screenPos.y) / viewportSize.y, 0.0f, 1.0f) * extent.height;
+
+                if (mGizmoPass) {
+                    mGizmoPass->schedulePick(true, {pickX, pickY});
+                    LOG_VERBOSE("Viewport pick at: {}, {}", pickX, pickY);
+                }
+            }
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
+                mIsCaptured = true;
+                mJustWarped = false;
+            }
         }
 
         if (mIsCaptured) {
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+            if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
                 ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+
 
                 constexpr float margin = 12.0f;
                 if (viewportSize.x > margin * 3.0f && viewportSize.y > margin * 3.0f) {
@@ -223,9 +284,9 @@ namespace Vox::Editor {
         ImVec2 hudPos = ImVec2(screenPos.x + 12.0f, screenPos.y + 12.0f);
         char hudText[128];
         if (mIsCaptured) {
-            snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: [Captured] Mouse Look + WASD ", (int)viewportSize.x, (int)viewportSize.y);
+            snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: [Captured] Mouse Look + WASD ", (int) viewportSize.x, (int) viewportSize.y);
         } else {
-            snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: Hold LMB to Look + WASD ", (int)viewportSize.x, (int)viewportSize.y);
+            snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: Hold RMB to Look + WASD ", (int) viewportSize.x, (int) viewportSize.y);
         }
         ImVec2 hudTextSize = ImGui::CalcTextSize(hudText);
         ImVec2 hudBgMax = ImVec2(hudPos.x + hudTextSize.x + 8.0f, hudPos.y + hudTextSize.y + 8.0f);

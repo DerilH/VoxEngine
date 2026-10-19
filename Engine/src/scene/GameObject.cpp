@@ -10,8 +10,7 @@ void Vox::Scene::GameObject::setScene(Ref<Scene> scene) {
     mScene = scene;
 }
 
-Vox::Scene::GameObject::GameObject(InternedString name) : transform(new Transform(this)) {
-    mName = name;
+Vox::Scene::GameObject::GameObject(InternedString name, uint64_t id) : mName(name), transform(new Transform(this)), id(id) {
     attachComponent(transform);
 }
 
@@ -29,7 +28,7 @@ void Vox::Scene::GameObject::attachComponent(Ref<Component> component) {
 }
 
 void Vox::Scene::GameObject::detachComponent(Ref<Component> component) {
-    auto res = std::find(mComponents.begin(), mComponents.end(), component);
+    auto res = std::ranges::find(mComponents, component);
     if (res != mComponents.end()) {
         mComponents.erase(res);
     }

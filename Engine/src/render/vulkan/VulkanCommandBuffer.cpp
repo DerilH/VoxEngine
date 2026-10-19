@@ -83,7 +83,7 @@ VULKAN_NS
         vkCmdPipelineBarrier2(*this, &depInfo);
     }
 
-    void VulkanCommandBuffer::beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size, bool clear) {
+    void VulkanCommandBuffer::beginRenderPass(ArrayView<AttachmentDesc> attachments, Extent size) {
         VOX_ASSERT(mStarted, "Command buffer not started")
         VkRenderingAttachmentInfo attachmentInfo[attachments.size() == 0 ? 1 : attachments.size()];
         uint32_t colorAttachmentCount = 0;
@@ -100,7 +100,7 @@ VULKAN_NS
                 depthAttachmentInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
                 depthAttachmentInfo.imageView = tex->getView();
                 depthAttachmentInfo.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-                depthAttachmentInfo.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+                depthAttachmentInfo.loadOp = attachments[i].shouldClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
                 depthAttachmentInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
                 depthAttachmentInfo.clearValue.depthStencil = {1.0f, 0};
             } else {
@@ -109,7 +109,7 @@ VULKAN_NS
                 colorInfo.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
                 colorInfo.imageView = tex->getView();
                 colorInfo.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-                colorInfo.loadOp = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+                colorInfo.loadOp = attachments[i].shouldClear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
                 colorInfo.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
                 colorInfo.clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
             }
@@ -170,10 +170,20 @@ VULKAN_NS
         vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, ResourceCast(bindGroup)->getSetId(), 1, &set, 0, nullptr);
     }
 
-    void VulkanCommandBuffer::bindGroup(Ref<BindGroup> bindGroup, uint32_t dynamicOffset) {
+    void VulkanCommandBuffer::bindGroup(Ref<BindGroup> bindGroup, ArrayView<uint32_t> dynamicOffset) {
         VOX_ASSERT(mStarted, "Command buffer not started")
         auto set = ResourceCast(bindGroup)->getSet()->getHandle();
-        vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, ResourceCast(bindGroup)->getSetId(), 1, &set, 1, &dynamicOffset);
+        vkCmdBindDescriptorSets(mHandle, VK_PIPELINE_BIND_POINT_GRAPHICS, mCurrentLayout, ResourceCast(bindGroup)->getSetId(), 1, &set, dynamicOffset.size(), dynamicOffset.pData);
+    }
+
+    void VulkanCommandBuffer::copyTextureToBuffer(Ref<Texture> texture, Ref<TransferBuffer> buffer, Extent offset, Extent size) {
+        auto text = ResourceCast(texture);
+        auto buff = ResourceCast(buffer);
+        VkBufferImageCopy region{};
+        region.imageSubresource = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1 };
+        region.imageOffset = { static_cast<int32_t>(offset.width), static_cast<int32_t>(offset.height), 0 };
+        region.imageExtent = {size.width, size.height, 1 };
+        vkCmdCopyImageToBuffer(mHandle, *text, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, *buff, 1, &region);
     }
 
     VkImageMemoryBarrier2 createBarrier(PassTransition transition, Ref<VulkanTexture> texture) {

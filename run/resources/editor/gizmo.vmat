@@ -1,0 +1,12 @@
+{
+    "shaders": {
+        "VERTEX": "editor/gizmoShader.vert",
+        "FRAGMENT": "editor/gizmoIDShader.frag"
+    },
+    "polygonMode": "FILL",
+    "cullMode": "NONE",
+    "topology": "TRIANGLE_LIST",
+    "depthTest": false,
+    "depthWrite": false,
+    "depthCompareOp": "LESS_OR_EQUAL"
+}

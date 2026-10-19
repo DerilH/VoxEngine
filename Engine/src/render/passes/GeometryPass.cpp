@@ -27,8 +27,8 @@ RENDER_NS
         }
 
         for (auto &map: context.renderer->getDrawLists()) {
-            auto entry = map.second.at(static_cast<uint8_t>(Scene::RenderLayer::WORLD));
-
+            auto entry = map.second.find(static_cast<uint8_t>(Scene::RenderLayer::WORLD));
+            if (entry == map.second.end()) continue;
             auto state = context.renderer->getPipeline(map.first, &mRenderingState);
             if (!state) {
                 LOG_ERROR("{}", state.error().format());
@@ -36,21 +36,47 @@ RENDER_NS
             }
             state.value()->bind(context.cmdBuffer);
 
-
             context.cmdBuffer->bindGroup(resManager->getCameraGroup());
             context.cmdBuffer->bindGroup(resManager->getSamplerGroup());
 
-            for (const auto &item: entry) {
+            for (const auto &item: entry->second) {
                 uint32_t offset = modelIndex * align;
                 resManager->getModelBuffer()->write(&item.modelMat, sizeof(glm::mat4), offset);
-                context.cmdBuffer->bindGroup(resManager->getModelGroup(), offset);
+                context.cmdBuffer->bindGroup(resManager->getModelGroup(), {offset, 0});
+                item.execute(context.cmdBuffer);
+                modelIndex++;
+            }
+        }
+
+        auto additionalAlign = resManager->getAdditionalAlignment();
+
+        for (auto &map: context.renderer->getDrawLists()) {
+            auto entry = map.second.find(static_cast<uint8_t>(Scene::RenderLayer::GIZMO));
+            if (entry == map.second.end()) continue;
+            auto state = context.renderer->getPipeline(map.first, &mRenderingState);
+            if (!state) {
+                LOG_ERROR("{}", state.error().format());
+                continue;
+            }
+            state.value()->bind(context.cmdBuffer);
+
+            context.cmdBuffer->bindGroup(resManager->getCameraGroup());
+
+            for (const auto &item: entry->second) {
+                uint32_t offset = modelIndex * align;
+                resManager->getModelBuffer()->write(&item.modelMat, sizeof(glm::mat4), offset);
+
+                uint32_t offset1 = modelIndex * additionalAlign;
+                resManager->getAdditionalBuffer()->write(&item.instanceId, sizeof(uint64_t), offset);
+                context.cmdBuffer->bindGroup(resManager->getAdditionalGroup(), {offset, offset1});
+
                 item.execute(context.cmdBuffer);
                 modelIndex++;
             }
         }
     }
 
-    GeometryPass::GeometryPass(RenderPassType mType, bool clear, const ArrayView<AttachmentDesc> &reads, const ArrayView<AttachmentDesc> &writes) : RenderPass(mType, reads, writes), mShouldClear(clear) {
+    GeometryPass::GeometryPass(RenderPassType mType, const ArrayView<AttachmentDesc> &reads, const ArrayView<AttachmentDesc> &writes) : RenderPass(mType, reads, writes) {
     }
 
 NS_END

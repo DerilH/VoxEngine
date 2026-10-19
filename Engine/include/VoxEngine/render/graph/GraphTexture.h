@@ -21,14 +21,14 @@ RENDER_NS
 
         std::function<Format()> mFormatProvider;
 
-        bool isImported = false;
     public:
+        const bool isExternal = false;
         const uint32_t id;
 
         GraphTexture(uint32_t id, Format format) : mFormatProvider([format]() { return format; }), id(id) {
         }
 
-        GraphTexture(uint32_t id, std::function<Ref<Texture>()> textureProvider) : mTextureProvider(textureProvider), mFormatProvider([this]() { return mTextureProvider()->getFormat(); }), isImported(true), id(id) {
+        GraphTexture(uint32_t id, std::function<Ref<Texture>()> textureProvider) : mTextureProvider(textureProvider), mFormatProvider([this]() { return mTextureProvider()->getFormat(); }), isExternal(true), id(id) {
         }
 
         TextureRef getExact() const {

@@ -67,6 +67,14 @@ SCENE_NS
             return StaticType();
         }
 
+        glm::mat4 computeWorldMatrix() const {
+            auto modelMat = glm::identity<glm::mat4>();
+            modelMat = glm::translate(modelMat, mPosition);
+            modelMat = modelMat * glm::mat4_cast(mRotation);
+            modelMat = glm::scale(modelMat, mScale);
+            return modelMat;
+        }
+
         ConstRef<GameObjectStorage> getChilds() const {
             return mChilds;
         }

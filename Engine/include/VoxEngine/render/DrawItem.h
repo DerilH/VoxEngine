@@ -11,8 +11,9 @@ RENDER_NS
 struct DrawItem {
     RenderMesh* mesh;
     glm::mat4 modelMat;
+    uint64_t instanceId;
 
-    DrawItem(RenderMesh* mesh, glm::mat4 modelMat) : mesh(mesh), modelMat(modelMat) {
+    DrawItem(RenderMesh* mesh, glm::mat4 modelMat, uint64_t instanceId) : mesh(mesh), modelMat(modelMat), instanceId(instanceId) {
     }
 
     void execute(CommandBufferRef cmdBuffer) const {

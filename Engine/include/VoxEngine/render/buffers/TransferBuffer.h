@@ -10,6 +10,11 @@
 RENDER_NS
     class TransferBuffer : virtual public RenderBuffer {
     protected:
-        explicit TransferBuffer() {};
+        explicit TransferBuffer() {
+        };
+
+    public:
+        virtual ArrayView<void> getSpan(size_t size) const = 0;
     };
+
 NS_END
