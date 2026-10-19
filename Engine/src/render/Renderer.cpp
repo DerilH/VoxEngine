@@ -154,14 +154,6 @@ RENDER_NS
         }
     }
 
-    const HashMap<ConstRef<Resources::MaterialAsset>, HashMap<uint8_t, Vector<DrawItem> > > &Renderer::getDrawLists() const {
-        return mLayerDrawListByMaterial;
-    }
-
-    const HashMap<uint8_t, Vector<DrawItem> > &Renderer::getLayerDrawList(const ConstRef<Resources::MaterialAsset> &state) const {
-        return mLayerDrawListByMaterial.at(state);
-    }
-
     void Renderer::draw(Ref<Scene::MeshRendererComponent> component) {
         auto mesh = mRenderResourceManager->getMesh(component->getMesh());
 

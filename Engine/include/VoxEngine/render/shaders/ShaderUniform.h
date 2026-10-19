@@ -6,12 +6,13 @@
 
 #include "VoxCore/Define.h"
 #include "VoxCore/containers/Containers.h"
+#include <VoxCore/render/Enums.h>
 #include "ShaderDataType.h"
 
 SHADERS_NS
-struct ShaderUniform {
+class ShaderUniform {
 private:
-    const uint32_t mArraySize;
+    uint32_t mArraySize;
 public:
 
     struct Member {
@@ -21,14 +22,16 @@ public:
         size_t offset;
         Member(const InternedString name, ShaderDataType typeId, size_t offset) : name(name), typeId(typeId), offset(offset) {}
     };
-    const InternedString name;
+    InternedString name;
 //    const Vector<Member> members;
-    const size_t size;
-    const uint32_t binding;
-    const uint32_t set;
-    const uint32_t location;
+    size_t size;
+    uint32_t binding;
+    uint32_t set;
+    uint32_t location;
+    ShaderResourceType resourceType;
 
-    ShaderUniform(InternedString name, const uint32_t location, const uint32_t binding, const uint32_t set, const size_t size, const uint32_t arraySize) : mArraySize(arraySize), name(name), size(size), binding(binding), set(set), location(location) {
+    ShaderUniform(InternedString name, const uint32_t location, const uint32_t binding, const uint32_t set, const size_t size, const uint32_t arraySize, const ShaderResourceType resourceType = ShaderResourceType::UNIFORM_BUFFER)
+        : mArraySize(arraySize), name(name), size(size), binding(binding), set(set), location(location), resourceType(resourceType) {
     }
 
     bool isArray() const {

@@ -1,6 +1,23 @@
 #include "VoxEngine/render/RenderResourceManager.h"
 
-Vox::Render::RenderResourceManager::RenderResourceManager(const Ref<RenderBackend> backend) : mBackend(backend) {
+Vox::Render::RenderResourceManager::RenderResourceManager(const Ref<RenderBackend> backend)
+    : mBackend(backend), mUniformAllocator(backend) {
+}
+
+Vox::Ref<Vox::Render::UniformBuffer> Vox::Render::RenderResourceManager::allocateUniformBuffer(size_t size) {
+    return mUniformAllocator.allocate(size);
+}
+
+Vox::Render::PooledUniformBuffer Vox::Render::RenderResourceManager::allocatePooledUniformBuffer(size_t size) {
+    return mUniformAllocator.allocatePooled(size);
+}
+
+void Vox::Render::RenderResourceManager::freeUniformBuffer(Ref<UniformBuffer> buffer) {
+    mUniformAllocator.free(buffer);
+}
+
+void Vox::Render::RenderResourceManager::clearFreeBuffers() {
+    mUniformAllocator.clearFreeBuffers();
 }
 
 Vox::Ref<Vox::Render::PipelineState> Vox::Render::RenderResourceManager::getPipeline(ConstRef<PipelineStateDesc> desc) {
@@ -17,16 +34,6 @@ Vox::Ref<Vox::Render::RenderMesh> Vox::Render::RenderResourceManager::getMesh(Co
         VertexBufferRef vBuff = mBackend->createVertexBuffer(data(asset->getInterleaved()), sizeof(char8_t) * asset->getInterleaved().size(), BufferUsage::VERTEX);
         IndexBufferRef iBuff = mBackend->createIndexBuffer(data(asset->getIndices()), sizeof(uint32_t) * asset->getIndices().size(), IndexType::UINT32);
         mesh = new RenderMesh(vBuff, iBuff);
-
-        // auto ubo = mBackend->createUniformBuffer(sizeof(glm::mat4));
-
-        // mesh->setModelUbo(ubo);
-        // auto vkDevice = Vulkan::ResourceCast(mBackend->getDevice());
-        // auto layout = vkDevice->getModelDescriptorSetLayout();
-        // auto set = vkDevice->createDescriptorSet(layout);
-        // set->update(*vkDevice, 0, *static_cast<Vulkan::VulkanUniformBuffer *>(ubo));
-        // mesh->setDescriptorSet(set);
-        // static_cast<Vulkan::VulkanUniformBuffer *>(ubo)->setDescriptorSet(set);
     }
     return mesh;
 }

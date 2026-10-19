@@ -19,10 +19,14 @@ VULKAN_NS
     }
 
     void VulkanDescriptorSet::update(const VulkanDevice &device, uint32_t binding, const VulkanUniformBuffer &buffer) {
+        update(device, binding, buffer, 0, VK_WHOLE_SIZE);
+    }
+
+    void VulkanDescriptorSet::update(const VulkanDevice &device, uint32_t binding, const VulkanUniformBuffer &buffer, VkDeviceSize offset, VkDeviceSize range) {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = buffer.getHandle();
-        bufferInfo.offset = 0;
-        bufferInfo.range = VK_WHOLE_SIZE;
+        bufferInfo.offset = offset;
+        bufferInfo.range = range;
 
         VkWriteDescriptorSet descriptorWrite{};
         descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

@@ -42,13 +42,11 @@ RENDER_NS
             for (const auto &item: entry->second) {
                 uint32_t offset = modelIndex * align;
                 resManager->getModelBuffer()->write(&item.modelMat, sizeof(glm::mat4), offset);
-                context.cmdBuffer->bindGroup(resManager->getModelGroup(), {offset, 0});
+                context.cmdBuffer->bindGroup(resManager->getModelGroup(), {offset});
                 item.execute(context.cmdBuffer);
                 modelIndex++;
             }
         }
-
-        auto additionalAlign = resManager->getAdditionalAlignment();
 
         for (auto &map: context.renderer->getDrawLists()) {
             auto entry = map.second.find(static_cast<uint8_t>(Scene::RenderLayer::GIZMO));
@@ -65,10 +63,7 @@ RENDER_NS
             for (const auto &item: entry->second) {
                 uint32_t offset = modelIndex * align;
                 resManager->getModelBuffer()->write(&item.modelMat, sizeof(glm::mat4), offset);
-
-                uint32_t offset1 = modelIndex * additionalAlign;
-                resManager->getAdditionalBuffer()->write(&item.instanceId, sizeof(uint64_t), offset);
-                context.cmdBuffer->bindGroup(resManager->getAdditionalGroup(), {offset, offset1});
+                context.cmdBuffer->bindGroup(resManager->getModelGroup(), {offset});
 
                 item.execute(context.cmdBuffer);
                 modelIndex++;

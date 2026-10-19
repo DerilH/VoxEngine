@@ -10,6 +10,8 @@
 #include <string>
 #include <queue>
 #include <list>
+#include <map>
+
 #include "../Define.h"
 #include <llvm/ADT/SmallVector.h>
 
@@ -34,6 +36,10 @@ VOX_NS
 
     template<typename K, typename V>
     using HashMap = std::unordered_map<K, V>;
+
+    template<typename K, typename V>
+    using OrderedMap = std::map<K, V>;
+
 
     template<typename K, typename V>
     using Pair = std::tuple<K, V>;

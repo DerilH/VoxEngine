@@ -27,6 +27,7 @@ VULKAN_NS
         }
 
         void update(const VulkanDevice& device, uint32_t binding, const VulkanUniformBuffer& buffer);
+        void update(const VulkanDevice& device, uint32_t binding, const VulkanUniformBuffer& buffer, VkDeviceSize offset, VkDeviceSize range);
         void updateDynamic(const VulkanDevice& device, uint32_t binding, const VulkanUniformBuffer& buffer, VkDeviceSize range);
         void update(const VulkanDevice& device, uint32_t binding, const VulkanTexture& buffer);
     };

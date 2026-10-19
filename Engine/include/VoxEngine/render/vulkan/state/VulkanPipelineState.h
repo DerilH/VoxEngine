@@ -17,13 +17,29 @@ VULKAN_NS
         friend class VulkanDevice;
         friend class VulkanCommandBuffer;
         VkPipelineLayout mLayout;
+        Vector<VkDescriptorSetLayout> mDescriptorSetLayouts;
 
-        VulkanPipelineState(const PipelineStateDesc& desc, VkPipeline handle, VkPipelineLayout layout);
+        VulkanPipelineState(const PipelineStateDesc& desc, VkPipeline handle, VkPipelineLayout layout, Vector<DescriptorSetInfo> descInfo = {}, Vector<VkDescriptorSetLayout> layouts = {});
 
-        static VulkanPipelineState Create(const VulkanDevice &device, PipelineStateDesc desc, const VkGraphicsPipelineCreateInfo& info);
+        static VulkanPipelineState Create(const VulkanDevice &device, PipelineStateDesc desc, const VkGraphicsPipelineCreateInfo& info, Vector<DescriptorSetInfo> descInfo = {}, Vector<VkDescriptorSetLayout> layouts = {});
     public:
         void bind(CommandBufferRef cmdBuffer) override {
             cmdBuffer->bindPipelineState(this);
+        }
+
+        VkPipelineLayout getPipelineLayout() const {
+            return mLayout;
+        }
+
+        VkDescriptorSetLayout getDescriptorSetLayout(uint32_t set) const {
+            if (set < mDescriptorSetLayouts.size()) {
+                return mDescriptorSetLayouts[set];
+            }
+            return VK_NULL_HANDLE;
+        }
+
+        const Vector<VkDescriptorSetLayout>& getDescriptorSetLayouts() const {
+            return mDescriptorSetLayouts;
         }
     };
 NS_END

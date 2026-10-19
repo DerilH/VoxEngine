@@ -1,6 +1,8 @@
 #include <shaderc/shaderc.hpp>
 #include <VoxEngine/render/shaders/ShaderCompiler.h>
 #include <spirv_cross.hpp>
+#include <VoxCore/Pointers.h>
+#include <VoxEngine/render/shaders/ShaderUniform.h>
 
 namespace Vox::Render::Shaders {
     std::vector<std::filesystem::path> ShaderCompiler::listShaders(const std::filesystem::path& path) {
@@ -73,25 +75,20 @@ namespace Vox::Render::Shaders {
         return attributesVec;
     }
 
-    Vector<ShaderUniform> getUniforms(spirv_cross::Compiler& compiler, spirv_cross::SmallVector<spirv_cross::Resource> inUniforms) {
+    Vector<ShaderUniform> getUniforms(spirv_cross::Compiler& compiler, const spirv_cross::SmallVector<spirv_cross::Resource>& inUniforms, ShaderResourceType resType) {
         Vector<ShaderUniform> uniforms;
-        for (auto& u: inUniforms) {
+        for (const auto& u: inUniforms) {
             const spirv_cross::SPIRType& type = compiler.get_type(u.base_type_id);
-            size_t size = compiler.get_declared_struct_size(type);
+            size_t size = 0;
+            if (type.basetype == spirv_cross::SPIRType::Struct) {
+                size = compiler.get_declared_struct_size(type);
+            }
             uint32_t binding = compiler.get_decoration(u.id, spv::DecorationBinding);
             uint32_t set = compiler.get_decoration(u.id, spv::DecorationDescriptorSet);
             uint32_t location = compiler.get_decoration(u.id, spv::DecorationLocation);
-            uint32_t arraySize = type.array.empty() ? 0 : type.array[0];
+            uint32_t arraySize = type.array.empty() ? 1 : type.array[0];
             InternedString name = compiler.get_name(u.id);
-//            Vector<ShaderUniform::Member> members;
-//            for (uint32_t i = 0; i < type.member_types.size(); i++)
-//            {
-//                auto& memberType = compiler.get_type(type.member_types[i]);
-//                std::string memberName = compiler.get_member_name(type.self, i);
-//                size_t offset = compiler.type_struct_member_offset(type, i);
-//                members.emplace_back({memberName, memberType.})
-//            }
-            uniforms.emplace_back(name, location, binding, set, size, arraySize);
+            uniforms.emplace_back(name, location, binding, set, size, arraySize, resType);
         }
         return uniforms;
     }
@@ -112,8 +109,37 @@ namespace Vox::Render::Shaders {
 
         auto inputs = getAttributes(compiler, resources.stage_inputs, ShaderAttribute::Direction::IN);
         auto outputs = getAttributes(compiler, resources.stage_outputs, ShaderAttribute::Direction::OUT);
-        auto uniforms = getUniforms(compiler, resources.uniform_buffers);
-        return CompiledShader(src.type, inputs, outputs, uniforms, src.name, bin);
+
+        Vector<ShaderUniform> uniforms;
+        auto ubos = getUniforms(compiler, resources.uniform_buffers, ShaderResourceType::UNIFORM_BUFFER);
+        uniforms.insert(uniforms.end(), ubos.begin(), ubos.end());
+
+        auto samplers = getUniforms(compiler, resources.sampled_images, ShaderResourceType::COMBINED_IMAGE_SAMPLER);
+        uniforms.insert(uniforms.end(), samplers.begin(), samplers.end());
+
+        auto ssbos = getUniforms(compiler, resources.storage_buffers, ShaderResourceType::STORAGE_BUFFER);
+        uniforms.insert(uniforms.end(), ssbos.begin(), ssbos.end());
+
+        auto storageImages = getUniforms(compiler, resources.storage_images, ShaderResourceType::STORAGE_IMAGE);
+        uniforms.insert(uniforms.end(), storageImages.begin(), storageImages.end());
+
+        auto sepSamplers = getUniforms(compiler, resources.separate_samplers, ShaderResourceType::SAMPLER);
+        uniforms.insert(uniforms.end(), sepSamplers.begin(), sepSamplers.end());
+
+        auto sepImages = getUniforms(compiler, resources.separate_images, ShaderResourceType::SAMPLED_IMAGE);
+        uniforms.insert(uniforms.end(), sepImages.begin(), sepImages.end());
+
+        Vector<PushConstantRange> pushConstants;
+        for (const auto& pc: resources.push_constant_buffers) {
+            const spirv_cross::SPIRType& type = compiler.get_type(pc.base_type_id);
+            size_t size = 0;
+            if (type.basetype == spirv_cross::SPIRType::Struct) {
+                size = compiler.get_declared_struct_size(type);
+            }
+            pushConstants.emplace_back(0, static_cast<uint32_t>(size), src.type);
+        }
+
+        return CompiledShader(src.type, std::move(inputs), std::move(outputs), std::move(uniforms), src.name, std::move(bin), std::move(pushConstants));
     }
 
     shaderc_shader_kind getShaderKind(const std::filesystem::path& path) {
