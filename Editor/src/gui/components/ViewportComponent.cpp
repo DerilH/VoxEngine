@@ -9,6 +9,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/mat3x3.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <imgui_impl_vulkan.h>
 #include <VoxEngine/render/Renderer.h>
 #include <VoxEngine/render/vulkan/VulkanResourceCast.h>
@@ -23,9 +24,36 @@
 #include "../Theme.h"
 
 namespace Vox::Editor {
+    static glm::vec3 computeMeshAxis(Ref<Resources::MeshAsset> mesh) {
+        if (!mesh) return glm::vec3(0.0f);
+        const auto &vertices = mesh->getVertices();
+        if (vertices.empty()) return glm::vec3(0.0f);
+        glm::vec3 center(0.0f);
+        for (const auto &v : vertices) {
+            center += v;
+        }
+        center /= static_cast<float>(vertices.size());
+        if (glm::length(center) > 1e-4f) {
+            return glm::normalize(center);
+        }
+        return glm::vec3(0.0f);
+    }
+
     ViewportComponent::ViewportComponent(Ref<Engine> mEngine, Ref<GizmoPass> gizmoPass) : mEngine(mEngine), mGizmoPass(gizmoPass) {
         mGizmoPass->onPickComplete += [mEngine, this](auto index) {
             LOG_VERBOSE("Picked: {}", index);
+            if (isGizmoElement(index)) {
+                if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+                    mActiveGizmoElement = static_cast<GizmoElement>(index);
+                    mIsDraggingGizmo = true;
+                    mJustStartedDrag = true;
+                }
+                return;
+            }
+
+            mActiveGizmoElement = GizmoElement::None;
+            mIsDraggingGizmo = false;
+            mJustStartedDrag = false;
             auto obj = mEngine->getGameObjectsRegistry()->find(index);
             onObjectPicked.invoke(obj);
         };
@@ -47,23 +75,29 @@ namespace Vox::Editor {
                 auto name = gizmoMesh.value()->getName();
                 uint64_t index = 0;
                 if (name == "Arrow_X") {
-                    index = -1ULL;
+                    index = static_cast<uint64_t>(GizmoElement::Arrow_X);
+                    auto axis = computeMeshAxis(gizmoMesh.value());
+                    if (glm::length(axis) > 0.5f) mArrowDirs[0] = axis;
                 } else if (name == "Arrow_Y") {
-                    index = -1ULL - 1;
+                    index = static_cast<uint64_t>(GizmoElement::Arrow_Y);
+                    auto axis = computeMeshAxis(gizmoMesh.value());
+                    if (glm::length(axis) > 0.5f) mArrowDirs[1] = axis;
                 } else if (name == "Arrow_Z") {
-                    index = -1ULL - 2;
+                    index = static_cast<uint64_t>(GizmoElement::Arrow_Z);
+                    auto axis = computeMeshAxis(gizmoMesh.value());
+                    if (glm::length(axis) > 0.5f) mArrowDirs[2] = axis;
                 } else if (name == "Ring_X") {
-                    index = -1ULL - 3;
+                    index = static_cast<uint64_t>(GizmoElement::Ring_X);
                 } else if (name == "Ring_Y") {
-                    index = -1ULL - 4;
+                    index = static_cast<uint64_t>(GizmoElement::Ring_Y);
                 } else if (name == "Ring_Z") {
-                    index = -1ULL - 5;
+                    index = static_cast<uint64_t>(GizmoElement::Ring_Z);
                 } else if (name == "Cube_X") {
-                    index = -1ULL - 6;
+                    index = static_cast<uint64_t>(GizmoElement::Cube_X);
                 } else if (name == "Cube_Y") {
-                    index = -1ULL - 7;
+                    index = static_cast<uint64_t>(GizmoElement::Cube_Y);
                 } else if (name == "Cube_Z") {
-                    index = -1ULL - 8;
+                    index = static_cast<uint64_t>(GizmoElement::Cube_Z);
                 }
                 a->draw(gizmoMesh.value(), gizmoMat.value(), mat, static_cast<uint8_t>(Scene::RenderLayer::GIZMO), index);
             }
@@ -137,9 +171,16 @@ namespace Vox::Editor {
             ImGui::EndDragDropTarget();
         }
 
+        if (!ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+            mActiveGizmoElement = GizmoElement::None;
+            mIsDraggingGizmo = false;
+            mJustStartedDrag = false;
+        }
+
         if (isImageHovered) {
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-                ImVec2 mousePos = ImGui::GetMousePos();
+            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !mIsDraggingGizmo) {
+                mClickMousePos = ImGui::GetMousePos();
+                ImVec2 mousePos = mClickMousePos;
                 auto extent = Render::Vulkan::ResourceCast(context.renderer->getGraph().getTexture("Scene")->getExact())->getExtent();
                 uint32_t pickX = std::clamp((mousePos.x - screenPos.x) / viewportSize.x, 0.0f, 1.0f) * extent.width;
                 uint32_t pickY = std::clamp((mousePos.y - screenPos.y) / viewportSize.y, 0.0f, 1.0f) * extent.height;
@@ -152,6 +193,83 @@ namespace Vox::Editor {
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
                 mIsCaptured = true;
                 mJustWarped = false;
+                mIsDraggingGizmo = false;
+                mActiveGizmoElement = GizmoElement::None;
+            }
+        }
+
+        if (mIsDraggingGizmo && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
+
+            if (mSelectedObj && mSelectedObj->transform) {
+                glm::vec3 localDir(0.0f);
+                if (mActiveGizmoElement == GizmoElement::Arrow_X) localDir = mArrowDirs[0];
+                else if (mActiveGizmoElement == GizmoElement::Arrow_Y) localDir = mArrowDirs[1];
+                else if (mActiveGizmoElement == GizmoElement::Arrow_Z) localDir = mArrowDirs[2];
+
+                if (glm::length(localDir) > 1e-4f) {
+                    glm::vec3 worldDir = mSelectedObj->transform->getRotation() * localDir;
+                    if (glm::length(worldDir) > 1e-4f) {
+                        worldDir = glm::normalize(worldDir);
+                    } else {
+                        worldDir = localDir;
+                    }
+
+                    auto camera = mEngine->scene ? mEngine->scene->getActiveCamera() : nullptr;
+                    if (camera && camera->gameObject && camera->gameObject->transform) {
+                        auto camTransform = camera->gameObject->transform;
+                        glm::vec3 camPos = camTransform->getPos();
+                        glm::vec3 camFwd = camTransform->getForward();
+                        glm::vec3 camUp = camTransform->getUp();
+                        glm::mat4 view = glm::lookAt(camPos, camPos + camFwd, camUp);
+
+                        float fov = glm::radians(45.0f);
+                        float aspect = 1400.0f / 900.0f;
+                        float zNear = 0.1f;
+                        float zFar = 100.0f;
+                        glm::mat4 proj = glm::perspective(fov, aspect, zNear, zFar);
+
+                        glm::vec3 objPos = mSelectedObj->transform->getPos();
+
+                        auto projectToScreen = [&](const glm::vec3 &worldPos) -> std::pair<glm::vec2, bool> {
+                            glm::vec4 clip = proj * view * glm::vec4(worldPos, 1.0f);
+                            if (clip.w <= 0.0001f) {
+                                return {glm::vec2(0.0f), false};
+                            }
+                            glm::vec2 ndc = glm::vec2(clip.x, clip.y) / clip.w;
+                            glm::vec2 screenCoord = glm::vec2(screenPos.x, screenPos.y) +
+                                                   (ndc * 0.5f + 0.5f) * glm::vec2(viewportSize.x, viewportSize.y);
+                            return {screenCoord, true};
+                        };
+
+                        auto [screenP0, valid0] = projectToScreen(objPos);
+                        auto [screenP1, valid1] = projectToScreen(objPos + worldDir);
+
+                        if (valid0 && valid1) {
+                            glm::vec2 screenAxis = screenP1 - screenP0;
+                            float screenAxisLenSq = glm::dot(screenAxis, screenAxis);
+
+                            glm::vec2 mouseDeltaVec(0.0f);
+                            if (mJustStartedDrag) {
+                                mouseDeltaVec = glm::vec2(ImGui::GetMousePos().x - mClickMousePos.x,
+                                                         ImGui::GetMousePos().y - mClickMousePos.y);
+                                mJustStartedDrag = false;
+                            } else {
+                                ImVec2 delta = ImGui::GetIO().MouseDelta;
+                                mouseDeltaVec = glm::vec2(delta.x, delta.y);
+                            }
+
+                            if (screenAxisLenSq > 1.0f && (mouseDeltaVec.x != 0.0f || mouseDeltaVec.y != 0.0f)) {
+                                float dragAmount = glm::dot(mouseDeltaVec, screenAxis) / screenAxisLenSq;
+                                if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
+                                    dragAmount *= 0.2f;
+                                }
+                                glm::vec3 newPos = objPos + worldDir * dragAmount;
+                                mSelectedObj->transform->setPos(newPos);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -285,6 +403,12 @@ namespace Vox::Editor {
         char hudText[128];
         if (mIsCaptured) {
             snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: [Captured] Mouse Look + WASD ", (int) viewportSize.x, (int) viewportSize.y);
+        } else if (mIsDraggingGizmo) {
+            const char *elemName = "Gizmo";
+            if (mActiveGizmoElement == GizmoElement::Arrow_X) elemName = "Arrow X";
+            else if (mActiveGizmoElement == GizmoElement::Arrow_Y) elemName = "Arrow Y";
+            else if (mActiveGizmoElement == GizmoElement::Arrow_Z) elemName = "Arrow Z";
+            snprintf(hudText, sizeof(hudText), " %dx%d  |  Move: [%s] Dragging (Shift for precision) ", (int) viewportSize.x, (int) viewportSize.y, elemName);
         } else {
             snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: Hold RMB to Look + WASD ", (int) viewportSize.x, (int) viewportSize.y);
         }
