@@ -68,7 +68,7 @@ namespace Vox::Editor {
             auto gizmoMat = a->getResourceManager()->get<Resources::MaterialAsset>("editor/gizmo.vmat");
             if (!gizmoMat) return;
 
-            auto mat = obj->transform->computeWorldMatrix();
+            auto mat = glm::translate(glm::mat4(1.0f), obj->transform->getPos()) * glm::mat4_cast(obj->transform->getRotation());
             for (int i = 0; i < gizmoModel.value()->getNestedCount(); ++i) {
                 auto gizmoMesh = gizmoModel.value()->getMesh(i);
                 if (!gizmoMesh) continue;
@@ -94,10 +94,16 @@ namespace Vox::Editor {
                     index = static_cast<uint64_t>(GizmoElement::Ring_Z);
                 } else if (name == "Cube_X") {
                     index = static_cast<uint64_t>(GizmoElement::Cube_X);
+                    auto axis = computeMeshAxis(gizmoMesh.value());
+                    if (glm::length(axis) > 0.5f && glm::length(mArrowDirs[0]) < 0.5f) mArrowDirs[0] = axis;
                 } else if (name == "Cube_Y") {
                     index = static_cast<uint64_t>(GizmoElement::Cube_Y);
+                    auto axis = computeMeshAxis(gizmoMesh.value());
+                    if (glm::length(axis) > 0.5f && glm::length(mArrowDirs[1]) < 0.5f) mArrowDirs[1] = axis;
                 } else if (name == "Cube_Z") {
                     index = static_cast<uint64_t>(GizmoElement::Cube_Z);
+                    auto axis = computeMeshAxis(gizmoMesh.value());
+                    if (glm::length(axis) > 0.5f && glm::length(mArrowDirs[2]) < 0.5f) mArrowDirs[2] = axis;
                 }
                 a->draw(gizmoMesh.value(), gizmoMat.value(), mat, static_cast<uint8_t>(Scene::RenderLayer::GIZMO), index);
             }
@@ -180,15 +186,7 @@ namespace Vox::Editor {
         if (isImageHovered) {
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !mIsDraggingGizmo) {
                 mClickMousePos = ImGui::GetMousePos();
-                ImVec2 mousePos = mClickMousePos;
-                auto extent = Render::Vulkan::ResourceCast(context.renderer->getGraph().getTexture("Scene")->getExact())->getExtent();
-                uint32_t pickX = std::clamp((mousePos.x - screenPos.x) / viewportSize.x, 0.0f, 1.0f) * extent.width;
-                uint32_t pickY = std::clamp((mousePos.y - screenPos.y) / viewportSize.y, 0.0f, 1.0f) * extent.height;
 
-                if (mGizmoPass) {
-                    mGizmoPass->schedulePick(true, {pickX, pickY});
-                    LOG_VERBOSE("Viewport pick at: {}, {}", pickX, pickY);
-                }
             }
             if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) {
                 mIsCaptured = true;
@@ -197,75 +195,221 @@ namespace Vox::Editor {
                 mActiveGizmoElement = GizmoElement::None;
             }
         }
+        ImVec2 mousePos = mClickMousePos;
+        auto extent = Render::Vulkan::ResourceCast(context.renderer->getGraph().getTexture("Scene")->getExact())->getExtent();
+        uint32_t pickX = std::clamp((mousePos.x - screenPos.x) / viewportSize.x, 0.0f, 1.0f) * extent.width;
+        uint32_t pickY = std::clamp((mousePos.y - screenPos.y) / viewportSize.y, 0.0f, 1.0f) * extent.height;
 
+        if (mGizmoPass) {
+            mGizmoPass->schedulePick(true, {pickX, pickY});
+            LOG_VERBOSE("Viewport pick at: {}, {}", pickX, pickY);
+        }
         if (mIsDraggingGizmo && ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
             ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeAll);
 
             if (mSelectedObj && mSelectedObj->transform) {
-                glm::vec3 localDir(0.0f);
-                if (mActiveGizmoElement == GizmoElement::Arrow_X) localDir = mArrowDirs[0];
-                else if (mActiveGizmoElement == GizmoElement::Arrow_Y) localDir = mArrowDirs[1];
-                else if (mActiveGizmoElement == GizmoElement::Arrow_Z) localDir = mArrowDirs[2];
+                auto camera = mEngine->scene ? mEngine->scene->getActiveCamera() : nullptr;
+                if (camera && camera->gameObject && camera->gameObject->transform) {
+                    auto camTransform = camera->gameObject->transform;
+                    glm::vec3 camPos = camTransform->getPos();
+                    glm::vec3 camFwd = camTransform->getForward();
+                    glm::vec3 camUp = camTransform->getUp();
+                    glm::mat4 view = glm::lookAt(camPos, camPos + camFwd, camUp);
 
-                if (glm::length(localDir) > 1e-4f) {
-                    glm::vec3 worldDir = mSelectedObj->transform->getRotation() * localDir;
-                    if (glm::length(worldDir) > 1e-4f) {
-                        worldDir = glm::normalize(worldDir);
+                    float fov = glm::radians(45.0f);
+                    float aspect = 1400.0f / 900.0f;
+                    float zNear = 0.1f;
+                    float zFar = 100.0f;
+                    glm::mat4 proj = glm::perspective(fov, aspect, zNear, zFar);
+
+                    glm::vec3 objPos = mSelectedObj->transform->getPos();
+
+                    auto projectToScreen = [&](const glm::vec3 &worldPos) -> std::pair<glm::vec2, bool> {
+                        glm::vec4 clip = proj * view * glm::vec4(worldPos, 1.0f);
+                        if (clip.w <= 0.0001f) {
+                            return {glm::vec2(0.0f), false};
+                        }
+                        glm::vec2 ndc = glm::vec2(clip.x, clip.y) / clip.w;
+                        glm::vec2 screenCoord = glm::vec2(screenPos.x, screenPos.y) +
+                                               (ndc * 0.5f + 0.5f) * glm::vec2(viewportSize.x, viewportSize.y);
+                        return {screenCoord, true};
+                    };
+
+                    glm::vec2 mouseDeltaVec(0.0f);
+                    ImVec2 prevMousePos;
+                    if (mJustStartedDrag) {
+                        prevMousePos = mClickMousePos;
+                        mouseDeltaVec = glm::vec2(ImGui::GetMousePos().x - mClickMousePos.x,
+                                                 ImGui::GetMousePos().y - mClickMousePos.y);
+                        mJustStartedDrag = false;
                     } else {
-                        worldDir = localDir;
+                        ImVec2 delta = ImGui::GetIO().MouseDelta;
+                        prevMousePos = ImVec2(ImGui::GetMousePos().x - delta.x, ImGui::GetMousePos().y - delta.y);
+                        mouseDeltaVec = glm::vec2(delta.x, delta.y);
                     }
 
-                    auto camera = mEngine->scene ? mEngine->scene->getActiveCamera() : nullptr;
-                    if (camera && camera->gameObject && camera->gameObject->transform) {
-                        auto camTransform = camera->gameObject->transform;
-                        glm::vec3 camPos = camTransform->getPos();
-                        glm::vec3 camFwd = camTransform->getForward();
-                        glm::vec3 camUp = camTransform->getUp();
-                        glm::mat4 view = glm::lookAt(camPos, camPos + camFwd, camUp);
+                    if (isTranslateGizmoElement(mActiveGizmoElement)) {
+                        glm::vec3 localDir(0.0f);
+                        if (mActiveGizmoElement == GizmoElement::Arrow_X) localDir = mArrowDirs[0];
+                        else if (mActiveGizmoElement == GizmoElement::Arrow_Y) localDir = mArrowDirs[1];
+                        else if (mActiveGizmoElement == GizmoElement::Arrow_Z) localDir = mArrowDirs[2];
 
-                        float fov = glm::radians(45.0f);
-                        float aspect = 1400.0f / 900.0f;
-                        float zNear = 0.1f;
-                        float zFar = 100.0f;
-                        glm::mat4 proj = glm::perspective(fov, aspect, zNear, zFar);
-
-                        glm::vec3 objPos = mSelectedObj->transform->getPos();
-
-                        auto projectToScreen = [&](const glm::vec3 &worldPos) -> std::pair<glm::vec2, bool> {
-                            glm::vec4 clip = proj * view * glm::vec4(worldPos, 1.0f);
-                            if (clip.w <= 0.0001f) {
-                                return {glm::vec2(0.0f), false};
-                            }
-                            glm::vec2 ndc = glm::vec2(clip.x, clip.y) / clip.w;
-                            glm::vec2 screenCoord = glm::vec2(screenPos.x, screenPos.y) +
-                                                   (ndc * 0.5f + 0.5f) * glm::vec2(viewportSize.x, viewportSize.y);
-                            return {screenCoord, true};
-                        };
-
-                        auto [screenP0, valid0] = projectToScreen(objPos);
-                        auto [screenP1, valid1] = projectToScreen(objPos + worldDir);
-
-                        if (valid0 && valid1) {
-                            glm::vec2 screenAxis = screenP1 - screenP0;
-                            float screenAxisLenSq = glm::dot(screenAxis, screenAxis);
-
-                            glm::vec2 mouseDeltaVec(0.0f);
-                            if (mJustStartedDrag) {
-                                mouseDeltaVec = glm::vec2(ImGui::GetMousePos().x - mClickMousePos.x,
-                                                         ImGui::GetMousePos().y - mClickMousePos.y);
-                                mJustStartedDrag = false;
+                        if (glm::length(localDir) > 1e-4f) {
+                            glm::vec3 worldDir = mSelectedObj->transform->getRotation() * localDir;
+                            if (glm::length(worldDir) > 1e-4f) {
+                                worldDir = glm::normalize(worldDir);
                             } else {
-                                ImVec2 delta = ImGui::GetIO().MouseDelta;
-                                mouseDeltaVec = glm::vec2(delta.x, delta.y);
+                                worldDir = localDir;
                             }
 
-                            if (screenAxisLenSq > 1.0f && (mouseDeltaVec.x != 0.0f || mouseDeltaVec.y != 0.0f)) {
-                                float dragAmount = glm::dot(mouseDeltaVec, screenAxis) / screenAxisLenSq;
-                                if (ImGui::IsKeyDown(ImGuiKey_LeftShift)) {
-                                    dragAmount *= 0.2f;
+                            auto [screenP0, valid0] = projectToScreen(objPos);
+                            auto [screenP1, valid1] = projectToScreen(objPos + worldDir);
+
+                            if (valid0 && valid1) {
+                                glm::vec2 screenAxis = screenP1 - screenP0;
+                                float screenAxisLenSq = glm::dot(screenAxis, screenAxis);
+
+                                if (screenAxisLenSq > 1.0f && (mouseDeltaVec.x != 0.0f || mouseDeltaVec.y != 0.0f)) {
+                                    float dragAmount = glm::dot(mouseDeltaVec, screenAxis) / screenAxisLenSq;
+                                    if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift)) {
+                                        dragAmount *= 0.2f;
+                                    }
+                                    glm::vec3 newPos = objPos + worldDir * dragAmount;
+                                    mSelectedObj->transform->setPos(newPos);
                                 }
-                                glm::vec3 newPos = objPos + worldDir * dragAmount;
-                                mSelectedObj->transform->setPos(newPos);
+                            }
+                        }
+                    } else if (isScaleGizmoElement(mActiveGizmoElement)) {
+                        glm::vec3 localDir(0.0f);
+                        int axisIdx = 0;
+                        if (mActiveGizmoElement == GizmoElement::Cube_X) { localDir = mArrowDirs[0]; axisIdx = 0; }
+                        else if (mActiveGizmoElement == GizmoElement::Cube_Y) { localDir = mArrowDirs[1]; axisIdx = 1; }
+                        else if (mActiveGizmoElement == GizmoElement::Cube_Z) { localDir = mArrowDirs[2]; axisIdx = 2; }
+
+                        if (glm::length(localDir) > 1e-4f) {
+                            glm::vec3 worldDir = mSelectedObj->transform->getRotation() * localDir;
+                            if (glm::length(worldDir) > 1e-4f) {
+                                worldDir = glm::normalize(worldDir);
+                            } else {
+                                worldDir = localDir;
+                            }
+
+                            auto [screenP0, valid0] = projectToScreen(objPos);
+                            auto [screenP1, valid1] = projectToScreen(objPos + worldDir);
+
+                            if (valid0 && valid1) {
+                                glm::vec2 screenAxis = screenP1 - screenP0;
+                                float screenAxisLenSq = glm::dot(screenAxis, screenAxis);
+
+                                if (screenAxisLenSq > 1.0f && (mouseDeltaVec.x != 0.0f || mouseDeltaVec.y != 0.0f)) {
+                                    float dragAmount = glm::dot(mouseDeltaVec, screenAxis) / screenAxisLenSq;
+                                    if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift)) {
+                                        dragAmount *= 0.2f;
+                                    }
+                                    glm::vec3 scale = mSelectedObj->transform->getScale();
+                                    if (ImGui::IsKeyDown(ImGuiKey_LeftCtrl) || ImGui::IsKeyDown(ImGuiKey_RightCtrl)) {
+                                        scale += glm::vec3(dragAmount);
+                                    } else {
+                                        scale[axisIdx] += dragAmount;
+                                    }
+                                    scale = glm::max(scale, glm::vec3(0.001f));
+                                    mSelectedObj->transform->setScale(scale);
+                                }
+                            }
+                        }
+                    } else if (isRotateGizmoElement(mActiveGizmoElement)) {
+                        glm::vec3 localAxis(0.0f);
+                        if (mActiveGizmoElement == GizmoElement::Ring_X) localAxis = mArrowDirs[0];
+                        else if (mActiveGizmoElement == GizmoElement::Ring_Y) localAxis = mArrowDirs[1];
+                        else if (mActiveGizmoElement == GizmoElement::Ring_Z) localAxis = mArrowDirs[2];
+
+                        if (glm::length(localAxis) > 1e-4f) {
+                            glm::vec3 worldAxis = mSelectedObj->transform->getRotation() * localAxis;
+                            if (glm::length(worldAxis) > 1e-4f) {
+                                worldAxis = glm::normalize(worldAxis);
+                            } else {
+                                worldAxis = localAxis;
+                            }
+
+                            if (mouseDeltaVec.x != 0.0f || mouseDeltaVec.y != 0.0f) {
+                                auto getRayDir = [&](const ImVec2 &mPos) -> glm::vec3 {
+                                    glm::vec2 ndc = ((glm::vec2(mPos.x, mPos.y) - glm::vec2(screenPos.x, screenPos.y)) /
+                                                     glm::vec2(viewportSize.x, viewportSize.y)) * 2.0f - 1.0f;
+                                    glm::mat4 invVP = glm::inverse(proj * view);
+                                    glm::vec4 nearP = invVP * glm::vec4(ndc.x, ndc.y, -1.0f, 1.0f);
+                                    glm::vec4 farP = invVP * glm::vec4(ndc.x, ndc.y, 1.0f, 1.0f);
+                                    if (std::abs(nearP.w) > 1e-5f) nearP /= nearP.w;
+                                    if (std::abs(farP.w) > 1e-5f) farP /= farP.w;
+                                    return glm::normalize(glm::vec3(farP - nearP));
+                                };
+
+                                glm::vec3 rayDirPrev = getRayDir(prevMousePos);
+                                glm::vec3 rayDirCurr = getRayDir(ImGui::GetMousePos());
+
+                                float denomPrev = glm::dot(rayDirPrev, worldAxis);
+                                float denomCurr = glm::dot(rayDirCurr, worldAxis);
+
+                                float deltaAngle = 0.0f;
+                                bool rotated = false;
+
+                                if (std::abs(denomPrev) > 0.08f && std::abs(denomCurr) > 0.08f) {
+                                    float tPrev = glm::dot(objPos - camPos, worldAxis) / denomPrev;
+                                    float tCurr = glm::dot(objPos - camPos, worldAxis) / denomCurr;
+                                    if (tPrev > 0.0f && tCurr > 0.0f) {
+                                        glm::vec3 hitPrev = (camPos + tPrev * rayDirPrev) - objPos;
+                                        glm::vec3 hitCurr = (camPos + tCurr * rayDirCurr) - objPos;
+                                        if (glm::length(hitPrev) > 1e-4f && glm::length(hitCurr) > 1e-4f) {
+                                            glm::vec3 vP = glm::normalize(hitPrev);
+                                            glm::vec3 vC = glm::normalize(hitCurr);
+                                            glm::vec3 crossVec = glm::cross(vP, vC);
+                                            float sinA = glm::dot(worldAxis, crossVec);
+                                            float cosA = glm::clamp(glm::dot(vP, vC), -1.0f, 1.0f);
+                                            deltaAngle = std::atan2(sinA, cosA);
+                                            deltaAngle = std::clamp(deltaAngle, -0.5f, 0.5f);
+                                            rotated = true;
+                                        }
+                                    }
+                                }
+
+                                if (!rotated) {
+                                    auto [screenP0, valid0] = projectToScreen(objPos);
+                                    auto [screenP1, valid1] = projectToScreen(objPos + worldAxis);
+                                    if (valid0 && valid1) {
+                                        glm::vec2 screenAxis = screenP1 - screenP0;
+                                        float axisLen = glm::length(screenAxis);
+                                        if (axisLen > 1e-4f) {
+                                            screenAxis /= axisLen;
+                                        } else {
+                                            screenAxis = glm::vec2(0.0f, 1.0f);
+                                        }
+                                        glm::vec2 screenTangent(-screenAxis.y, screenAxis.x);
+                                        float tangentDist = glm::dot(mouseDeltaVec, screenTangent);
+
+                                        glm::vec3 camToObj = glm::normalize(objPos - camPos);
+                                        glm::vec3 frontTangent = glm::cross(worldAxis, -camToObj);
+                                        if (glm::length(frontTangent) > 1e-4f) {
+                                            auto [screenFront, validF] = projectToScreen(objPos + frontTangent);
+                                            if (validF) {
+                                                glm::vec2 projFront = screenFront - screenP0;
+                                                if (glm::dot(projFront, screenTangent) < 0.0f) {
+                                                    tangentDist = -tangentDist;
+                                                }
+                                            }
+                                        }
+
+                                        deltaAngle = tangentDist * 0.01f;
+                                        deltaAngle = std::clamp(deltaAngle, -0.5f, 0.5f);
+                                        rotated = true;
+                                    }
+                                }
+
+                                if (rotated && std::abs(deltaAngle) > 1e-6f) {
+                                    if (ImGui::IsKeyDown(ImGuiKey_LeftShift) || ImGui::IsKeyDown(ImGuiKey_RightShift)) {
+                                        deltaAngle *= 0.2f;
+                                    }
+                                    glm::quat deltaRot = glm::angleAxis(deltaAngle, worldAxis);
+                                    mSelectedObj->transform->setRotation(glm::normalize(deltaRot * mSelectedObj->transform->getRotation()));
+                                }
                             }
                         }
                     }
@@ -405,10 +549,22 @@ namespace Vox::Editor {
             snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: [Captured] Mouse Look + WASD ", (int) viewportSize.x, (int) viewportSize.y);
         } else if (mIsDraggingGizmo) {
             const char *elemName = "Gizmo";
-            if (mActiveGizmoElement == GizmoElement::Arrow_X) elemName = "Arrow X";
-            else if (mActiveGizmoElement == GizmoElement::Arrow_Y) elemName = "Arrow Y";
-            else if (mActiveGizmoElement == GizmoElement::Arrow_Z) elemName = "Arrow Z";
-            snprintf(hudText, sizeof(hudText), " %dx%d  |  Move: [%s] Dragging (Shift for precision) ", (int) viewportSize.x, (int) viewportSize.y, elemName);
+            const char *actionName = "Transform";
+            if (mActiveGizmoElement == GizmoElement::Arrow_X) { elemName = "Arrow X"; actionName = "Move"; }
+            else if (mActiveGizmoElement == GizmoElement::Arrow_Y) { elemName = "Arrow Y"; actionName = "Move"; }
+            else if (mActiveGizmoElement == GizmoElement::Arrow_Z) { elemName = "Arrow Z"; actionName = "Move"; }
+            else if (mActiveGizmoElement == GizmoElement::Cube_X) { elemName = "Cube X"; actionName = "Scale"; }
+            else if (mActiveGizmoElement == GizmoElement::Cube_Y) { elemName = "Cube Y"; actionName = "Scale"; }
+            else if (mActiveGizmoElement == GizmoElement::Cube_Z) { elemName = "Cube Z"; actionName = "Scale"; }
+            else if (mActiveGizmoElement == GizmoElement::Ring_X) { elemName = "Ring X"; actionName = "Rotate"; }
+            else if (mActiveGizmoElement == GizmoElement::Ring_Y) { elemName = "Ring Y"; actionName = "Rotate"; }
+            else if (mActiveGizmoElement == GizmoElement::Ring_Z) { elemName = "Ring Z"; actionName = "Rotate"; }
+
+            if (isScaleGizmoElement(mActiveGizmoElement)) {
+                snprintf(hudText, sizeof(hudText), " %dx%d  |  %s: [%s] Dragging (Ctrl: Uniform, Shift: Fine) ", (int) viewportSize.x, (int) viewportSize.y, actionName, elemName);
+            } else {
+                snprintf(hudText, sizeof(hudText), " %dx%d  |  %s: [%s] Dragging (Shift for precision) ", (int) viewportSize.x, (int) viewportSize.y, actionName, elemName);
+            }
         } else {
             snprintf(hudText, sizeof(hudText), " %dx%d  |  Camera: Hold RMB to Look + WASD ", (int) viewportSize.x, (int) viewportSize.y);
         }

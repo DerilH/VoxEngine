@@ -32,6 +32,18 @@ namespace Vox::Editor {
                index <= static_cast<uint64_t>(GizmoElement::Arrow_X);
     }
 
+    inline bool isTranslateGizmoElement(GizmoElement el) {
+        return el == GizmoElement::Arrow_X || el == GizmoElement::Arrow_Y || el == GizmoElement::Arrow_Z;
+    }
+
+    inline bool isRotateGizmoElement(GizmoElement el) {
+        return el == GizmoElement::Ring_X || el == GizmoElement::Ring_Y || el == GizmoElement::Ring_Z;
+    }
+
+    inline bool isScaleGizmoElement(GizmoElement el) {
+        return el == GizmoElement::Cube_X || el == GizmoElement::Cube_Y || el == GizmoElement::Cube_Z;
+    }
+
     class ViewportComponent : public GuiComponent {
         bool mRegistered = false;
         ImTextureID mTextureId = 0;
