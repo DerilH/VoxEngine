@@ -76,16 +76,16 @@ SERIALIZATION_NS
 
         // Strings
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const std::string &val) {
-            yyjson_mut_obj_add_strn(doc, obj, key, val.data(), val.size());
+            yyjson_mut_obj_add_strncpy(doc, obj, key, val.data(), val.size());
         }
 
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, std::string_view val) {
-            yyjson_mut_obj_add_strn(doc, obj, key, val.data(), val.size());
+            yyjson_mut_obj_add_strncpy(doc, obj, key, val.data(), val.size());
         }
 
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const char *val) {
             if (val) {
-                yyjson_mut_obj_add_str(doc, obj, key, val);
+                yyjson_mut_obj_add_strcpy(doc, obj, key, val);
             } else {
                 yyjson_mut_obj_add_null(doc, obj, key);
             }
@@ -97,7 +97,7 @@ SERIALIZATION_NS
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const T &val) {
             auto name = magic_enum::enum_name(val);
             if (!name.empty()) {
-                yyjson_mut_obj_add_strn(doc, obj, key, name.data(), name.size());
+                yyjson_mut_obj_add_strncpy(doc, obj, key, name.data(), name.size());
             } else {
                 yyjson_mut_obj_add_int(doc, obj, key, std::to_underlying(val));
             }
@@ -106,7 +106,7 @@ SERIALIZATION_NS
         // UUID
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const UUID &uuid) {
             auto str = uuid.toString();
-            yyjson_mut_obj_add_strn(doc, obj, key, str.data(), str.size());
+            yyjson_mut_obj_add_strncpy(doc, obj, key, str.data(), str.size());
         }
 
         // Hash128
@@ -142,11 +142,11 @@ SERIALIZATION_NS
                 } else if constexpr (std::is_floating_point_v<T>) {
                     yyjson_mut_arr_add_real(doc, arr, static_cast<double>(item));
                 } else if constexpr (std::is_same_v<T, std::string>) {
-                    yyjson_mut_arr_add_strn(doc, arr, item.data(), item.size());
+                    yyjson_mut_arr_add_strncpy(doc, arr, item.data(), item.size());
                 } else if constexpr (std::is_enum_v<T>) {
                     auto name = magic_enum::enum_name(item);
                     if (!name.empty()) {
-                        yyjson_mut_arr_add_strn(doc, arr, name.data(), name.size());
+                        yyjson_mut_arr_add_strncpy(doc, arr, name.data(), name.size());
                     } else {
                         yyjson_mut_arr_add_int(doc, arr, std::to_underlying(item));
                     }

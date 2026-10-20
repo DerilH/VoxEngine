@@ -3,7 +3,7 @@
 #include "../../Serializable.h"
 
 ASSETS_NS
-    struct AssetCache : public Serializable {
+    struct AssetCache : public Serializable<Binary> {
         Hash128 hash{0, 0};
         uint64_t mtime{0};
         uint64_t size{0};

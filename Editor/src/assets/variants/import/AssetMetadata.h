@@ -13,7 +13,7 @@
 #include "../../Serializable.h"
 
 ASSETS_NS
-    struct AssetMetadata : public Serializable {
+    struct AssetMetadata : public Serializable<Json> {
         UUID uuid;
         uint32_t version{1};
         AssetType type{AssetType::REGULAR};
