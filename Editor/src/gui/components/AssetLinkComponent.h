@@ -1,7 +1,7 @@
 #pragma once
 #include <functional>
 #include <VoxCore/containers/Containers.h>
-#include <VoxEngine/resources/assets/Asset.h>
+#include <../../assets/Asset.h>
 #include "GuiComponent.h"
 
 namespace Vox::Editor {

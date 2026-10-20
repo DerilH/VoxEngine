@@ -1,9 +1,9 @@
 #pragma once
 #include <VoxCore/Define.h>
 #include <VoxEngine/render/RenderMesh.h>
-#include <VoxEngine/resources/assets/MaterialAsset.h>
-#include <VoxEngine/resources/assets/MeshAsset.h>
-#include <VoxEngine/resources/assets/ShaderAsset.h>
+#include <../../../../../Editor/src/assets/MaterialAsset.h>
+#include <../../../../../Editor/src/assets/MeshAsset.h>
+#include <../../../../../Editor/src/assets/ShaderAsset.h>
 #include <VoxEngine/scene/Types.h>
 #include "RenderLayer.h"
 #include "RendererComponent.h"

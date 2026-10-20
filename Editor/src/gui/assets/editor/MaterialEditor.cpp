@@ -6,8 +6,8 @@
 
 #include <imgui.h>
 #include <magic_enum/magic_enum.hpp>
-#include <VoxEngine/resources/ResourceManager.h>
-#include <VoxEngine/resources/assets/MaterialAsset.h>
+#include <../../../assets/ResourceManager.h>
+#include <../../../assets/MaterialAsset.h>
 #include "../../Theme.h"
 
 namespace Vox::Editor {

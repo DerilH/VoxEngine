@@ -2,7 +2,7 @@
 
 #include <VoxCore/Pointers.h>
 #include <VoxCore/signal/Event.h>
-#include <VoxEngine/resources/assets/MaterialAsset.h>
+#include <../../../../Editor/src/assets/MaterialAsset.h>
 #include <VoxEngine/resources/assets/ModelAsset.h>
 #include <VoxEngine/scene/Scene.h>
 
@@ -13,11 +13,11 @@
 #include "FrameSync.h"
 #include "MaterialPipelines.h"
 #include "RenderResourceManager.h"
-#include "VoxEngine/resources/assets/MeshAsset.h"
-#include "VoxEngine/resources/assets/ShaderAsset.h"
+#include "../../../../Editor/src/assets/variants/MeshAsset.h"
+#include "../../../../Editor/src/assets/variants/ShaderAsset.h"
 
 namespace Vox::Resources {
-    class ResourceManager;
+    class AssetManager;
 }
 
 namespace Vox::Scene {
@@ -42,9 +42,9 @@ RENDER_NS
 
         Ref<RenderBackend> mBackend;
         Ref<RenderResourceManager> mRenderResourceManager;
-        Ref<Resources::ResourceManager> mResourceManager;
+        Ref<Resources::AssetManager> mResourceManager;
 
-        explicit Renderer(Ref<Resources::ResourceManager> resourceManager, Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend);
+        explicit Renderer(Ref<Resources::AssetManager> resourceManager, Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend);
 
         void drawFrame(RenderTargetRef target, Ref<CommandBuffer> cmdBuffer);
 
@@ -86,7 +86,7 @@ RENDER_NS
         Expected<Ref<PipelineState> > getPipeline(ConstRef<Resources::MaterialAsset> material, ConstRef<RenderingState> renderingState);
 
         Ref<RenderBackend> getBackend() const { return mBackend; }
-        Ref<Resources::ResourceManager> getResourceManager() const { return mResourceManager; }
+        Ref<Resources::AssetManager> getResourceManager() const { return mResourceManager; }
         Ref<RenderResourceManager> getRenderResourceManager() const { return mRenderResourceManager; }
         const HashMap<InternedString, RenderTargetRef> &getViewportTargets() const { return mViewportTargets; }
         const HashMap<InternedString, Ref<RenderTarget>> & getPresentTargets() const {return mPresentTargets;}

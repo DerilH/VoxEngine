@@ -1,6 +1,6 @@
 #include "VoxEngine/render/RenderResourceManager.h"
-#include <VoxEngine/resources/ResourceManager.h>
-#include <VoxEngine/resources/assets/TextureAsset.h>
+#include <../../../Editor/src/assets/AssetManager.h>
+#include <../../include/VoxEngine/resources/TextureAsset.h>
 
 Vox::Render::RenderResourceManager::RenderResourceManager(const Ref<RenderBackend> backend)
     : mBackend(backend), mUniformAllocator(backend) {
@@ -40,7 +40,7 @@ Vox::Ref<Vox::Render::RenderMesh> Vox::Render::RenderResourceManager::getMesh(Co
     return mesh;
 }
 
-Vox::Ref<Vox::Render::Texture> Vox::Render::RenderResourceManager::getTexture(InternedString path, Ref<Resources::ResourceManager> resourceManager) {
+Vox::Ref<Vox::Render::Texture> Vox::Render::RenderResourceManager::getTexture(InternedString path, Ref<Resources::AssetManager> resourceManager) {
     if (path.empty()) {
         return mDefaultTexture;
     }
@@ -73,7 +73,7 @@ Vox::Ref<Vox::Render::Texture> Vox::Render::RenderResourceManager::getTexture(In
 Vox::Ref<Vox::Render::BindGroup> Vox::Render::RenderResourceManager::getMaterialTextureGroup(
     ConstRef<Resources::MaterialAsset> material,
     Ref<PipelineState> pso,
-    Ref<Resources::ResourceManager> resourceManager
+    Ref<Resources::AssetManager> resourceManager
 ) {
     if (!material) {
         return mSamplerGroup;

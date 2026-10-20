@@ -6,7 +6,7 @@
 
 #include <VoxCore/Pointers.h>
 #include <VoxEngine/Engine.h>
-#include <VoxEngine/resources/assets/MaterialAsset.h>
+#include <../../../assets/MaterialAsset.h>
 
 #include "AssetEditor.h"
 #include "../../components/AssetLinkComponent.h"

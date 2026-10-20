@@ -14,7 +14,7 @@
 #include <VoxEngine/render/Renderer.h>
 #include <VoxEngine/render/vulkan/VulkanResourceCast.h>
 #include <VoxEngine/render/windowing/WindowManager.h>
-#include <VoxEngine/resources/ResourceManager.h>
+#include <../../assets/ResourceManager.h>
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/scene/Scene.h>
 #include <VoxEngine/scene/components/CameraComponent.h>

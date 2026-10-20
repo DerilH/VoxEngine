@@ -1,6 +1,6 @@
 #include "./HierarchyComponent.h"
 #include <imgui.h>
-#include <VoxEngine/resources/ResourceManager.h>
+#include <../../assets/ResourceManager.h>
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/scene/TransformStorage.h>
 #include <VoxEngine/scene/Scene.h>

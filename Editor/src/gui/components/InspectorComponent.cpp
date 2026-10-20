@@ -1,8 +1,8 @@
 #include "./InspectorComponent.h"
 
 #include <imgui.h>
-#include <VoxEngine/resources/ResourceManager.h>
-#include <VoxEngine/resources/assets/MaterialAsset.h>
+#include <../../assets/ResourceManager.h>
+#include <../../assets/MaterialAsset.h>
 #include <VoxEngine/scene/components/MeshRendererComponent.h>
 #include <VoxEngine/scene/components/Transform.h>
 #include "../Theme.h"

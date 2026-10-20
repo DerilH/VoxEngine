@@ -23,7 +23,7 @@
 #include <VoxEngine/render/vulkan/VulkanDevice.h>
 #include <VoxEngine/render/vulkan/VulkanUtil.h>
 #include <VoxEngine/scene/GameObject.h>
-#include <VoxEngine/resources/ResourceManager.h>
+#include <../assets/ResourceManager.h>
 
 #include "GizmoPass.h"
 #include "GuiRenderPass.h"

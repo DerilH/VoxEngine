@@ -5,7 +5,7 @@
 #include <imgui.h>
 #include "AssetIcon.h"
 #include "assets/editor/MaterialEditor.h"
-#include <VoxEngine/resources/assets/MaterialAsset.h>
+#include <../assets/MaterialAsset.h>
 #include <VoxEngine/Engine.h>
 #include "Theme.h"
 

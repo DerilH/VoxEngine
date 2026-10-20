@@ -7,7 +7,7 @@
 #include "VoxEngine/render/passes/GeometryPass.h"
 #include "VoxEngine/render/passes/PassTransition.h"
 #include "VoxEngine/render/RenderTarget.h"
-#include "VoxEngine/resources/assets/MeshAsset.h"
+#include "../../../Editor/src/assets/variants/MeshAsset.h"
 #include "VoxEngine/render/state/Shader.h"
 #include "VoxEngine/render/state/DepthState.h"
 #include <glm/glm.hpp>
@@ -23,7 +23,7 @@ namespace Vox::Scene {
 }
 
 RENDER_NS
-    Renderer::Renderer(Ref<Resources::ResourceManager> resManager, Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend) : mBackend(backend), mRenderResourceManager(renderResManager), mResourceManager(resManager), backendApi(backend->api) {
+    Renderer::Renderer(Ref<Resources::AssetManager> resManager, Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend) : mBackend(backend), mRenderResourceManager(renderResManager), mResourceManager(resManager), backendApi(backend->api) {
     }
 
     void Renderer::init() {

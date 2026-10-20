@@ -1,8 +1,8 @@
 #pragma once
 #include <VoxCore/Define.h>
 #include <VoxCore/Pointers.h>
-#include <VoxEngine/resources/assets/MaterialAsset.h>
-#include <VoxEngine/resources/assets/MeshAsset.h>
+#include <../../../../Editor/src/assets/MaterialAsset.h>
+#include <../../../../Editor/src/assets/MeshAsset.h>
 
 #include "MaterialPipelines.h"
 #include "RenderBackend.h"
@@ -10,7 +10,7 @@
 #include "buffers/UniformBufferAllocator.h"
 
 namespace Vox::Resources {
-    class ResourceManager;
+    class AssetManager;
 }
 
 RENDER_NS
@@ -100,8 +100,8 @@ RENDER_NS
 
         virtual void updateSampler(Ref<Texture> texture) = 0;
 
-        Ref<Texture> getTexture(InternedString path, Ref<Resources::ResourceManager> resourceManager);
-        Ref<BindGroup> getMaterialTextureGroup(ConstRef<Resources::MaterialAsset> material, Ref<PipelineState> pso, Ref<Resources::ResourceManager> resourceManager);
+        Ref<Texture> getTexture(InternedString path, Ref<Resources::AssetManager> resourceManager);
+        Ref<BindGroup> getMaterialTextureGroup(ConstRef<Resources::MaterialAsset> material, Ref<PipelineState> pso, Ref<Resources::AssetManager> resourceManager);
 
         Ref<UniformBuffer> getCameraBuffer() const {
             return mCameraBuffer;

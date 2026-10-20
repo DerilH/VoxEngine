@@ -15,14 +15,14 @@
 
 #include "VoxEngine/render/RenderCore.h"
 #include "VoxEngine/resources/assets/ModelAsset.h"
-#include "VoxEngine/resources/assets/ShaderAsset.h"
+#include "../../../Editor/src/assets/variants/ShaderAsset.h"
 #include "VoxEngine/render/RenderBackend.h"
-#include "VoxEngine/resources/assets/MeshAsset.h"
+#include "../../../Editor/src/assets/variants/MeshAsset.h"
 #include "VoxEngine/scene/components/CameraComponent.h"
 #include "VoxEngine/scene/GameObjectRegistry.h"
 
 VOX_NS
-    Engine::Engine(std::string mTitle, const Render::RenderAPI renderApi) : mTitle(std::move(mTitle)), mRenderApi(renderApi), mResourceManager(new Resources::ResourceManager()), mGameObjectRegistry(new Scene::GameObjectRegistry()) {
+    Engine::Engine(std::string mTitle, const Render::RenderAPI renderApi) : mTitle(std::move(mTitle)), mRenderApi(renderApi), mResourceManager(new Resources::AssetManager()), mGameObjectRegistry(new Scene::GameObjectRegistry()) {
         VOX_CHECK(mRenderApi == Render::VULKAN_API, "Unsupported execute api");
     }
 

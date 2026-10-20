@@ -1,7 +1,7 @@
 #pragma once
 #include <VoxCore/containers/Containers.h>
 #include <VoxEngine/Engine.h>
-#include <VoxEngine/resources/AssetDirectory.h>
+#include <../assets/AssetDirectory.h>
 
 #include "AssetIcon.h"
 #include "assets/editor/AssetEditor.h"
@@ -14,7 +14,7 @@ namespace Vox::Editor {
         bool mShouldCloseEditor = false;
         Vector<UPtr<AssetIcon>> mIcons;
         Ref<Engine> mEngine;
-        Ref<Resources::ResourceManager> mResManager;
+        Ref<Resources::AssetManager> mResManager;
 
         void renderTree();
         void renderDirNode(ConstRef<Resources::AssetDirectory> dir);

@@ -6,7 +6,7 @@
 #include <VoxEngine/render/Renderer.h>
 
 RENDER_NS
-    Renderer* RendererFactory::Create(RenderAPI api, Ref<Resources::ResourceManager> resManager) {
+    Renderer* RendererFactory::Create(RenderAPI api, Ref<Resources::AssetManager> resManager) {
         auto back = CreateRenderBackend(api);
         auto res = CreateRenderResourceManager(back);
 

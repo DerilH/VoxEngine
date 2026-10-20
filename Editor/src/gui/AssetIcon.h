@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include <VoxEngine/resources/assets/Asset.h>
+#include <../assets/Asset.h>
 
 namespace Vox::Editor {
     class AssetIcon {

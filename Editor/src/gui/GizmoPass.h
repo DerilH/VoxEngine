@@ -8,7 +8,7 @@
 #include <VoxEngine/render/buffers/UniformBuffer.h>
 #include <VoxEngine/render/passes/RenderPass.h>
 #include <VoxEngine/render/state/PipelineState.h>
-#include <VoxEngine/resources/ResourceManager.h>
+#include <../assets/ResourceManager.h>
 #include <VoxEngine/scene/components/RenderLayer.h>
 
 namespace Vox::Editor {
