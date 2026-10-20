@@ -1,6 +1,7 @@
 #pragma once
 
 #include <yyjson.h>
+#include <cstdio>
 #include <filesystem>
 #include <string>
 #include <string_view>
@@ -14,6 +15,7 @@
 #include <VoxCore/math/Hash128.h>
 #include <VoxCore/containers/Containers.h>
 #include <VoxCore/serialization/Serializable.h>
+#include <VoxCore/serialization/SerializationContext.h>
 
 SERIALIZATION_NS
 
@@ -26,37 +28,179 @@ SERIALIZATION_NS
     using json = JsonSerialization;
 
     template<>
+    class SerializationContext<JsonSerialization> {
+    public:
+        yyjson_mut_doc *doc = nullptr;
+        yyjson_mut_val *root = nullptr;
+        yyjson_doc *readDoc = nullptr;
+        yyjson_val *readRoot = nullptr;
+        bool ownsDoc = true;
+        bool ownsReadDoc = true;
+
+        SerializationContext() {
+            doc = yyjson_mut_doc_new(nullptr);
+            root = yyjson_mut_obj(doc);
+            yyjson_mut_doc_set_root(doc, root);
+        }
+
+        explicit SerializationContext(FILE *) : SerializationContext() {}
+
+        SerializationContext(yyjson_mut_doc *doc, yyjson_mut_val *root)
+            : doc(doc), root(root), ownsDoc(false) {
+        }
+
+        ~SerializationContext() {
+            reset();
+        }
+
+        void reset() {
+            if (ownsDoc && doc) {
+                yyjson_mut_doc_free(doc);
+                doc = nullptr;
+                root = nullptr;
+            }
+            if (ownsReadDoc && readDoc) {
+                yyjson_doc_free(readDoc);
+                readDoc = nullptr;
+                readRoot = nullptr;
+            }
+        }
+
+        SerializationContext(const SerializationContext &) = delete;
+        SerializationContext &operator=(const SerializationContext &) = delete;
+
+        SerializationContext(SerializationContext &&other) noexcept
+            : doc(other.doc), root(other.root), readDoc(other.readDoc), readRoot(other.readRoot),
+              ownsDoc(other.ownsDoc), ownsReadDoc(other.ownsReadDoc) {
+            other.doc = nullptr;
+            other.root = nullptr;
+            other.readDoc = nullptr;
+            other.readRoot = nullptr;
+            other.ownsDoc = false;
+            other.ownsReadDoc = false;
+        }
+
+        SerializationContext &operator=(SerializationContext &&other) noexcept {
+            if (this != &other) {
+                reset();
+                doc = other.doc;
+                root = other.root;
+                readDoc = other.readDoc;
+                readRoot = other.readRoot;
+                ownsDoc = other.ownsDoc;
+                ownsReadDoc = other.ownsReadDoc;
+                other.doc = nullptr;
+                other.root = nullptr;
+                other.readDoc = nullptr;
+                other.readRoot = nullptr;
+                other.ownsDoc = false;
+                other.ownsReadDoc = false;
+            }
+            return *this;
+        }
+
+        void flush(FILE *file, bool pretty = true) {
+            if (!file || !doc) return;
+            size_t jsonSize = 0;
+            yyjson_write_err writeErr;
+            yyjson_write_flag flags = YYJSON_WRITE_ESCAPE_UNICODE;
+            if (pretty) flags |= YYJSON_WRITE_PRETTY;
+            char *jsonStr = yyjson_mut_write_opts(doc, flags, nullptr, &jsonSize, &writeErr);
+            if (jsonStr) {
+                fwrite(jsonStr, sizeof(char), jsonSize, file);
+                free(jsonStr);
+            }
+        }
+
+        std::string toString(bool pretty = true) const {
+            if (!doc) return {};
+            size_t jsonSize = 0;
+            yyjson_write_err writeErr;
+            yyjson_write_flag flags = YYJSON_WRITE_ESCAPE_UNICODE;
+            if (pretty) flags |= YYJSON_WRITE_PRETTY;
+            char *jsonStr = yyjson_mut_write_opts(doc, flags, nullptr, &jsonSize, &writeErr);
+            std::string result;
+            if (jsonStr) {
+                result.assign(jsonStr, jsonSize);
+                free(jsonStr);
+            }
+            return result;
+        }
+
+        static SerializationContext createForReading(std::string_view jsonStr) {
+            SerializationContext ctx;
+            ctx.reset();
+            yyjson_read_err readErr;
+            ctx.readDoc = yyjson_read_opts(const_cast<char *>(jsonStr.data()), jsonStr.size(), 0, nullptr, &readErr);
+            if (ctx.readDoc) {
+                ctx.readRoot = yyjson_doc_get_root(ctx.readDoc);
+            }
+            ctx.ownsReadDoc = true;
+            return ctx;
+        }
+
+        static SerializationContext createForReading(FILE *file) {
+            if (!file) return {};
+            long curr = ftell(file);
+            fseek(file, 0, SEEK_END);
+            long size = ftell(file) - curr;
+            fseek(file, curr, SEEK_SET);
+            if (size <= 0) return {};
+            std::string buffer(static_cast<size_t>(size), '\0');
+            size_t readBytes = fread(buffer.data(), sizeof(char), static_cast<size_t>(size), file);
+            buffer.resize(readBytes);
+            return createForReading(buffer);
+        }
+    };
+
+    using JsonContext = SerializationContext<JsonSerialization>;
+    using json_context = SerializationContext<JsonSerialization>;
+
+    template<>
     class Serializable<JsonSerialization> {
     public:
         virtual ~Serializable() = default;
 
-        // Core pure virtual method for JSON serialization
-        virtual void serialize(yyjson_mut_doc *doc, yyjson_mut_val *root) const = 0;
+        // Unified virtual method in base Serializable
+        virtual void serialize(FILE *file) const = 0;
 
-        // Virtual method for JSON deserialization
-        virtual bool deserialize(yyjson_val *root) { return true; }
-
-        // Convenience serialization methods
+        // Convenience methods
         std::string toJsonString(bool pretty = true) const;
         bool serializeToFile(const std::filesystem::path &path, bool pretty = true) const;
-        void serialize(FILE *file) const;
-        void serializeJson(FILE *file, bool pretty = true) const;
 
-        // Convenience deserialization methods
-        bool deserializeFromString(std::string_view jsonStr);
-        bool deserializeFromFile(const std::filesystem::path &path);
-        bool deserializeFromMemory(const void *data, size_t size);
-        bool deserialize(FILE *file);
-        bool deserializeJson(FILE *file);
+        // --- UNIFIED SERIALIZATION (with context and key) ---
+        template<typename T>
+        static inline void serializeInternal(FILE *, SerializationContext<JsonSerialization> &ctx, const char *key, const T &val) {
+            serializeInternal(ctx.doc, ctx.root, key, val);
+        }
 
-        // --- SERIALIZATION HELPERS ---
+        template<typename T, typename... Rest>
+        requires (sizeof...(Rest) > 0 && sizeof...(Rest) % 2 == 0)
+        static inline void serializeInternal(FILE *file, SerializationContext<JsonSerialization> &ctx, const char *key, const T &val, Rest &&... rest) {
+            serializeInternal(file, ctx, key, val);
+            serializeInternal(file, ctx, std::forward<Rest>(rest)...);
+        }
 
-        // Booleans
+        // --- UNIFIED DESERIALIZATION (with context and key) ---
+        template<typename T>
+        static inline bool deserializeInternal(FILE *, SerializationContext<JsonSerialization> &ctx, const char *key, T &val) {
+            if (!ctx.readRoot) return false;
+            return deserializeInternal(ctx.readRoot, key, val);
+        }
+
+        template<typename T, typename... Rest>
+        requires (sizeof...(Rest) > 0 && sizeof...(Rest) % 2 == 0)
+        static inline bool deserializeInternal(FILE *file, SerializationContext<JsonSerialization> &ctx, const char *key, T &val, Rest &&... rest) {
+            bool ok = deserializeInternal(file, ctx, key, val);
+            return ok && deserializeInternal(file, ctx, std::forward<Rest>(rest)...);
+        }
+
+        // --- DIRECT JSON SERIALIZATION HELPERS ---
+
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, bool val) {
             yyjson_mut_obj_add_bool(doc, obj, key, val);
         }
 
-        // Integral types
         template<typename T>
         requires std::is_integral_v<T> && (!std::is_same_v<T, bool>)
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, T val) {
@@ -67,14 +211,12 @@ SERIALIZATION_NS
             }
         }
 
-        // Floating point
         template<typename T>
         requires std::is_floating_point_v<T>
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, T val) {
             yyjson_mut_obj_add_real(doc, obj, key, static_cast<double>(val));
         }
 
-        // Strings
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const std::string &val) {
             yyjson_mut_obj_add_strncpy(doc, obj, key, val.data(), val.size());
         }
@@ -91,7 +233,6 @@ SERIALIZATION_NS
             }
         }
 
-        // Enums
         template<typename T>
         requires std::is_enum_v<T>
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const T &val) {
@@ -103,13 +244,11 @@ SERIALIZATION_NS
             }
         }
 
-        // UUID
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const UUID &uuid) {
             auto str = uuid.toString();
             yyjson_mut_obj_add_strncpy(doc, obj, key, str.data(), str.size());
         }
 
-        // Hash128
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const Hash128 &hash) {
             auto hObj = yyjson_mut_obj(doc);
             yyjson_mut_obj_add_uint(doc, hObj, "hi", hash.hi);
@@ -117,16 +256,6 @@ SERIALIZATION_NS
             yyjson_mut_obj_add_val(doc, obj, key, hObj);
         }
 
-        // Nested Serializable<JsonSerialization>
-        template<typename Sub>
-        requires std::is_base_of_v<Serializable<JsonSerialization>, Sub>
-        static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const Sub &sub) {
-            auto child = yyjson_mut_obj(doc);
-            sub.serialize(doc, child);
-            yyjson_mut_obj_add_val(doc, obj, key, child);
-        }
-
-        // Vector of elements
         template<typename T>
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const std::vector<T> &vec) {
             auto arr = yyjson_mut_arr(doc);
@@ -150,18 +279,13 @@ SERIALIZATION_NS
                     } else {
                         yyjson_mut_arr_add_int(doc, arr, std::to_underlying(item));
                     }
-                } else if constexpr (std::is_base_of_v<Serializable<JsonSerialization>, T>) {
-                    auto childObj = yyjson_mut_obj(doc);
-                    item.serialize(doc, childObj);
-                    yyjson_mut_arr_add_val(arr, childObj);
                 }
             }
             yyjson_mut_obj_add_val(doc, obj, key, arr);
         }
 
-        // --- DESERIALIZATION HELPERS ---
+        // --- DIRECT JSON DESERIALIZATION HELPERS ---
 
-        // Booleans
         static inline bool deserializeInternal(yyjson_val *obj, const char *key, bool &out) {
             auto v = yyjson_obj_get(obj, key);
             if (v && yyjson_is_bool(v)) {
@@ -171,7 +295,6 @@ SERIALIZATION_NS
             return false;
         }
 
-        // Integral types
         template<typename T>
         requires std::is_integral_v<T> && (!std::is_same_v<T, bool>)
         static inline bool deserializeInternal(yyjson_val *obj, const char *key, T &out) {
@@ -187,7 +310,6 @@ SERIALIZATION_NS
             return false;
         }
 
-        // Floating point
         template<typename T>
         requires std::is_floating_point_v<T>
         static inline bool deserializeInternal(yyjson_val *obj, const char *key, T &out) {
@@ -199,7 +321,6 @@ SERIALIZATION_NS
             return false;
         }
 
-        // Strings
         static inline bool deserializeInternal(yyjson_val *obj, const char *key, std::string &out) {
             auto v = yyjson_obj_get(obj, key);
             if (v && yyjson_is_str(v)) {
@@ -209,7 +330,6 @@ SERIALIZATION_NS
             return false;
         }
 
-        // Enums
         template<typename T>
         requires std::is_enum_v<T>
         static inline bool deserializeInternal(yyjson_val *obj, const char *key, T &out) {
@@ -228,7 +348,6 @@ SERIALIZATION_NS
             return false;
         }
 
-        // UUID
         static inline bool parseUUIDString(std::string_view str, UUID &out) {
             uint64_t hi = 0, lo = 0;
             int digitCount = 0;
@@ -270,7 +389,6 @@ SERIALIZATION_NS
             return false;
         }
 
-        // Hash128
         static inline bool parseHash128String(std::string_view str, Hash128 &out) {
             uint64_t hi = 0, lo = 0;
             int digitCount = 0;
@@ -313,16 +431,6 @@ SERIALIZATION_NS
             return false;
         }
 
-        // Nested Serializable<JsonSerialization>
-        template<typename Sub>
-        requires std::is_base_of_v<Serializable<JsonSerialization>, Sub>
-        static inline bool deserializeInternal(yyjson_val *obj, const char *key, Sub &out) {
-            auto v = yyjson_obj_get(obj, key);
-            if (!v || !yyjson_is_obj(v)) return false;
-            return out.deserialize(v);
-        }
-
-        // Vector
         template<typename T>
         static inline bool deserializeInternal(yyjson_val *obj, const char *key, std::vector<T> &out) {
             auto arr = yyjson_obj_get(obj, key);
@@ -353,11 +461,6 @@ SERIALIZATION_NS
                     } else if (yyjson_is_num(val)) {
                         out.push_back(static_cast<T>(yyjson_get_sint(val)));
                     }
-                } else if constexpr (std::is_base_of_v<Serializable<JsonSerialization>, T>) {
-                    if (yyjson_is_obj(val)) {
-                        T item{};
-                        if (item.deserialize(val)) out.push_back(std::move(item));
-                    }
                 }
             }
             return true;
@@ -370,4 +473,6 @@ VOX_NS
     using JsonSerialization = Vox::Resources::Serialization::JsonSerialization;
     using Json = Vox::Resources::Serialization::Json;
     using json = Vox::Resources::Serialization::json;
+    using JsonContext = Vox::Resources::Serialization::JsonContext;
+    using json_context = Vox::Resources::Serialization::json_context;
 NS_END

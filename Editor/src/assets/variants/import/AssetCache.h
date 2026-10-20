@@ -3,7 +3,7 @@
 #include "../../Serializable.h"
 
 ASSETS_NS
-    struct AssetCache : public Serializable<Binary> {
+    struct AssetCache : public Serializable<Json> {
         Hash128 hash{0, 0};
         uint64_t mtime{0};
         uint64_t size{0};
@@ -17,13 +17,20 @@ ASSETS_NS
         }
 
         void serialize(FILE *file) const override {
-            serializeInternal(file, hash, mtime, size);
+            SerializationContext<Json> ctx;
+            serializeInternal(file, ctx, "hash", hash, "mtime", mtime, "size", size);
+            ctx.flush(file);
         }
 
-        static AssetCache deserialize(FILE *file) {
-            AssetCache cache{};
-            deserializeInternal(file, cache.hash, cache.mtime, cache.size);
-            return cache;
+        static Expected<AssetCache> deserialize(FILE *file) {
+            VOX_EXPECT(file != nullptr, "Invalid file for metadata deserialization");
+            auto metadata = AssetCache();
+            auto ctx = SerializationContext<Json>::createForReading(file);
+            if (ctx.readRoot) {
+                deserializeInternal(file, ctx, "hash", metadata.hash, "mtime", metadata.mtime, "size", metadata.size);
+                return metadata;
+            }
+            VOX_EXPECT(false, "Invalid metadata file, root not found")
         }
     };
 NS_END
