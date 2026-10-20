@@ -4,7 +4,7 @@
 #include "Component.h"
 
 SCENE_NS
-    class GameObjectStorage;
+    class TransformStorage;
     class GameObject;
 
     class CameraComponent : public Component {

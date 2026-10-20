@@ -2,7 +2,7 @@
 #include <imgui.h>
 #include <VoxEngine/resources/ResourceManager.h>
 #include <VoxEngine/scene/GameObject.h>
-#include <VoxEngine/scene/GameObjectStorage.h>
+#include <VoxEngine/scene/TransformStorage.h>
 #include <VoxEngine/scene/Scene.h>
 #include <VoxEngine/scene/components/MeshRendererComponent.h>
 #include <VoxEngine/scene/components/Transform.h>
@@ -190,7 +190,7 @@ namespace Vox::Editor {
         if (isOpen) {
             if (hasChildren) {
                 for (auto child: el->transform->getChilds()->getAll()) {
-                    renderNode(child);
+                    renderNode(child->gameObject);
                 }
             }
             ImGui::TreePop();

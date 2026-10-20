@@ -7,10 +7,10 @@
 #include "Component.h"
 
 SCENE_NS
-    class GameObjectStorage;
+    class TransformStorage;
     class GameObject;
 
-    class Transform : Component {
+    class Transform : public Component {
         friend GameObject;
 
         Vec3 mPosition = Vec3(0);
@@ -21,8 +21,7 @@ SCENE_NS
         Vec3 mLocalScale = Vec3(1);
         Quat mLocalRotation = Quat(1,0,0,0);
 
-        Ref<GameObject> parent = nullptr;
-        Ref<GameObjectStorage> mChilds;
+        Ref<TransformStorage> mChilds;
 
         explicit Transform(Ref<GameObject> gameObject);
     public:
@@ -75,7 +74,7 @@ SCENE_NS
             return modelMat;
         }
 
-        ConstRef<GameObjectStorage> getChilds() const {
+        ConstRef<TransformStorage> getChilds() const {
             return mChilds;
         }
 
