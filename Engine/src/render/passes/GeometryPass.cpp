@@ -6,8 +6,6 @@
 
 #include <VoxEngine/render/buffers/UniformBuffer.h>
 #include <VoxEngine/render/state/PipelineState.h>
-#include <../../../../Editor/src/assets/ResourceManager.h>
-#include <../../../../Editor/src/assets/TextureAsset.h>
 #include <VoxEngine/scene/components/RenderLayer.h>
 
 #include "VoxEngine/render/Renderer.h"

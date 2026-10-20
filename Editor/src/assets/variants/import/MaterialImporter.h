@@ -4,13 +4,14 @@
 
 #pragma once
 
-#include <VoxCore/Pointers.h>
-
 #include "AssetImporter.h"
-#include "../AssetLoader.h"
 
 ASSETS_NS
-class MaterialImporter : public AssetImporter {
-    Ref<Asset> load(InternedString path, ArrayView<void> data) override;
-};
+    class MaterialImporter : public AssetImporter {
+    public:
+        Ref<Asset> load(InternedString path, ArrayView<void> data) override;
+        AssetType type() override {
+            return AssetType::MATERIAL;
+        }
+    };
 NS_END

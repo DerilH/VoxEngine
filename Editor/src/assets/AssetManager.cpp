@@ -7,36 +7,40 @@
 
 #include <magic_enum/magic_enum.hpp>
 #include <memory>
+#define XXH_INLINE_ALL
 #include <xxhash.h>
+#include <functional>
 
 #include "variants/import/AssetMetadata.h"
 #include "variants/import/FbxImporter.h"
 #include "variants/import/MaterialImporter.h"
 #include "variants/import/ShaderImporter.h"
 #include "variants/import/TextureImporter.h"
+#include "variants/import/RegularFileImporter.h"
 #include "variants/write/MaterialWriter.h"
 
 ASSETS_NS
     Expected<FILE *> openFileRead(const char *path) {
         auto file = std::fopen(path, "rb");
-        VOX_EXPECT(file, "Cannot open file for read", std::strerror(errno));
+        VOX_EXPECT(file != nullptr, "Cannot open file for read", std::strerror(errno));
         return file;
     }
 
     Expected<FILE *> openFileWrite(const char *path) {
-        auto file = std::fopen(path, "w");
-        VOX_EXPECT(file, "Cannot open file for write", std::strerror(errno));
+        auto file = std::fopen(path, "wb");
+        VOX_EXPECT(file != nullptr, "Cannot open file for write", std::strerror(errno));
         return file;
     }
 
-    Expected<ArrayView<void> > readFile(const std::filesystem::path &path) {
+    Expected<ArrayView<void> > readFileData(const std::filesystem::path &path) {
         auto file = openFileRead(path.c_str());
         VOX_EXPECT(file, file.error());
-        VOX_EXPECT(std::fseek(*file, 0, SEEK_END), "Cant seek file {}", std::strerror(errno));
+        VOX_EXPECT(std::fseek(*file, 0, SEEK_END) == 0, "Cant seek file {}", std::strerror(errno));
 
         long fileSize = std::ftell(*file);
         if (fileSize < 0) {
-            VOX_EXPECT(false, "Cant read file {}", std::strerror(errno))
+            fclose(*file);
+            VOX_EXPECT(false, "Cant read file {}", std::strerror(errno));
         }
 
         std::rewind(*file);
@@ -44,7 +48,11 @@ ASSETS_NS
         auto data = new char8_t[fileSize];
         if (fileSize > 0) {
             const auto bytesRead = std::fread(data, 1, fileSize, *file);
-            VOX_EXPECT(bytesRead == fileSize, "Cant fully read file {}", std::strerror(errno));
+            if (bytesRead != static_cast<size_t>(fileSize)) {
+                delete[] data;
+                fclose(*file);
+                VOX_EXPECT(false, "Cant fully read file {}", std::strerror(errno));
+            }
         }
 
         fclose(*file);
@@ -59,8 +67,6 @@ ASSETS_NS
             sys_time.time_since_epoch()
         ).count();
     }
-
-    class AssetWriter;
 
     const UPtr<RegularFileImporter> AssetManager::sRegularLoader = makeUPtr<RegularFileImporter>();
 
@@ -78,7 +84,7 @@ ASSETS_NS
 
     const HashMap<AssetType, UPtr<AssetWriter> > AssetManager::sWriterByType = []() {
         HashMap<AssetType, UPtr<AssetWriter> > map;
-        // map.emplace(AssetType::MATERIAL, makeUPtr<MaterialWriter>());
+        map.emplace(AssetType::MATERIAL, makeUPtr<MaterialWriter>());
         return map;
     }();
 
@@ -86,21 +92,22 @@ ASSETS_NS
         auto path = mAssetsCache / asset.toString();
         auto file = openFileRead(path.c_str());
         VOX_EXPECT(file, "");
-        return AssetCache::deserialize(*file);
+        auto cache = AssetCache::deserialize(*file);
+        fclose(*file);
+        return cache;
     }
 
     void AssetManager::writeCache(const UUID asset, const AssetCache &cache) const {
         const auto path = mAssetsCache / asset.toString();
         auto file = openFileWrite(path.c_str());
         if (!file) {
-            LOG_WARN("Cannot write asset cache {}, cause:", path.c_str(), file.error().format());
+            LOG_WARN("Cannot write asset cache {}, cause: {}", path.c_str(), file.error().format());
             return;
         }
 
-
         cache.serialize(*file);
+        fclose(*file);
     }
-
 
     void AssetManager::loadAll() {
         VOX_CHECK(!mAssetsRoot.empty(), "Resource root path not set");
@@ -108,26 +115,16 @@ ASSETS_NS
     }
 
     bool isMetadata(const std::filesystem::path &extension) {
-        const auto &str = extension.native();
-        const auto size = str.size();
-
-        if (size < 5) return false;
-
-        using CharT = std::filesystem::path::value_type;
-
-        return str[size - 5] == static_cast<CharT>('.') &&
-               str[size - 4] == static_cast<CharT>('m') &&
-               str[size - 3] == static_cast<CharT>('e') &&
-               str[size - 2] == static_cast<CharT>('t') &&
-               str[size - 1] == static_cast<CharT>('a');
+        return extension == ".meta";
     }
 
     Expected<AssetCache> createCache(const std::filesystem::path &path) {
         const auto size = std::filesystem::file_size(path);
         const auto mtime = readTime(path);
-        const auto file = readFile(path);
+        const auto file = readFileData(path);
         VOX_EXPECT(file, file.error());
         const auto [low64, high64] = XXH3_128bits(file->pData, file->size());
+        delete[] static_cast<char8_t *>(file->pData);
         return AssetCache{Hash128(high64, low64), mtime, size};
     }
 
@@ -152,123 +149,173 @@ ASSETS_NS
     }
 
     void AssetManager::loadDir(const std::filesystem::path &currentPath, AssetDirectory &currentDir) {
-        for (const auto &entry: std::filesystem::directory_iterator(currentPath)) {
+        namespace fs = std::filesystem;
+        if (!fs::exists(currentPath) || !fs::is_directory(currentPath)) return;
+
+        for (const auto &entry: fs::directory_iterator(currentPath)) {
             const auto &path = entry.path();
-            auto relPath = relative(path, mAssetsRoot);
-            if (!entry.is_regular_file()) {
-                if (entry.is_directory()) {
-                    auto parentRel = relative(path.parent_path(), mAssetsRoot);
-                    auto dir = makeUPtr<AssetDirectory>(relPath.string(), path.filename());
-                    loadDir(path, *dir);
-                    currentDir.addDirectory(std::move(dir));
+
+            if (entry.is_directory()) {
+                if (path.filename() == ".cache" || path.filename().string().starts_with(".")) {
+                    continue;
                 }
+                auto relPath = fs::relative(path, mAssetsRoot);
+                auto dir = makeUPtr<AssetDirectory>(relPath.string(), path.filename().string());
+                loadDir(path, *dir);
+                currentDir.addDirectory(std::move(dir));
                 continue;
             }
+
+            if (!entry.is_regular_file()) continue;
 
             auto extension = path.extension();
             if (isMetadata(extension)) {
                 auto base = path.stem();
                 auto assetPath = path.parent_path() / base;
-                if (!std::filesystem::exists(assetPath)) {
-                    LOG_WARN("Alone asset metadata found {}", path.c_str());
-                    // std::filesystem::remove(assetPath);
-                    continue;
+                if (!fs::exists(assetPath)) {
+                    LOG_WARN("Alone asset metadata found: {}", path.c_str());
                 }
-
-
-                auto file = openFileRead(path.c_str());
-                if (!file) {
-                    LOG_WARN("Cannot load asset metadata {}: {}", path.c_str(), file.error().format())
-                    continue;
-                }
-                const auto ptr = AssetMetadata::deserialize(file.value());
-                if (!ptr) {
-                    LOG_WARN("Cannot load asset metadata {}, : {}", path.c_str(), file.error().format())
-                }
-
-                if (!isMetadataValid())
-
-                    mAssetsMetadata.emplace((*ptr)->uuid, *ptr);
+                continue;
             }
+
+            if (path.filename().string().starts_with(".")) {
+                continue;
+            }
+
+            auto relPath = fs::relative(path, mAssetsRoot);
+            fs::path metaPath = path;
+            metaPath += ".meta";
+
+            UPtr<AssetMetadata> metadata = nullptr;
+            if (fs::exists(metaPath)) {
+                auto metaFile = openFileRead(metaPath.c_str());
+                if (metaFile) {
+                    auto res = AssetMetadata::deserialize(*metaFile);
+                    fclose(*metaFile);
+                    if (res) {
+                        metadata = std::move(*res);
+                    } else {
+                        LOG_WARN("Corrupted metadata at {}, regenerating", metaPath.c_str());
+                    }
+                }
+            }
+
+            if (!metadata) {
+                UUID uuid = UUID::uuid4();
+                AssetType type = AssetType::REGULAR;
+                auto it = sImporterByExtension.find(extension.string());
+                if (it != sImporterByExtension.end()) {
+                    type = it->second->type();
+                }
+                metadata = makeUPtr<AssetMetadata>(uuid, 1, type, nullptr);
+                auto metaWriteFile = openFileWrite(metaPath.c_str());
+                if (metaWriteFile) {
+                    metadata->serialize(*metaWriteFile);
+                    fclose(*metaWriteFile);
+                } else {
+                    LOG_WARN("Cannot write metadata to {}: {}", metaPath.c_str(), metaWriteFile.error().format());
+                }
+            }
+
+            UUID assetUuid = metadata->uuid;
+            currentDir.addAsset(assetUuid);
+
+            updateMetadata(assetUuid, path);
+
+            auto it = sImporterByExtension.find(extension.string());
+            const auto importer = (it == sImporterByExtension.end()) ? sRegularLoader.get() : it->second.get();
+
+            try {
+                auto fileData = readFileData(path);
+                if (fileData) {
+                    Ref<Asset> asset = importer->load(relPath.string(), *fileData);
+                    if (asset) {
+                        mLoadedAssets.emplace(assetUuid, UPtr<Asset>(asset));
+                        mPathToUUID[relPath.string()] = assetUuid;
+                        mUUIDToPath[assetUuid] = relPath.string();
+
+                        for (uint32_t i = 0; i < asset->getNestedCount(); i++) {
+                            auto nested = asset->getNested()[i];
+                            if (nested) {
+                                mNestedAssets[nested->getPath()] = nested;
+                            }
+                        }
+                    }
+                } else {
+                    LOG_ERROR("Failed to read asset file {}: {}", path.c_str(), fileData.error().format());
+                }
+            } catch (const std::exception &e) {
+                LOG_ERROR("Exception while loading asset {}: {}", path.c_str(), e.what());
+            }
+
+            mAssetsMetadata.emplace(assetUuid, std::move(metadata));
         }
-        // for (const auto &entry: std::filesystem::directory_iterator(currentPath)) {
-        //     const auto &path = entry.path();
-        //     auto relPath = relative(path, mAssetsRoot);
-        //     if (!entry.is_regular_file()) {
-        //         if (entry.is_directory()) {
-        //             auto parentRel = relative(path.parent_path(), mAssetsRoot);
-        //             auto dir = makeUPtr<AssetDirectory>(relPath.string(), path.filename());
-        //             loadDir(path, *dir);
-        //             currentDir.addDirectory(std::move(dir));
-        //         }
-        //         continue;
-        //     }
-        //     auto it = sImporterByExtension.find(path.extension());
-        //     const auto loader = it == sImporterByExtension.end() ? sRegularLoader.get() : it->second.get();
-        //     try {
-        //         auto view = readFile(path);
-        //         Asset *asset = loader->load(relPath, view);
-        //         mLoadedAssets.emplace(relPath.string(), asset);
-        //         for (int i = 0; i < asset->getNestedCount(); i++) {
-        //             auto nested = asset->getNested()[i];
-        //             mLoadedAssets.emplace(nested->getPath(), nested);
-        //         }
-        //     } catch (std::exception &e) {
-        //         LOG_ERROR("Error while loading asset: {} {}", path.string(), e.what())
-        //     }
-        // }
     }
 
     void AssetManager::processDirty() {
         VOX_CHECK(!mAssetsRoot.empty(), "Resource root path not set");
 
         for (const auto &key: mDirty) {
-            auto &asset = mLoadedAssets[key];
+            auto it = mLoadedAssets.find(key);
+            if (it == mLoadedAssets.end() || !it->second) continue;
+            const auto &asset = it->second;
             const auto &writer = sWriterByType.find(asset->type());
             if (writer == sWriterByType.end()) {
-                LOG_WARN("No writer provided for asset: {} of type: {}. Skipped", asset->getPath(), magic_enum::enum_name<>(asset->type()));
-            } else if (asset) {
-                writer->second->writeToFile(mAssetsRoot / asset->getPath(), asset.get());
+                LOG_WARN("No writer provided for asset: {} of type: {}. Skipped", asset->getPath().c_str(), magic_enum::enum_name<>(asset->type()));
+            } else {
+                writer->second->writeToFile(mAssetsRoot / asset->getPath().c_str(), asset.get());
+                updateMetadata(key, mAssetsRoot / asset->getPath().c_str());
             }
         }
         mDirty.clear();
     }
 
+    Expected<ArrayView<void> > AssetManager::readFile(const std::filesystem::path &path) const {
+        return readFileData(path);
+    }
 
     Vector<ConstRef<Asset> > AssetManager::listDirAssets(InternedString path) const {
-        static const Vector<ConstRef<Asset> > emptyVector(0);
-        auto dirPath = mAssetsRoot / path;
-        if (!std::filesystem::exists(dirPath) || !std::filesystem::is_directory(dirPath)) return emptyVector;
-
         Vector<ConstRef<Asset> > out;
-        for (const auto &entry: std::filesystem::directory_iterator(dirPath)) {
-            if (!entry.is_regular_file()) continue;
+        std::function<ConstRef<AssetDirectory>(ConstRef<AssetDirectory>, const std::string &)> findDir =
+                [&](ConstRef<AssetDirectory> node, const std::string &target) -> ConstRef<AssetDirectory> {
+            if (!node) return nullptr;
+            if (node->path == target || (target == "." && node->path == ".")) return node;
+            for (const auto &child: node->getNested()) {
+                auto found = findDir(child.get(), target);
+                if (found) return found;
+            }
+            return nullptr;
+        };
 
-            const auto &p = entry.path();
-            auto rel = relative(p, mAssetsRoot);
-            try {
-                ConstRef<Asset> r = mLoadedAssets.at(rel).get();
-                out.emplace_back(r);
-            } catch (std::exception &e) {
+        std::string target = path.c_str();
+        if (target.empty()) target = ".";
+
+        auto dir = findDir(mRootDir.get(), target);
+        if (dir) {
+            for (const auto &uuid: dir->getAssets()) {
+                auto it = mLoadedAssets.find(uuid);
+                if (it != mLoadedAssets.end() && it->second) {
+                    out.emplace_back(it->second.get());
+                }
             }
         }
         return out;
     }
 
     void AssetManager::setPaths(std::filesystem::path path, std::filesystem::path cachePath) {
-        VOX_CHECK(is_directory(path), "Assets root path must be a directory");
-        VOX_CHECK(exists(path), "Assets root not exists");
-        mRootDir = makeUPtr<AssetDirectory>(".", path.filename());
+        VOX_CHECK(std::filesystem::is_directory(path), "Assets root path must be a directory");
+        VOX_CHECK(std::filesystem::exists(path), "Assets root not exists");
+        mRootDir = makeUPtr<AssetDirectory>(".", path.filename().string());
         mAssetsRoot = std::move(path);
         LOG_INFO("Assets root: {}", std::filesystem::absolute(mAssetsRoot).lexically_normal().string());
 
         VOX_CHECK(cachePath.filename() == ".cache", "Cache dir name does not equal to '.cache'");
 
         if (!std::filesystem::exists(cachePath)) {
-            VOX_CHECK_FMT(std::filesystem::create_directories(cachePath), "Cannot create cache dir {}", cachePath.c_str())
+            VOX_CHECK_FMT(std::filesystem::create_directories(cachePath), "Cannot create cache dir {}", cachePath.c_str());
         }
-        mAssetsCache = cachePath;
-        LOG_INFO("Assets cache path: {}", std::filesystem::absolute(mAssetsRoot).lexically_normal().string());
+        mAssetsCache = std::move(cachePath);
+        LOG_INFO("Assets cache path: {}", std::filesystem::absolute(mAssetsCache).lexically_normal().string());
     }
 
 NS_END

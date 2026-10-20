@@ -2,8 +2,12 @@
 #include <cstdint>
 #include <random>
 #include <cstdio>
+#include <format>
+#include <string>
+#include <bit>
 
 #include <VoxCore/Define.h>
+#include <VoxCore/containers/Containers.h>
 
 VOX_NS
     struct Xoshiro {
@@ -29,11 +33,14 @@ VOX_NS
         }
     };
 
-
     class UUID {
-        uint64_t hi, lo;
+        uint64_t hi{0}, lo{0};
 
-        UUID uuid4() {
+    public:
+        constexpr UUID() = default;
+        constexpr UUID(uint64_t hi, uint64_t lo) : hi(hi), lo(lo) {}
+
+        static UUID uuid4() {
             thread_local Xoshiro rng;
             UUID u{rng.next(), rng.next()};
             u.hi = (u.hi & ~0xF000ull) | 0x4000ull;
@@ -41,8 +48,10 @@ VOX_NS
             return u;
         }
 
-    public:
-        constexpr std::string toString() const {
+        constexpr uint64_t getHi() const { return hi; }
+        constexpr uint64_t getLo() const { return lo; }
+
+        std::string toString() const {
             return std::format("{:08x}-{:04x}-{:04x}-{:04x}-{:012x}",
                 static_cast<uint32_t>(hi >> 32),
                 static_cast<uint16_t>(hi >> 16),
@@ -52,11 +61,17 @@ VOX_NS
             );
         }
 
+        operator InternedString() const {
+            return InternedString(toString());
+        }
+
         constexpr friend bool operator==(const UUID &a, const UUID &b) { return a.hi == b.hi && a.lo == b.lo; }
         constexpr friend bool operator!=(const UUID &a, const UUID &b) { return !(a == b); }
         constexpr friend bool operator<(const UUID &a, const UUID &b) { return a.hi != b.hi ? a.hi < b.hi : a.lo < b.lo; }
 
         constexpr bool isNil() const { return (hi | lo) == 0; }
+        constexpr bool isValid() const { return !isNil(); }
+        constexpr explicit operator bool() const { return isValid(); }
     };
 
 NS_END
@@ -64,6 +79,13 @@ NS_END
 template<>
 struct std::hash<Vox::UUID> {
     constexpr size_t operator()(const Vox::UUID &u) const noexcept {
-        return (size_t) (u.hi ^ (u.lo * 0x9E3779B97F4A7C15ull));
+        return (size_t) (u.getHi() ^ (u.getLo() * 0x9E3779B97F4A7C15ull));
+    }
+};
+
+template<>
+struct std::formatter<Vox::UUID> : std::formatter<std::string> {
+    auto format(const Vox::UUID &u, std::format_context &ctx) const {
+        return std::formatter<std::string>::format(u.toString(), ctx);
     }
 };

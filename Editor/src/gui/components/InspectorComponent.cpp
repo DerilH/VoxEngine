@@ -1,8 +1,16 @@
 #include "./InspectorComponent.h"
 
 #include <imgui.h>
-#include <../../assets/ResourceManager.h>
-#include <../../assets/MaterialAsset.h>
+#include "../../assets/AssetConverter.h"
+#include "../../assets/AssetManager.h"
+#include "../../assets/variants/MaterialAsset.h"
+#include "../../assets/variants/MeshAsset.h"
+#include "../Gui.h"
+#include <VoxEngine/resources/ResourceManager.h>
+#include <VoxEngine/resources/MaterialResource.h>
+#include <VoxEngine/resources/ModelResource.h>
+#include <VoxEngine/resources/MeshResource.h>
+#include <VoxEngine/resources/TextureResource.h>
 #include <VoxEngine/scene/components/MeshRendererComponent.h>
 #include <VoxEngine/scene/components/Transform.h>
 #include "../Theme.h"
@@ -13,7 +21,7 @@ namespace Vox::Editor {
             if (!mGameObject) return "";
             auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
             if (renderer && renderer->getMaterial()) {
-                return renderer->getMaterial()->getPath();
+                return renderer->getMaterial()->getName();
             }
             return "";
         });
@@ -22,12 +30,16 @@ namespace Vox::Editor {
             if (!mGameObject) return;
             auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
             if (!renderer) return;
-            try {
-                auto newMat = mEngine->getResourceManager()->get<Resources::MaterialAsset>(path);
-                if (newMat) {
-                    renderer->setMaterial(*newMat);
+            auto assetMgr = Gui::GetAssetManager();
+            if (!assetMgr) return;
+            auto newMat = assetMgr->get<Assets::MaterialAsset>(path);
+            if (newMat) {
+                auto resMgr = mEngine->getResourceManager();
+                auto matHandle = Assets::AssetConverter::toResource(*newMat, resMgr, assetMgr);
+                if (matHandle) {
+                    auto matRes = resMgr->get(*matHandle);
+                    if (matRes) renderer->setMaterial(matRes.value());
                 }
-            } catch (const std::exception &) {
             }
         };
 
@@ -41,7 +53,12 @@ namespace Vox::Editor {
             if (!mGameObject) return "";
             auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
             if (renderer && renderer->getMaterial()) {
-                return renderer->getMaterial()->texture;
+                auto texHandle = renderer->getMaterial()->getTexture();
+                if (texHandle.isValid()) {
+                    auto resMgr = mEngine->getResourceManager();
+                    auto texRes = resMgr->get(texHandle);
+                    if (texRes) return texRes.value()->getName();
+                }
             }
             return "";
         });
@@ -51,20 +68,25 @@ namespace Vox::Editor {
             auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
             if (!renderer || !renderer->getMaterial()) return;
 
-            auto oldMat = renderer->getMaterial();
-            auto newMat = oldMat->cloneTyped();
-            newMat->texture = path;
-            newMat->albedo = path;
-            auto matPath = oldMat->getPath();
-            // if (!matPath.empty()) {
-                mEngine->getResourceManager()->update(matPath, std::move(newMat));
-                auto updated = mEngine->getResourceManager()->get<Resources::MaterialAsset>(matPath);
+            auto assetMgr = Gui::GetAssetManager();
+            if (!assetMgr) return;
+            auto matPath = renderer->getMaterial()->getName();
+            auto oldMat = assetMgr->get<Assets::MaterialAsset>(matPath);
+            if (oldMat) {
+                auto newMat = (*oldMat)->cloneTyped();
+                newMat->texture = path;
+                newMat->albedo = path;
+                assetMgr->update(matPath, std::move(newMat));
+                auto updated = assetMgr->get<Assets::MaterialAsset>(matPath);
                 if (updated) {
-                    renderer->setMaterial(*updated);
+                    auto resMgr = mEngine->getResourceManager();
+                    auto handle = Assets::AssetConverter::toResource(*updated, resMgr, assetMgr);
+                    if (handle) {
+                        auto matRes = resMgr->get(*handle);
+                        if (matRes) renderer->setMaterial(matRes.value());
+                    }
                 }
-            // } else {
-                // renderer->setMaterial(newMat);
-            // }
+            }
         };
 
         mTextureLink->onDoubleClicked += [this](InternedString path) {
@@ -77,7 +99,7 @@ namespace Vox::Editor {
             if (!mGameObject) return "";
             auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
             if (renderer && renderer->getMesh()) {
-                return renderer->getMesh()->getPath();
+                return renderer->getMesh()->getName();
             }
             return "";
         });
@@ -86,14 +108,19 @@ namespace Vox::Editor {
             if (!mGameObject) return;
             auto renderer = mGameObject->findComponent<Scene::MeshRendererComponent>();
             if (!renderer) return;
-            try {
-                auto mesh = mEngine->getResourceManager()->get<Resources::MeshAsset>(path);
-                if (mesh.has_value()) {
-                    renderer->setMeshProvider([mesh]() {
-                        return *mesh;
+            auto assetMgr = Gui::GetAssetManager();
+            if (!assetMgr) return;
+            auto mesh = assetMgr->get<Assets::MeshAsset>(path);
+            if (mesh) {
+                auto resMgr = mEngine->getResourceManager();
+                auto meshHandle = Assets::AssetConverter::toResource(*mesh, resMgr);
+                if (meshHandle) {
+                    auto h = *meshHandle;
+                    renderer->setMeshProvider([resMgr, h]() -> ConstRef<Resources::MeshResource> {
+                        auto m = resMgr->get(h);
+                        return m ? m.value() : nullptr;
                     });
                 }
-            } catch (const std::exception &) {
             }
         };
 
@@ -217,11 +244,23 @@ namespace Vox::Editor {
             if (ImGui::BeginPopup("AddComponentPopup")) {
                 if (ImGui::MenuItem("Mesh Renderer")) {
                     auto comp = new Scene::MeshRendererComponent(mGameObject);
-                    comp->setMaterial(mEngine->getResourceManager()->getDefault<Resources::MaterialAsset>());
-                    comp->setMeshProvider([this]() {
-                        auto model = mEngine->getResourceManager()->getDefault<Resources::ModelAsset>();
-                        return static_cast<Ref<Resources::MeshAsset>>(model->getNested()[0]);
-                    });
+                    auto resMgr = mEngine->getResourceManager();
+                    auto matHandle = resMgr->find<Resources::MaterialResource>("defaults/DefaultMaterial.vmat");
+                    if (matHandle) {
+                        auto matRes = resMgr->get(*matHandle);
+                        if (matRes) comp->setMaterial(matRes.value());
+                    }
+                    auto modelHandle = resMgr->find<Resources::ModelResource>("defaults/DefaultCube.fbx");
+                    if (modelHandle) {
+                        auto model = resMgr->get(*modelHandle);
+                        if (model && model.value()->getMeshCount() > 0) {
+                            auto meshHandle = model.value()->getMesh(0);
+                            comp->setMeshProvider([resMgr, meshHandle]() -> ConstRef<Resources::MeshResource> {
+                                auto m = resMgr->get(meshHandle);
+                                return m ? m.value() : nullptr;
+                            });
+                        }
+                    }
                     mGameObject->attachComponent(comp);
                 }
                 ImGui::EndPopup();

@@ -6,15 +6,13 @@
 
 #include <imgui.h>
 #include <magic_enum/magic_enum.hpp>
-#include <../../../assets/ResourceManager.h>
-#include <../../../assets/MaterialAsset.h>
+#include "../../../assets/AssetConverter.h"
+#include "../../../assets/AssetManager.h"
+#include "../../../assets/variants/MaterialAsset.h"
+#include "../../Gui.h"
 #include "../../Theme.h"
 
-namespace Vox::Editor {
-    class MaterialAsset;
-}
-
-Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, ConstRef<Resources::MaterialAsset> asset, bool &shouldClose)
+Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, ConstRef<Assets::MaterialAsset> asset, bool &shouldClose)
     : AssetEditor(shouldClose), mEngine(engine), mOriginalAsset(asset), mAsset(std::move(asset->cloneTyped())) {
     mTextureLink = makeUPtr<AssetLinkComponent>("Texture", AssetType::TEXTURE, [this]() -> InternedString {
         if (!mAsset) return "";
@@ -27,7 +25,14 @@ Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, ConstRef<Resourc
         mAsset->albedo = path;
         auto matPath = mAsset->getPath();
         auto clone = mAsset->cloneTyped();
-        mEngine->getResourceManager()->update(matPath, std::move(mAsset));
+        auto assetMgr = Gui::GetAssetManager();
+        if (assetMgr) {
+            assetMgr->update(matPath, std::move(mAsset));
+            auto matAsset = assetMgr->get<Assets::MaterialAsset>(matPath);
+            if (matAsset) {
+                Assets::AssetConverter::toResource(*matAsset, mEngine->getResourceManager(), assetMgr);
+            }
+        }
         mAsset = std::move(clone);
     };
 }
@@ -112,7 +117,14 @@ void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) 
     if (changed) {
         auto path = mAsset->getPath();
         auto clone = mAsset->cloneTyped();
-        mEngine->getResourceManager()->update(path, std::move(mAsset));
+        auto assetMgr = Gui::GetAssetManager();
+        if (assetMgr) {
+            assetMgr->update(path, std::move(mAsset));
+            auto matAsset = assetMgr->get<Assets::MaterialAsset>(path);
+            if (matAsset) {
+                Assets::AssetConverter::toResource(*matAsset, mEngine->getResourceManager(), assetMgr);
+            }
+        }
         mAsset = std::move(clone);
     }
 

@@ -17,7 +17,7 @@ ASSETS_NS
         InternedString mName;
 
         Asset **mNestedResources = nullptr;
-        uint32_t mNestedResourceCount;
+        uint32_t mNestedResourceCount = 0;
 
         NO_MOVE_DEFAULT(Asset);
 
@@ -36,21 +36,20 @@ ASSETS_NS
             return mName;
         }
 
-        virtual ~Asset() = 0;
+        virtual ~Asset();
 
-        template<typename AssetType, typename = std::enable_if_t<std::is_base_of_v<Asset, AssetType> > >
+        template<typename AssetType, typename = std::enable_if_t<std::is_base_of_v<Asset, AssetType>>>
         AssetType *getNestedUnsafe(int id) const {
             return reinterpret_cast<AssetType *>(mNestedResources[id]);
         }
 
-        template<typename AssetType, typename = std::enable_if_t<std::is_base_of_v<Asset, AssetType> > >
+        template<typename AssetType, typename = std::enable_if_t<std::is_base_of_v<Asset, AssetType>>>
         Expected<Ref<AssetType>> getNested(int id) const {
             VOX_EXPECT(id < mNestedResourceCount, "Nested id({}) is out of bounds", id);
             auto asset = mNestedResources[id];
-            VOX_EXPECT(asset->type() == AssetType::StaticType(), "Nested asset type mismatch, expected {}, actual {}", AssetType::StaticType(), asset->type());
+            VOX_EXPECT(asset->type() == AssetType::StaticType(), "Nested asset type mismatch, expected {}, actual {}", +AssetType::StaticType(), +asset->type());
             return reinterpret_cast<AssetType *>(mNestedResources[id]);
         }
-
 
         Asset **getNested() const {
             return mNestedResources;
@@ -68,3 +67,7 @@ ASSETS_NS
     };
 
 NS_END
+
+namespace Vox::Resources {
+    using Asset = Vox::Editor::Assets::Asset;
+}

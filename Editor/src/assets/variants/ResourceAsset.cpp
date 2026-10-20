@@ -2,29 +2,33 @@
 // Created by deril on 2/19/26.
 //
 
-#include "../../../../Engine/include/VoxEngine/resources/Resource.h"
+#include "Asset.h"
+#include <filesystem>
+#include <VoxCore/Assert.h>
 
-#include <VoxCore/containers/Containers.h>
-
-RESOURCES_NS
-    Resource::Resource(InternedString path, Resource **nested, uint32_t nestedCount) : mPath(path), mName(std::filesystem::path(path).filename()), mNestedResources(nested), mNestedResourcesCount(nestedCount) {
+ASSETS_NS
+    Asset::Asset(InternedString path, Asset **nested, uint32_t nestedCount)
+        : mPath(path),
+          mName(std::filesystem::path(path.c_str()).filename().string()),
+          mNestedResources(nested),
+          mNestedResourceCount(nestedCount) {
     }
 
-    bool Resource::hasNested() const {
+    bool Asset::hasNested() const {
         return mNestedResources != nullptr;
     }
 
-
-    uint32_t Resource::getNestedCount() const {
+    uint32_t Asset::getNestedCount() const {
         return mNestedResourceCount;
     }
 
-    UPtr<Resource> Resource::clone() const {
-        VOX_CHECK_FMT(false, "{} Resource cannot be clone", +type())
+    UPtr<Asset> Asset::clone() const {
+        VOX_CHECK_FMT(false, "{} Asset cannot be cloned", +type());
     }
 
-    void Resource::cloneTo(void *ptr) const {
-        VOX_CHECK_FMT(false, "{} Resource cannot be clone", +type())
+    void Asset::cloneTo(void *ptr) const {
+        VOX_CHECK_FMT(false, "{} Asset cannot be cloned", +type());
     }
-    Resource::~Resource() = default;
+
+    Asset::~Asset() = default;
 NS_END

@@ -3,47 +3,44 @@
 //
 
 #include "FbxImporter.h"
-#include "../../../../Engine/include/VoxEngine/resources/Mesh.h"
-#include "../../../../Engine/include/VoxEngine/resources/Model.h"
+#include "../MeshAsset.h"
+#include "../ModelAsset.h"
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <vector>
 
 ASSETS_NS
-    std::vector<glm::vec3> readVec3Array(aiVector3D *vertices, size_t count) {
+    static std::vector<glm::vec3> readVec3Array(aiVector3D *vertices, size_t count) {
         std::vector<glm::vec3> vec(count);
-        for (int i = 0; i < count; ++i) {
+        for (size_t i = 0; i < count; ++i) {
             vec.at(i) = glm::vec3(vertices[i].x, vertices[i].y, vertices[i].z);
         }
-
         return vec;
     }
 
-    std::vector<glm::vec4> readVec4Array(aiColor4D *vertices, size_t count) {
+    static std::vector<glm::vec4> readVec4Array(aiColor4D *vertices, size_t count) {
         std::vector<glm::vec4> vec(count);
-        for (int i = 0; i < count; ++i) {
+        for (size_t i = 0; i < count; ++i) {
             vec.at(i) = glm::vec4(vertices[i].r, vertices[i].g, vertices[i].b, vertices[i].a);
         }
-
         return vec;
     }
 
-    std::vector<glm::vec2> readVec2Array(aiVector3D *vertices, size_t count) {
+    static std::vector<glm::vec2> readVec2Array(aiVector3D *vertices, size_t count) {
         std::vector<glm::vec2> vec(count);
-        for (int i = 0; i < count; ++i) {
+        for (size_t i = 0; i < count; ++i) {
             vec.at(i) = glm::vec2(vertices[i].x, vertices[i].y);
         }
-
         return vec;
     }
 
-    std::vector<uint32_t> readIndices(aiFace *faces, size_t count) {
+    static std::vector<uint32_t> readIndices(aiFace *faces, size_t count) {
         std::vector<uint32_t> vec;
         vec.reserve(count * 3);
-        for (int f = 0; f < count; f++) {
+        for (size_t f = 0; f < count; f++) {
             const aiFace &face = faces[f];
-            for (int i = 0; i < face.mNumIndices; i++) {
+            for (size_t i = 0; i < face.mNumIndices; i++) {
                 vec.push_back(face.mIndices[i]);
             }
         }
@@ -51,7 +48,7 @@ ASSETS_NS
     }
 
     template<typename T>
-    std::vector<char8_t> createInterleaved(const Vector<glm::vec3> &vertices, const Vector<T> &attrs) {
+    static std::vector<char8_t> createInterleaved(const std::vector<glm::vec3> &vertices, const std::vector<T> &attrs) {
         static_assert(std::is_same_v<typename T::value_type, float>, "Attribute must be a float glm vector");
         VOX_CHECK(vertices.size() == attrs.size(), "Different vertices and attribute count");
 
@@ -68,26 +65,33 @@ ASSETS_NS
         return buffer;
     }
 
-    Asset *FbxImporter::load(std::string path, ArrayView<void> data) {
+    Ref<Asset> FbxImporter::load(InternedString path, ArrayView<void> data) {
         Assimp::Importer importer{};
 
         const aiScene *scene = importer.ReadFileFromMemory(data.pData, data.size(), aiPostProcessSteps::aiProcess_Triangulate);
-        auto **nested = static_cast<Asset **>(malloc(scene->mNumMeshes * sizeof(Mesh)));
-        LOG_VERBOSE("Loading model {}", path);
+        VOX_CHECK_FMT(scene != nullptr, "Failed to load model {}: {}", path.c_str(), importer.GetErrorString());
+
+        auto **nested = static_cast<Asset **>(malloc(scene->mNumMeshes * sizeof(Asset *)));
+        LOG_VERBOSE("Loading model {}", path.c_str());
         LOG_VERBOSE("Loading {} meshes", scene->mNumMeshes);
 
-        for (int i = 0; i < scene->mNumMeshes; i++) {
+        for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
             aiMesh *mesh = scene->mMeshes[i];
 
             auto vertices = readVec3Array(mesh->mVertices, mesh->mNumVertices);
             auto normals = readVec3Array(mesh->mNormals, mesh->mNumVertices);
             auto indices = readIndices(mesh->mFaces, mesh->mNumFaces);
-            auto interleaved = mesh->HasVertexColors(0) ? createInterleaved<glm::vec4>(vertices, readVec4Array(mesh->mColors[0], mesh->mNumVertices)) : createInterleaved<glm::vec2>(vertices, readVec2Array(mesh->mTextureCoords[0], mesh->mNumVertices));
+            auto interleaved = mesh->HasVertexColors(0)
+                ? createInterleaved<glm::vec4>(vertices, readVec4Array(mesh->mColors[0], mesh->mNumVertices))
+                : createInterleaved<glm::vec2>(vertices, readVec2Array(mesh->mTextureCoords[0], mesh->mNumVertices));
 
-            nested[i] = new Mesh(path + "/" + mesh->mName.C_Str(), interleaved, vertices, normals, indices);
-            LOG_VERBOSE("Mesh loaded {}", nested[i]->getPath());
+            std::string meshPath = path.c_str();
+            meshPath += "/";
+            meshPath += mesh->mName.C_Str();
+
+            nested[i] = new MeshAsset(InternedString(meshPath), interleaved, vertices, normals, indices);
+            LOG_VERBOSE("Mesh loaded {}", nested[i]->getPath().c_str());
         }
-        return new Model(path, nested, scene->mNumMeshes);
+        return new ModelAsset(path, nested, scene->mNumMeshes);
     }
-
 NS_END

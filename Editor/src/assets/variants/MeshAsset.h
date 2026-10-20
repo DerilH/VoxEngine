@@ -4,12 +4,13 @@
 
 #pragma once
 
-
 #include "Asset.h"
+#include <vector>
 #include <glm/glm.hpp>
+#include <VoxCore/containers/Containers.h>
 #include <VoxCore/containers/ArrayView.h>
 
-RESOURCES_NS
+ASSETS_NS
     class MeshAsset : public Asset {
         std::vector<glm::vec3> mVertices;
         Vector<char8_t> mInterleaved;
@@ -17,7 +18,7 @@ RESOURCES_NS
         std::vector<glm::vec3> mNormals;
 
     public:
-        MeshAsset(InternedString path, Vector<char8_t> interleaved, std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals, std::vector<uint32_t> &indices);
+        MeshAsset(InternedString path, const Vector<char8_t>& interleaved, std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals, std::vector<uint32_t> &indices);
 
         ~MeshAsset() override;
 
@@ -47,3 +48,7 @@ RESOURCES_NS
     };
 
 NS_END
+
+namespace Vox::Resources {
+    using MeshAsset = Vox::Editor::Assets::MeshAsset;
+}

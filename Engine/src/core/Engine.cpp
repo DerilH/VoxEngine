@@ -14,25 +14,23 @@
 #include <VoxEngine/scene/components/Transform.h>
 
 #include "VoxEngine/render/RenderCore.h"
-#include "VoxEngine/resources/assets/ModelAsset.h"
-#include "../../../Editor/src/assets/variants/ShaderAsset.h"
 #include "VoxEngine/render/RenderBackend.h"
-#include "../../../Editor/src/assets/variants/MeshAsset.h"
 #include "VoxEngine/scene/components/CameraComponent.h"
 #include "VoxEngine/scene/GameObjectRegistry.h"
 
 VOX_NS
-    Engine::Engine(std::string mTitle, const Render::RenderAPI renderApi) : mTitle(std::move(mTitle)), mRenderApi(renderApi), mResourceManager(new Resources::AssetManager()), mGameObjectRegistry(new Scene::GameObjectRegistry()) {
-        VOX_CHECK(mRenderApi == Render::VULKAN_API, "Unsupported execute api");
+    Engine::Engine(std::string mTitle, const Render::RenderAPI renderApi)
+        : mTitle(std::move(mTitle)),
+          mRenderApi(renderApi),
+          mResourceManager(makeUPtr<Resources::ResourceManager>()),
+          mGameObjectRegistry(new Scene::GameObjectRegistry()) {
+        VOX_CHECK(mRenderApi == Render::VULKAN_API, "Unsupported render api");
     }
 
     Engine::~Engine() = default;
 
     void Engine::init() {
-        mResourceManager->loadAll();
-
-        mRenderer = Render::RendererFactory::Create(Render::RenderAPI::VULKAN_API, mResourceManager);
-
+        mRenderer = Render::RendererFactory::Create(Render::RenderAPI::VULKAN_API, mResourceManager.get());
         mRenderer->init();
     }
 
@@ -43,18 +41,24 @@ VOX_NS
         const auto obj = scene->createObject("TestTeapot");
         auto meshComp = Scene::MeshRendererComponent(obj);
         obj->attachComponent(&meshComp);
-        const auto t = mResourceManager->get<Resources::ModelAsset>("defaults/DefaultCube.fbx");
-        if (t) {
-            meshComp.setMeshProvider([this, t]() {
-                return (*t)->getNestedUnsafe<Resources::MeshAsset>(0);
-            });
+
+        auto meshHandle = mResourceManager->find<Resources::MeshResource>("defaults/DefaultCube.fbx/Cube");
+        if (meshHandle) {
+            auto meshRes = mResourceManager->get(*meshHandle);
+            if (meshRes) {
+                meshComp.setMeshProvider([mesh = *meshRes]() {
+                    return mesh;
+                });
+            }
         }
 
-        const auto mat = mResourceManager->get<Resources::MaterialAsset>("materials/test.vmat");
-        if (mat) {
-            meshComp.setMaterial(*mat);
+        auto matHandle = mResourceManager->find<Resources::MaterialResource>("materials/test.vmat");
+        if (matHandle) {
+            auto matRes = mResourceManager->get(*matHandle);
+            if (matRes) {
+                meshComp.setMaterial(*matRes);
+            }
         }
-
 
         //TODO add separate camera for editor;
         auto camera = scene->createObject("DefaultCamera");
@@ -62,7 +66,6 @@ VOX_NS
         scene->setActiveCamera(camera->findComponent<Scene::CameraComponent>());
         camera->transform->setPos(Vec3(0, 0, 10));
         while (!mShouldClose) {
-            mResourceManager->processDirty();
             mRenderer->render(scene.get());
             Render::Window::pollEvents();
         }

@@ -7,7 +7,11 @@
 #include "AssetImporter.h"
 
 ASSETS_NS
-class TextureImporter : public AssetImporter {
-    Asset *load(std::string path, ArrayView<void> data) override;
-};
+    class TextureImporter : public AssetImporter {
+    public:
+        Ref<Asset> load(InternedString path, ArrayView<void> data) override;
+        AssetType type() override {
+            return AssetType::TEXTURE;
+        }
+    };
 NS_END

@@ -3,15 +3,11 @@
 //
 
 #pragma once
-#include <VoxCore/Define.h>
+#include "AssetWriter.h"
 
-#include "../AssetWriter.h"
-
-
-RESOURCES_NS
+ASSETS_NS
     class MaterialWriter : public AssetWriter {
     public:
         void writeToFile(const std::filesystem::path &path, Asset* asset) override;
     };
-
 NS_END

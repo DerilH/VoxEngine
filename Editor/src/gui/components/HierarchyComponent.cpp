@@ -1,6 +1,10 @@
 #include "./HierarchyComponent.h"
 #include <imgui.h>
-#include <../../assets/ResourceManager.h>
+#include "../../assets/AssetManager.h"
+#include <VoxEngine/resources/ResourceManager.h>
+#include <VoxEngine/resources/MaterialResource.h>
+#include <VoxEngine/resources/ModelResource.h>
+#include <VoxEngine/resources/MeshResource.h>
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/scene/TransformStorage.h>
 #include <VoxEngine/scene/Scene.h>
@@ -20,7 +24,6 @@ namespace Vox::Editor {
         clone->transform->setPos(orig->transform->getPos() + glm::vec3(0.5f, 0.0f, 0.5f));
         clone->transform->setRotation(orig->transform->getRotation());
         clone->transform->setScale(orig->transform->getScale());
-
 
         auto renderer = orig->findComponent<Scene::MeshRendererComponent>();
         if (renderer) {
@@ -69,6 +72,29 @@ namespace Vox::Editor {
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         ImGui::InputTextWithHint("##HierarchyFilter", "Search entities...", mFilterBuffer, sizeof(mFilterBuffer));
 
+        auto createCubeObject = [this]() {
+            auto cube = mScene->createObject("Cube");
+            auto renderer = new Scene::MeshRendererComponent(cube);
+            auto resMgr = mEngine->getResourceManager();
+            auto matHandle = resMgr->find<Resources::MaterialResource>("defaults/DefaultMaterial.vmat");
+            if (matHandle) {
+                auto matRes = resMgr->get(*matHandle);
+                if (matRes) renderer->setMaterial(matRes.value());
+            }
+            auto modelHandle = resMgr->find<Resources::ModelResource>("defaults/DefaultCube.fbx");
+            if (modelHandle) {
+                auto model = resMgr->get(*modelHandle);
+                if (model && model.value()->getMeshCount() > 0) {
+                    auto meshHandle = model.value()->getMesh(0);
+                    renderer->setMeshProvider([resMgr, meshHandle]() -> ConstRef<Resources::MeshResource> {
+                        auto m = resMgr->get(meshHandle);
+                        return m ? m.value() : nullptr;
+                    });
+                }
+            }
+            cube->attachComponent(renderer);
+        };
+
         ImGui::SetNextWindowPos(ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMax().y));
         if (ImGui::BeginPopup("CreateObjectPopup")) {
             if (ImGui::MenuItem("Empty Object")) {
@@ -76,14 +102,7 @@ namespace Vox::Editor {
             }
             if (ImGui::BeginMenu("3D Object")) {
                 if (ImGui::MenuItem("Cube")) {
-                    auto cube = mScene->createObject("Cube");
-                    auto renderer = new Scene::MeshRendererComponent(cube);
-                    renderer->setMaterial(mEngine->getResourceManager()->getDefault<Resources::MaterialAsset>());
-                    renderer->setMeshProvider([this]() {
-                        auto model = mEngine->getResourceManager()->getDefault<Resources::ModelAsset>();
-                        return static_cast<Ref<Resources::MeshAsset>>(model->getNested()[0]);
-                    });
-                    cube->attachComponent(renderer);
+                    createCubeObject();
                 }
                 ImGui::EndMenu();
             }
@@ -100,14 +119,7 @@ namespace Vox::Editor {
                 mScene->createObject("Empty");
             }
             if (ImGui::MenuItem("Create 3D Cube")) {
-                auto cube = mScene->createObject("Cube");
-                auto renderer = new Scene::MeshRendererComponent(cube);
-                renderer->setMaterial(mEngine->getResourceManager()->getDefault<Resources::MaterialAsset>());
-                renderer->setMeshProvider([this]() {
-                    auto model = mEngine->getResourceManager()->getDefault<Resources::ModelAsset>();
-                    return static_cast<Ref<Resources::MeshAsset>>(model->getNested()[0]);
-                });
-                cube->attachComponent(renderer);
+                createCubeObject();
             }
             ImGui::EndPopup();
         }

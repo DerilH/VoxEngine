@@ -2,8 +2,10 @@
 #include <VoxCore/Define.h>
 #include <VoxCore/containers/Containers.h>
 #include <VoxCore/Pointers.h>
+#include <VoxCore/math/UUID.h>
 
 #include "../Define.h"
+
 ASSETS_NS
     class AssetDirectory {
         LinkedList<UPtr<AssetDirectory>> mNested;

@@ -7,7 +7,11 @@
 #include "AssetImporter.h"
 
 ASSETS_NS
-class FbxImporter : public AssetImporter {
-    Asset *load(std::string path, ArrayView<void> data) override;
-};
+    class FbxImporter : public AssetImporter {
+    public:
+        Ref<Asset> load(InternedString path, ArrayView<void> data) override;
+        AssetType type() override {
+            return AssetType::MODEL;
+        }
+    };
 NS_END

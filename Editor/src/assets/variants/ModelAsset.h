@@ -4,12 +4,10 @@
 
 #pragma once
 
-#include "../../../../Engine/include/VoxEngine/resources/Resource.h"
+#include "Asset.h"
 #include "MeshAsset.h"
 
-RESOURCES_NS
-    class MeshAsset;
-
+ASSETS_NS
     class ModelAsset : public Asset {
     public:
         ModelAsset(InternedString path, Asset **nested, uint32_t nestedCount);
@@ -28,3 +26,7 @@ RESOURCES_NS
     };
 
 NS_END
+
+namespace Vox::Resources {
+    using ModelAsset = Vox::Editor::Assets::ModelAsset;
+}

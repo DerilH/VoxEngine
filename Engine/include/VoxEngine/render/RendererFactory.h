@@ -4,7 +4,7 @@
 
 #pragma once
 #include <VoxCore/Pointers.h>
-#include <../../../../Editor/src/assets/ResourceManager.h>
+#include <VoxEngine/resources/ResourceManager.h>
 
 #include "RenderCore.h"
 
@@ -17,7 +17,7 @@ RENDER_NS
         virtual ~RendererFactory() = default;
 
     public:
-        static Renderer *Create(RenderAPI backend, Ref<Resources::AssetManager> resManager);
+        static Renderer *Create(RenderAPI backend, Ref<Resources::ResourceManager> resManager);
     };
 
 NS_END

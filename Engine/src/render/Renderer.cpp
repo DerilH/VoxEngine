@@ -7,7 +7,6 @@
 #include "VoxEngine/render/passes/GeometryPass.h"
 #include "VoxEngine/render/passes/PassTransition.h"
 #include "VoxEngine/render/RenderTarget.h"
-#include "../../../Editor/src/assets/variants/MeshAsset.h"
 #include "VoxEngine/render/state/Shader.h"
 #include "VoxEngine/render/state/DepthState.h"
 #include <glm/glm.hpp>
@@ -23,7 +22,7 @@ namespace Vox::Scene {
 }
 
 RENDER_NS
-    Renderer::Renderer(Ref<Resources::AssetManager> resManager, Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend) : mBackend(backend), mRenderResourceManager(renderResManager), mResourceManager(resManager), backendApi(backend->api) {
+    Renderer::Renderer(Ref<Resources::ResourceManager> resManager, Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend) : mBackend(backend), mRenderResourceManager(renderResManager), mResourceManager(resManager), backendApi(backend->api) {
     }
 
     void Renderer::init() {
@@ -97,16 +96,18 @@ RENDER_NS
     }
 
 
-    Expected<Ref<PipelineState> > Renderer::getPipeline(ConstRef<Resources::MaterialAsset> material, ConstRef<RenderingState> renderingState) {
+    Expected<Ref<PipelineState> > Renderer::getPipeline(ConstRef<Resources::MaterialResource> material, ConstRef<RenderingState> renderingState) {
         const auto pipIt = mPipelinesByMaterial.find(material);
         MaterialPipelines pipelines = pipIt == mPipelinesByMaterial.end() ? MaterialPipelines({}) : pipIt->second;
         auto state = pipelines.find(*renderingState);
         if (!state) {
-            auto vertPath = material->shaders.at(ShaderStage::VERTEX);
-            auto fragPath = material->shaders.at(ShaderStage::FRAGMENT);
-            auto vert = mResourceManager->get<Resources::ShaderAsset>(vertPath);
+            auto vertHandle = material->getShader(ShaderStage::VERTEX);
+            auto fragHandle = material->getShader(ShaderStage::FRAGMENT);
+            VOX_EXPECT(vertHandle.isValid(), "Material is missing vertex shader");
+            VOX_EXPECT(fragHandle.isValid(), "Material is missing fragment shader");
+            auto vert = mResourceManager->get(vertHandle);
             VOX_EXPECT(vert, vert.error());
-            auto frag = mResourceManager->get<Resources::ShaderAsset>(fragPath);
+            auto frag = mResourceManager->get(fragHandle);
             VOX_EXPECT(frag, frag.error());
 
             auto vertexShader = new Shader(&(*vert)->getCompiled());
@@ -116,15 +117,15 @@ RENDER_NS
             VOX_EXPECT(shaderState, shaderState.error());
 
             Vector<BlendState> blendState = BlendState::GetBuilder().startAttachment().endAttachment().build();
-            RasterizerState rasterizerState = RasterizerState::GetBuilder().cullMode(material->cullMode).polygonMode(material->polygonMode).build();
+            RasterizerState rasterizerState = RasterizerState::GetBuilder().cullMode(material->getCullMode()).polygonMode(material->getPolygonMode()).build();
             MSAAState msaaState = MSAAState(MSAASamples::COUNT_1);
             DepthState depthState = DepthState::GetBuilder()
-                    .depthTest(material->depthTest)
-                    .depthWrite(material->depthWrite)
-                    .compareOp(material->depthCompareOp)
+                    .depthTest(material->isDepthTest())
+                    .depthWrite(material->isDepthWrite())
+                    .compareOp(material->getDepthCompareOp())
                     .build();
             auto blend = ArrayView<BlendState>::Copy(blendState);
-            PipelineStateDesc desc(shaderState.value(), blend, rasterizerState, material->topology, msaaState, *renderingState, depthState);
+            PipelineStateDesc desc(shaderState.value(), blend, rasterizerState, material->getTopology(), msaaState, *renderingState, depthState);
             pipelines.insert({*renderingState, desc});
             return mRenderResourceManager->getPipeline(&desc);
         }
@@ -148,7 +149,7 @@ RENDER_NS
         mGraph->execute({this, cmdBuffer}, target);
     }
 
-    void Renderer::clearDrawList(ConstRef<Resources::MaterialAsset> state) {
+    void Renderer::clearDrawList(ConstRef<Resources::MaterialResource> state) {
         for (auto &val: mLayerDrawListByMaterial[state] | std::views::values) {
             val.clear();
         }
@@ -156,14 +157,14 @@ RENDER_NS
 
     void Renderer::draw(Ref<Scene::MeshRendererComponent> component) {
         auto mesh = mRenderResourceManager->getMesh(component->getMesh());
-
+        if (!mesh) return;
         auto mat = component->getMaterial();
 
         auto t = component->gameObject;
         mLayerDrawListByMaterial[mat][static_cast<uint8_t>(component->getLayer())].emplace_back(mesh, t->transform->computeWorldMatrix(), t->id);
     }
 
-    void Renderer::draw(ConstRef<Resources::MeshAsset> mesh, ConstRef<Resources::MaterialAsset> material, glm::mat4 modelMat, uint8_t layer, uint64_t id) {
+    void Renderer::draw(ConstRef<Resources::MeshResource> mesh, ConstRef<Resources::MaterialResource> material, glm::mat4 modelMat, uint8_t layer, uint64_t id) {
         auto m = mRenderResourceManager->getMesh(mesh);
         mLayerDrawListByMaterial[material][layer].emplace_back(m, modelMat, id);
     }
@@ -189,28 +190,4 @@ RENDER_NS
         buff->write(&view, sizeof(glm::mat4), sizeof(glm::mat4));
     }
 
-    //    void VulkanRenderer::addRenderTarget(RenderTarget* target) {
-    //        Renderer::addRenderTarget(target);
-    //        const auto vert = Vox::Resources::ResourcesManager::Get().get<Resources::ShaderAsset>("shaders/baseShader.vert");
-    //        const auto frag = Vox::Resources::ResourcesManager::Get().get<Resources::ShaderAsset>("shaders/baseShader.frag");
-    //
-    //        PipelineBuilder builder = mVkState->device->builder<GraphicsPipeline>();
-    //
-    //        builder.vertexInput(Vertex::getAttributeDescriptions(), {Vertex::getBindingDescription()});
-    //        builder.msaa().rasterizer().topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE);
-    //        builder.layout(Buffer<VkDescriptorSetLayout>::Empty(), Buffer<VkPushConstantRange>::Empty());
-    //        builder.shader(vert->getCompiled(), VK_SHADER_STAGE_VERTEX_BIT, "main");
-    //        builder.shader(frag->getCompiled(), VK_SHADER_STAGE_FRAGMENT_BIT, "main");
-    //        builder.dynamic({VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR});
-    //        builder.rendering({target->getFormat()});
-    //        builder.viewport(1, 1);
-    //
-    //        BlendState state = BlendStateBuilder(1).writes(true, true, true, true).endAttachment().build();
-    //        builder.blend(state);
-    //
-    //        mVkState->pipeline = new GraphicsPipeline(builder.build());
-    //        if (mGraph == nullptr) {
-    //            createGraph();
-    //        }
-    //    }
 NS_END

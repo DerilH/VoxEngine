@@ -8,7 +8,8 @@
 #include <VoxEngine/render/buffers/UniformBuffer.h>
 #include <VoxEngine/render/passes/RenderPass.h>
 #include <VoxEngine/render/state/PipelineState.h>
-#include <../assets/ResourceManager.h>
+#include <VoxEngine/resources/MaterialResource.h>
+#include <VoxEngine/resources/ResourceManager.h>
 #include <VoxEngine/scene/components/RenderLayer.h>
 
 namespace Vox::Editor {
@@ -75,10 +76,13 @@ namespace Vox::Editor {
 
                 uint32_t modelIndex = 0;
 
-                auto bindPipeline = [&](ConstRef<Resources::MaterialAsset> asset) {
-                    auto material = asset->cloneTyped();
-                    material->shaders[Render::ShaderStage::FRAGMENT] = "editor/IDShader.frag";
-                    auto state = context.renderer->getPipeline(material.get(), &mRenderingState);
+                auto bindPipeline = [&](ConstRef<Vox::Resources::MaterialResource> resource) {
+                    Vox::Resources::MaterialResource material = *resource;
+                    auto fragShader = context.renderer->getResourceManager()->find<Vox::Resources::ShaderResource>("editor/IDShader.frag");
+                    if (fragShader) {
+                        material.setShader(Render::ShaderStage::FRAGMENT, *fragShader);
+                    }
+                    auto state = context.renderer->getPipeline(&material, &mRenderingState);
                     if (!state) {
                         LOG_ERROR("{}", state.error().format());
                         return;

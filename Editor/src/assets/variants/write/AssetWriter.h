@@ -3,16 +3,15 @@
 //
 
 #pragma once
-#include "VoxCore/Define.h"
-#include "../../../../Engine/include/VoxEngine/resources/Resource.h"
 #include <filesystem>
+#include <VoxCore/Define.h>
 #include <VoxCore/Pointers.h>
+#include "../Asset.h"
 
-RESOURCES_NS
+ASSETS_NS
     class AssetWriter {
     public:
         virtual ~AssetWriter() = default;
         virtual void writeToFile(const std::filesystem::path &path, Asset* asset) = 0;
     };
-
 NS_END

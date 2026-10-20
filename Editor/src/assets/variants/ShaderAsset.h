@@ -4,24 +4,26 @@
 
 #pragma once
 
-
 #include "Asset.h"
-#include "VoxCore/containers/ArrayView.h"
-#include "VoxEngine/render/shaders/CompiledShader.h"
+#include <VoxEngine/render/shaders/CompiledShader.h>
 
-RESOURCES_NS
-class ShaderAsset : public Asset {
-    const Render::Shaders::CompiledShader mCompiled;
-public:
-    explicit ShaderAsset(std::string path, const Render::Shaders::CompiledShader mCompiled);
-    const Render::Shaders::CompiledShader& getCompiled() const;
+ASSETS_NS
+    class ShaderAsset : public Asset {
+        const Render::Shaders::CompiledShader mCompiled;
+    public:
+        explicit ShaderAsset(std::string path, const Render::Shaders::CompiledShader compiled);
+        const Render::Shaders::CompiledShader& getCompiled() const;
 
-    AssetType type() const override {
-        return StaticType();
-    }
+        AssetType type() const override {
+            return StaticType();
+        }
 
-    static AssetType StaticType() {
-        return AssetType::SHADER;
-    }
-};
+        static AssetType StaticType() {
+            return AssetType::SHADER;
+        }
+    };
 NS_END
+
+namespace Vox::Resources {
+    using ShaderAsset = Vox::Editor::Assets::ShaderAsset;
+}

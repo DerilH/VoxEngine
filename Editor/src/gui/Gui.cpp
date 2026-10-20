@@ -23,7 +23,7 @@
 #include <VoxEngine/render/vulkan/VulkanDevice.h>
 #include <VoxEngine/render/vulkan/VulkanUtil.h>
 #include <VoxEngine/scene/GameObject.h>
-#include <../assets/ResourceManager.h>
+#include "../assets/AssetManager.h"
 
 #include "GizmoPass.h"
 #include "GuiRenderPass.h"
@@ -32,7 +32,8 @@
 #include "Theme.h"
 
 namespace Vox::Editor {
-    void Gui::init(Render::Window &window, Engine &engine) {
+    void Gui::init(Render::Window &window, Engine &engine, Assets::AssetManager &assetManager) {
+        sAssetManager = &assetManager;
         mWindow = &window;
         mEngine = &engine;
         mRenderer = engine.getRenderer();
@@ -48,7 +49,7 @@ namespace Vox::Editor {
         ImGuiIO &io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
-        LoadEditorFonts(mEngine->getResourceManager()->getResourcesRoot());
+        LoadEditorFonts(sAssetManager->getResourcesRoot());
         ApplyVoxTheme();
 
         ImGui_ImplGlfw_InitForVulkan((GLFWwindow *) mWindow->getHandle(), true);

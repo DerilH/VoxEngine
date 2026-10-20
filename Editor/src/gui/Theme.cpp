@@ -2,6 +2,8 @@
 #include <imgui_internal.h>
 #include <vector>
 
+#include "../assets/variants/AssetType.h"
+
 namespace Vox::Editor {
 
     void ApplyVoxTheme() {

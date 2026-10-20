@@ -42,7 +42,7 @@ VOX_NS
 
         static ArrayView Copy(Vector<PointerType> &list) {
             auto dataPtr = data(list);
-            if (dataPtr == nullptr) Empty();
+            if (dataPtr == nullptr || list.empty()) return Empty();
             PointerType *pData = reinterpret_cast<PointerType *>(::operator new(list.size() * sizeof(PointerType)));
             memcpy(pData, dataPtr, list.size() * sizeof(PointerType));
             return ArrayView(pData, list.size());

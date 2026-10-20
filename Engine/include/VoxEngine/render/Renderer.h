@@ -2,8 +2,11 @@
 
 #include <VoxCore/Pointers.h>
 #include <VoxCore/signal/Event.h>
-#include <../../../../Editor/src/assets/MaterialAsset.h>
-#include <VoxEngine/resources/assets/ModelAsset.h>
+#include <VoxEngine/resources/ResourceManager.h>
+#include <VoxEngine/resources/MaterialResource.h>
+#include <VoxEngine/resources/MeshResource.h>
+#include <VoxEngine/resources/ShaderResource.h>
+#include <VoxEngine/resources/TextureResource.h>
 #include <VoxEngine/scene/Scene.h>
 
 #include "RenderTarget.h"
@@ -13,12 +16,6 @@
 #include "FrameSync.h"
 #include "MaterialPipelines.h"
 #include "RenderResourceManager.h"
-#include "../../../../Editor/src/assets/variants/MeshAsset.h"
-#include "../../../../Editor/src/assets/variants/ShaderAsset.h"
-
-namespace Vox::Resources {
-    class AssetManager;
-}
 
 namespace Vox::Scene {
     class MeshRendererComponent;
@@ -37,14 +34,14 @@ RENDER_NS
 
         int mBufferingLevel = 0;
         RenderGraph *mGraph = nullptr;
-        HashMap<ConstRef<Resources::MaterialAsset>, OrderedMap<uint8_t, Vector<DrawItem>>> mLayerDrawListByMaterial;
-        HashMap<ConstRef<Resources::MaterialAsset>, MaterialPipelines> mPipelinesByMaterial;
+        HashMap<ConstRef<Resources::MaterialResource>, OrderedMap<uint8_t, Vector<DrawItem>>> mLayerDrawListByMaterial;
+        HashMap<ConstRef<Resources::MaterialResource>, MaterialPipelines> mPipelinesByMaterial;
 
         Ref<RenderBackend> mBackend;
         Ref<RenderResourceManager> mRenderResourceManager;
-        Ref<Resources::AssetManager> mResourceManager;
+        Ref<Resources::ResourceManager> mResourceManager;
 
-        explicit Renderer(Ref<Resources::AssetManager> resourceManager, Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend);
+        explicit Renderer(Ref<Resources::ResourceManager> resourceManager, Ref<RenderResourceManager> renderResManager, Ref<RenderBackend> backend);
 
         void drawFrame(RenderTargetRef target, Ref<CommandBuffer> cmdBuffer);
 
@@ -69,24 +66,24 @@ RENDER_NS
 
         void createGraph();
 
-        const HashMap<ConstRef<Resources::MaterialAsset>, OrderedMap<uint8_t, Vector<DrawItem>>> &getDrawLists() const {
+        const HashMap<ConstRef<Resources::MaterialResource>, OrderedMap<uint8_t, Vector<DrawItem>>> &getDrawLists() const {
             return mLayerDrawListByMaterial;
         }
 
-        const OrderedMap<uint8_t, Vector<DrawItem>> &getLayerDrawList(const ConstRef<Resources::MaterialAsset> &state) const {
+        const OrderedMap<uint8_t, Vector<DrawItem>> &getLayerDrawList(const ConstRef<Resources::MaterialResource> &state) const {
             return mLayerDrawListByMaterial.at(state);
         }
 
-        void clearDrawList(ConstRef<Resources::MaterialAsset> state);
+        void clearDrawList(ConstRef<Resources::MaterialResource> state);
 
         void draw(Ref<Scene::MeshRendererComponent> component);
-        void draw(ConstRef<Resources::MeshAsset> mesh, ConstRef<Resources::MaterialAsset> material, glm::mat4 modelMat, uint8_t layer, uint64_t id);
+        void draw(ConstRef<Resources::MeshResource> mesh, ConstRef<Resources::MaterialResource> material, glm::mat4 modelMat, uint8_t layer, uint64_t id);
         void updateCamera(Ref<Scene::CameraComponent> camera);
 
-        Expected<Ref<PipelineState> > getPipeline(ConstRef<Resources::MaterialAsset> material, ConstRef<RenderingState> renderingState);
+        Expected<Ref<PipelineState> > getPipeline(ConstRef<Resources::MaterialResource> material, ConstRef<RenderingState> renderingState);
 
         Ref<RenderBackend> getBackend() const { return mBackend; }
-        Ref<Resources::AssetManager> getResourceManager() const { return mResourceManager; }
+        Ref<Resources::ResourceManager> getResourceManager() const { return mResourceManager; }
         Ref<RenderResourceManager> getRenderResourceManager() const { return mRenderResourceManager; }
         const HashMap<InternedString, RenderTargetRef> &getViewportTargets() const { return mViewportTargets; }
         const HashMap<InternedString, Ref<RenderTarget>> & getPresentTargets() const {return mPresentTargets;}

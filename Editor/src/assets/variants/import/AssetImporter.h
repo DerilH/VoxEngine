@@ -3,10 +3,9 @@
 //
 
 #pragma once
-#include "VoxCore/Define.h"
+#include <VoxCore/Define.h>
 #include <VoxCore/Pointers.h>
 #include <VoxCore/containers/ArrayView.h>
-
 #include "../Asset.h"
 
 ASSETS_NS
@@ -21,5 +20,4 @@ ASSETS_NS
         virtual Ref<Asset> load(InternedString path, ArrayView<void> data) = 0;
         virtual AssetType type() = 0;
     };
-
 NS_END

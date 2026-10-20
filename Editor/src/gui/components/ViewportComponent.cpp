@@ -14,7 +14,13 @@
 #include <VoxEngine/render/Renderer.h>
 #include <VoxEngine/render/vulkan/VulkanResourceCast.h>
 #include <VoxEngine/render/windowing/WindowManager.h>
-#include <../../assets/ResourceManager.h>
+#include "../../assets/AssetManager.h"
+#include "../../assets/AssetConverter.h"
+#include "../Gui.h"
+#include <VoxEngine/resources/ResourceManager.h>
+#include <VoxEngine/resources/ModelResource.h>
+#include <VoxEngine/resources/MaterialResource.h>
+#include <VoxEngine/resources/MeshResource.h>
 #include <VoxEngine/scene/GameObject.h>
 #include <VoxEngine/scene/Scene.h>
 #include <VoxEngine/scene/components/CameraComponent.h>
@@ -24,7 +30,7 @@
 #include "../Theme.h"
 
 namespace Vox::Editor {
-    static glm::vec3 computeMeshAxis(Ref<Resources::MeshAsset> mesh) {
+    static glm::vec3 computeMeshAxis(ConstRef<Resources::MeshResource> mesh) {
         if (!mesh) return glm::vec3(0.0f);
         const auto &vertices = mesh->getVertices();
         if (vertices.empty()) return glm::vec3(0.0f);
@@ -62,17 +68,23 @@ namespace Vox::Editor {
             auto obj = mSelectedObj;
             if (!obj) return;
 
-            auto gizmoModel = a->getResourceManager()->get<Resources::ModelAsset>("editor/gizmo.fbx");
+            auto resMgr = a->getResourceManager();
+            auto gizmoModelHandle = resMgr->find<Resources::ModelResource>("editor/gizmo.fbx");
+            if (!gizmoModelHandle) return;
+            auto gizmoModel = resMgr->get(*gizmoModelHandle);
             if (!gizmoModel) return;
 
-            auto gizmoMat = a->getResourceManager()->get<Resources::MaterialAsset>("editor/gizmo.vmat");
+            auto gizmoMatHandle = resMgr->find<Resources::MaterialResource>("editor/gizmo.vmat");
+            if (!gizmoMatHandle) return;
+            auto gizmoMat = resMgr->get(*gizmoMatHandle);
             if (!gizmoMat) return;
 
             auto mat = glm::translate(glm::mat4(1.0f), obj->transform->getPos()) * glm::mat4_cast(obj->transform->getRotation());
-            for (int i = 0; i < gizmoModel.value()->getNestedCount(); ++i) {
-                auto gizmoMesh = gizmoModel.value()->getMesh(i);
+            for (uint32_t i = 0; i < gizmoModel.value()->getMeshCount(); ++i) {
+                auto meshHandle = gizmoModel.value()->getMesh(i);
+                auto gizmoMesh = resMgr->get(meshHandle);
                 if (!gizmoMesh) continue;
-                auto name = gizmoMesh.value()->getName();
+                std::string name = (i < gizmoModel.value()->getMeshNames().size()) ? gizmoModel.value()->getMeshNames()[i].c_str() : "";
                 uint64_t index = 0;
                 if (name == "Arrow_X") {
                     index = static_cast<uint64_t>(GizmoElement::Arrow_X);
@@ -159,18 +171,32 @@ namespace Vox::Editor {
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_ITEM")) {
                 buffer.assign(static_cast<const char *>(payload->Data), payload->DataSize);
-                auto asset = context.renderer->getResourceManager()->get<Resources::ModelAsset>(buffer);
-                if (asset) {
-                    for (int i = 0; i < asset.value()->getNestedCount(); ++i) {
-                        auto mesh = asset.value()->getNestedUnsafe<Resources::MeshAsset>(i);
-                        auto obj = mEngine->scene->createObject(mesh->getName());
-                        auto render = new Scene::MeshRendererComponent(obj);
-                        auto defaultMat = context.renderer->getResourceManager()->getDefault<Resources::MaterialAsset>();
-                        render->setMaterial(defaultMat);
-                        render->setMeshProvider([mesh]() {
-                            return mesh;
-                        });
-                        obj->attachComponent(render);
+                auto assetMgr = Gui::GetAssetManager();
+                if (assetMgr) {
+                    auto asset = assetMgr->get<Assets::ModelAsset>(buffer.c_str());
+                    if (asset) {
+                        for (int i = 0; i < asset.value()->getNestedCount(); ++i) {
+                            auto mesh = asset.value()->getNestedUnsafe<Assets::MeshAsset>(i);
+                            auto obj = mEngine->scene->createObject(mesh->getName());
+                            auto render = new Scene::MeshRendererComponent(obj);
+
+                            auto resMgr = mEngine->getResourceManager();
+                            auto meshHandle = Assets::AssetConverter::toResource(mesh, resMgr);
+
+                            auto defaultMatHandle = resMgr->find<Resources::MaterialResource>("defaults/DefaultMaterial.vmat");
+                            if (defaultMatHandle) {
+                                auto matRes = resMgr->get(*defaultMatHandle);
+                                if (matRes) render->setMaterial(matRes.value());
+                            }
+                            if (meshHandle) {
+                                auto h = *meshHandle;
+                                render->setMeshProvider([resMgr, h]() -> ConstRef<Resources::MeshResource> {
+                                    auto m = resMgr->get(h);
+                                    return m ? m.value() : nullptr;
+                                });
+                            }
+                            obj->attachComponent(render);
+                        }
                     }
                 }
             }

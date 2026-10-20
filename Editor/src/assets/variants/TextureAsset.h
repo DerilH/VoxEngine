@@ -6,15 +6,15 @@
 
 #include <VoxCore/containers/ArrayView.h>
 #include <VoxCore/math/Extent.h>
-
 #include "Asset.h"
 
-RESOURCES_NS
+ASSETS_NS
     class TextureAsset : public Asset {
         ArrayView<void> mPixels;
         Extent mExtent;
     public:
-        TextureAsset(InternedString path, ArrayView<void> pixels, Extent extent) : Asset(path, nullptr), mPixels(pixels), mExtent(extent) {
+        TextureAsset(InternedString path, ArrayView<void> pixels, Extent extent)
+            : Asset(path, nullptr, 0), mPixels(pixels), mExtent(extent) {
         }
 
         ArrayView<void> getPixels() const {
@@ -33,5 +33,8 @@ RESOURCES_NS
             return AssetType::TEXTURE;
         }
     };
-
 NS_END
+
+namespace Vox::Resources {
+    using TextureAsset = Vox::Editor::Assets::TextureAsset;
+}

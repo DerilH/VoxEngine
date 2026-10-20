@@ -8,13 +8,13 @@
 #include "VoxEngine/render/Renderer.h"
 #include "VoxEngine/render/vulkan/VulkanRenderTarget.h"
 #include "VoxEngine/render/windowing/Window.h"
-#include "../../../Editor/src/assets/AssetManager.h"
+#include "VoxEngine/resources/ResourceManager.h"
 #include "VoxEngine/render/RenderCore.h"
 
 VOX_NS
     class Engine {
         Ref<Render::Renderer> mRenderer = nullptr;
-        Ref<Resources::AssetManager> mResourceManager = nullptr;
+        UPtr<Resources::ResourceManager> mResourceManager = nullptr;
         UPtr<Scene::GameObjectRegistry> mGameObjectRegistry = nullptr;
 
         bool mInitialized = false;
@@ -39,8 +39,8 @@ VOX_NS
             return mRenderer;
         }
 
-        Ref<Resources::AssetManager> getResourceManager() const {
-            return mResourceManager;
+        Ref<Resources::ResourceManager> getResourceManager() const {
+            return mResourceManager.get();
         }
 
         Ref<Scene::GameObjectRegistry> getGameObjectsRegistry() const {

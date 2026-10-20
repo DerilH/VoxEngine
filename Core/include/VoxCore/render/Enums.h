@@ -1,4 +1,5 @@
 #pragma once
+#include <magic_enum/magic_enum.hpp>
 #include <VoxCore/Define.h>
 
 RENDER_NS
@@ -110,6 +111,10 @@ RENDER_NS
         VERTEX,
         FRAGMENT
     };
+
+    constexpr std::string_view operator+(const ShaderStage type) noexcept {
+        return magic_enum::enum_name(type);
+    }
 
     enum class MSAASamples {
         COUNT_1,

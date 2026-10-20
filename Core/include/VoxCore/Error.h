@@ -1,22 +1,25 @@
 #pragma once
 #include "containers/Containers.h"
+#include <format>
+#include <string_view>
+#include <type_traits>
 
 namespace Vox {
-    // class Error {
-    //     static constexpr size_t kMaxArgs = 4;
-    //
-    //     const char* mMessage = nullptr;
-    //     // std::array<InternedString, kMaxArgs> mArgs{};
-    //     // uint8_t mCount = 0;
-    //
-    // public:
-    //     template <std::same_as<InternedString>... Args>
-    //         requires (sizeof...(Args) <= kMaxArgs)
-    //     Error(const char* message, Args... args)
-    //         : mMessage(message)
-    //         , mArgs{args...}
-    //     , mCount(sizeof...(Args)) {}
-    // };
+    namespace Detail {
+        template <typename T>
+        InternedString toErrorArg(T&& val) {
+            using Decayed = std::decay_t<T>;
+            if constexpr (std::is_same_v<Decayed, InternedString>) {
+                return std::forward<T>(val);
+            } else if constexpr (std::is_convertible_v<T, std::string_view>) {
+                return InternedString(std::string_view(val));
+            } else if constexpr (std::is_arithmetic_v<Decayed>) {
+                return std::to_string(val);
+            } else {
+                return std::format("{}", val);
+            }
+        }
+    }
 
     struct Error {
         const char* message;
@@ -33,7 +36,7 @@ namespace Vox {
         {
             static_assert(sizeof...(Args) <= 4, "Error structure supports a maximum of 4 arguments");
 
-            InternedString tempArgs[]{ std::forward<Args>(inputArgs)... };
+            InternedString tempArgs[]{ Detail::toErrorArg(std::forward<Args>(inputArgs))... };
             for (size_t i = 0; i < sizeof...(Args); ++i) {
                 args[i] = tempArgs[i];
             }
@@ -64,7 +67,6 @@ namespace Vox {
                 break;
             }
 
-            // Добавляем текст ДО открывающей скобки
             result.append(fmt.substr(pos, openBrace - pos));
 
             std::string_view inside = fmt.substr(openBrace + 1, closeBrace - openBrace - 1);

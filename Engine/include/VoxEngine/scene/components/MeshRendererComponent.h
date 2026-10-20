@@ -1,9 +1,8 @@
 #pragma once
 #include <VoxCore/Define.h>
 #include <VoxEngine/render/RenderMesh.h>
-#include <../../../../../Editor/src/assets/MaterialAsset.h>
-#include <../../../../../Editor/src/assets/MeshAsset.h>
-#include <../../../../../Editor/src/assets/ShaderAsset.h>
+#include <VoxEngine/resources/MaterialResource.h>
+#include <VoxEngine/resources/MeshResource.h>
 #include <VoxEngine/scene/Types.h>
 #include "RenderLayer.h"
 #include "RendererComponent.h"
@@ -14,20 +13,18 @@ namespace Vox::Render {
 
 SCENE_NS
     class MeshRendererComponent : public RendererComponent {
-        std::function<ConstRef<Resources::MeshAsset>()> mMeshProvider;
-        ConstRef<Resources::MaterialAsset> mMaterial;
-        ConstRef<Resources::ShaderAsset> mVertexShader;
-        ConstRef<Resources::ShaderAsset> mFragmentShader;
+        std::function<ConstRef<Resources::MeshResource>()> mMeshProvider;
+        ConstRef<Resources::MaterialResource> mMaterial = nullptr;
         RenderLayer mLayer = RenderLayer::WORLD;
 
     public:
         explicit MeshRendererComponent(GameObjectRef gameObject, RenderLayer layer = RenderLayer::WORLD);
 
-        void setMeshProvider(const std::function<ConstRef<Resources::MeshAsset>()> &meshProvider) {
+        void setMeshProvider(const std::function<ConstRef<Resources::MeshResource>()> &meshProvider) {
             mMeshProvider = meshProvider;
         }
 
-        void setMaterial(ConstRef<Resources::MaterialAsset> material) {
+        void setMaterial(ConstRef<Resources::MaterialResource> material) {
             mMaterial = material;
         }
 
@@ -41,11 +38,11 @@ SCENE_NS
 
         void OnAddedToScene(Ref<Scene> scene) override;
 
-        ConstRef<Resources::MeshAsset> getMesh() const {
-            return mMeshProvider();
+        ConstRef<Resources::MeshResource> getMesh() const {
+            return mMeshProvider ? mMeshProvider() : nullptr;
         }
 
-        ConstRef<Resources::MaterialAsset> getMaterial() const {
+        ConstRef<Resources::MaterialResource> getMaterial() const {
             return mMaterial;
         }
 

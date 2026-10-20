@@ -7,7 +7,11 @@
 #include "AssetImporter.h"
 
 ASSETS_NS
-class RegularFileImporter : public AssetImporter {
-    Asset *load(InternedString path, ArrayView<void> data) override;
-};
+    class RegularFileImporter : public AssetImporter {
+    public:
+        Ref<Asset> load(InternedString path, ArrayView<void> data) override;
+        AssetType type() override {
+            return AssetType::REGULAR;
+        }
+    };
 NS_END

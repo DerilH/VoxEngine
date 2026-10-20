@@ -1,9 +1,9 @@
 #pragma once
 #include "Asset.h"
-#include "VoxCore/Pointers.h"
+#include <VoxCore/Pointers.h>
 
-RESOURCES_NS
-    template<typename Derived, typename Base = Vox::Resources::Asset>
+ASSETS_NS
+    template<typename Derived, typename Base = Asset>
     class CloneableAsset : public Base {
     public:
         using Base::Base;
@@ -12,14 +12,13 @@ RESOURCES_NS
             return UPtr<Derived>(static_cast<Derived *>(this->cloneImpl(::operator new(sizeof(Derived)))));
         }
 
-        UPtr<Base> clone() const override {
+        UPtr<Asset> clone() const override {
             return UPtr<Derived>(static_cast<Derived *>(this->cloneImpl(::operator new(sizeof(Derived)))));
         }
 
         void cloneTo(void* ptr) const override {
-            static_cast<Derived *>(this->cloneImpl(ptr));
+            this->cloneImpl(ptr);
         }
-
 
     protected:
         virtual Derived *cloneImpl(void *ptr) const {

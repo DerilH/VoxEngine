@@ -2,11 +2,11 @@
 // Created by deril on 2/19/26.
 //
 
-#include "../RegularFileLoader.h"
-#include "../RegularFile.h"
+#include "RegularFileImporter.h"
+#include "../RegularFileAsset.h"
 
 ASSETS_NS
-Asset *RegularFileLoader::load(InternedString path, ArrayView<void> data) {
-    return new RegularFile(path, data);
-}
+    Ref<Asset> RegularFileImporter::load(InternedString path, ArrayView<void> data) {
+        return new RegularFileAsset(path, data);
+    }
 NS_END

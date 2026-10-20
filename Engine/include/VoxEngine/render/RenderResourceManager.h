@@ -1,17 +1,15 @@
 #pragma once
 #include <VoxCore/Define.h>
 #include <VoxCore/Pointers.h>
-#include <../../../../Editor/src/assets/MaterialAsset.h>
-#include <../../../../Editor/src/assets/MeshAsset.h>
+#include <VoxEngine/resources/MaterialResource.h>
+#include <VoxEngine/resources/MeshResource.h>
+#include <VoxEngine/resources/TextureResource.h>
+#include <VoxEngine/resources/ResourceManager.h>
 
 #include "MaterialPipelines.h"
 #include "RenderBackend.h"
 #include "RenderMesh.h"
 #include "buffers/UniformBufferAllocator.h"
-
-namespace Vox::Resources {
-    class AssetManager;
-}
 
 RENDER_NS
     class RenderResourceManager {
@@ -33,11 +31,10 @@ RENDER_NS
         HashMap<InternedString, Ref<Texture>> mLoadedTextures;
 
         struct MaterialTextureBinding {
-            InternedString texturePath;
             Ref<Texture> texture;
             Ref<BindGroup> bindGroup;
         };
-        HashMap<ConstRef<Resources::MaterialAsset>, MaterialTextureBinding> mMaterialTextureBindings;
+        HashMap<ConstRef<Resources::MaterialResource>, MaterialTextureBinding> mMaterialTextureBindings;
 
     private:
         virtual Ref<PipelineState> createPSO(ConstRef<PipelineStateDesc> desc) = 0;
@@ -100,8 +97,8 @@ RENDER_NS
 
         virtual void updateSampler(Ref<Texture> texture) = 0;
 
-        Ref<Texture> getTexture(InternedString path, Ref<Resources::AssetManager> resourceManager);
-        Ref<BindGroup> getMaterialTextureGroup(ConstRef<Resources::MaterialAsset> material, Ref<PipelineState> pso, Ref<Resources::AssetManager> resourceManager);
+        Ref<Texture> getTexture(Resources::TextureHandle handle, Ref<Resources::ResourceManager> resourceManager);
+        Ref<BindGroup> getMaterialTextureGroup(ConstRef<Resources::MaterialResource> material, Ref<PipelineState> pso, Ref<Resources::ResourceManager> resourceManager);
 
         Ref<UniformBuffer> getCameraBuffer() const {
             return mCameraBuffer;
@@ -115,11 +112,11 @@ RENDER_NS
             return mModelAlignment;
         }
 
-        Ref<PipelineState> getPipeline(ConstRef<Resources::MaterialAsset> material, ConstRef<RenderingState> renderingState);
+        Ref<PipelineState> getPipeline(ConstRef<Resources::MaterialResource> material, ConstRef<RenderingState> renderingState);
 
         Ref<PipelineState> getPipeline(ConstRef<PipelineStateDesc> desc);
 
-        Ref<RenderMesh> getMesh(ConstRef<Resources::MeshAsset> mesh);
+        Ref<RenderMesh> getMesh(ConstRef<Resources::MeshResource> mesh);
     };
 
 NS_END

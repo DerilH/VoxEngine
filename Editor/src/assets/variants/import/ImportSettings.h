@@ -1,10 +1,11 @@
 #pragma once
-#include <variant>
-#include "../Serializable.h"
-#include "../../Define.h"
+#include "../../Serializable.h"
+#include "../../../Define.h"
 
 ASSETS_NS
-class ImportSettings : Resources::Serialization::Serializable {
+class ImportSettings : public Serializable {
 public:
+    virtual ~ImportSettings() = default;
+    void serialize(FILE *file) const override {}
 };
 NS_END

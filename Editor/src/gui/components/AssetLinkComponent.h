@@ -1,8 +1,10 @@
 #pragma once
 #include <functional>
 #include <VoxCore/containers/Containers.h>
-#include <../../assets/Asset.h>
 #include "GuiComponent.h"
+#include "../../assets/variants/AssetType.h"
+
+enum class AssetType : uint16_t;
 
 namespace Vox::Editor {
     class AssetLinkComponent : public GuiComponent {

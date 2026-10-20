@@ -10,22 +10,25 @@
 
 #include "ImportSettings.h"
 #include "../AssetType.h"
+#include "../../Serializable.h"
 
 ASSETS_NS
-    struct  AssetMetadata : Serializable {
+    struct AssetMetadata : public Serializable {
         UUID uuid;
-        uint32_t version;
-        AssetType type;
-        UPtr<ImportSettings> settings;
+        uint32_t version{1};
+        AssetType type{AssetType::REGULAR};
+        UPtr<ImportSettings> settings{nullptr};
 
-   AssetMetadata(const UUID uuid, const uint32_t version, const AssetType type, const Ref<ImportSettings> settings)
+        AssetMetadata() = default;
+
+        AssetMetadata(const UUID uuid, const uint32_t version, const AssetType type, UPtr<ImportSettings> settings = nullptr)
             : uuid(uuid),
               version(version),
               type(type),
-              settings(settings) {
+              settings(std::move(settings)) {
         }
 
-        void serialize(FILE *file) override;
-        static Expected<Ref<AssetMetadata>> deserialize(FILE *file);
+        void serialize(FILE *file) const override;
+        static Expected<UPtr<AssetMetadata>> deserialize(FILE *file);
     };
 NS_END

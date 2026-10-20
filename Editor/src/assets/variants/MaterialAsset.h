@@ -5,7 +5,7 @@
 #include "Asset.h"
 #include "ClonableAsset.h"
 
-RESOURCES_NS
+ASSETS_NS
     class MaterialAsset : public CloneableAsset<MaterialAsset> {
     protected:
         MaterialAsset *cloneImpl(void *ptr) const override;
@@ -36,5 +36,8 @@ RESOURCES_NS
             return AssetType::MATERIAL;
         }
     };
-
 NS_END
+
+namespace Vox::Resources {
+    using MaterialAsset = Vox::Editor::Assets::MaterialAsset;
+}
