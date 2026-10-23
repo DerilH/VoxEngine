@@ -12,36 +12,63 @@
 #include "../../Gui.h"
 #include "../../Theme.h"
 
-Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, ConstRef<Assets::MaterialAsset> asset, bool &shouldClose)
-    : AssetEditor(shouldClose), mEngine(engine), mOriginalAsset(asset), mAsset(std::move(asset->cloneTyped())) {
+Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, UUID assetUuid, ConstRef<Assets::MaterialAsset> asset, bool &shouldClose)
+    : AssetEditor(shouldClose), mAssetUuid(assetUuid), mEngine(engine), mOriginalAsset(asset), mAsset(std::move(asset->cloneTyped())) {
     mTextureLink = makeUPtr<AssetLinkComponent>("Texture", AssetType::TEXTURE, [this]() -> InternedString {
-        if (!mAsset) return "";
-        return mAsset->texture;
+        if (!mAsset || !mAsset->albedo.isValid()) return "";
+        auto assetMgr = Gui::GetAssetManager();
+        if (assetMgr) {
+            auto meta = assetMgr->getMetadata(mAsset->albedo);
+            if (meta) return meta->fileName;
+        }
+        return mAsset->albedo.toString();
     });
 
-    mTextureLink->onChanged += [this](InternedString path) {
+    mTextureLink->onAssetChanged += [this](UUID texUuid) {
         if (!mAsset) return;
-        mAsset->texture = path;
-        mAsset->albedo = path;
-        auto matPath = mAsset->getPath();
+        mAsset->albedo = texUuid;
         auto clone = mAsset->cloneTyped();
         auto assetMgr = Gui::GetAssetManager();
         if (assetMgr) {
-            assetMgr->update(matPath, std::move(mAsset));
-            auto matAsset = assetMgr->findByPath<Assets::MaterialAsset>(matPath);
+            assetMgr->update(mAssetUuid, std::move(mAsset));
+            auto matAsset = assetMgr->getOrLoad<Assets::MaterialAsset>(mAssetUuid);
             if (matAsset) {
-                Assets::AssetConverter::toResource(*matAsset, mEngine->getResourceManager(), assetMgr);
+                Assets::AssetConverter::toResource(*matAsset, mEngine->getResourceManager(), assetMgr, mAssetUuid);
             }
         }
         mAsset = std::move(clone);
+    };
+
+    mTextureLink->onChanged += [this](InternedString nameOrPath) {
+        if (!mAsset) return;
+        auto assetMgr = Gui::GetAssetManager();
+        if (assetMgr) {
+            UUID texUuid = assetMgr->getUUID(nameOrPath);
+            // if (!texUuid.isValid()) texUuid = UUID::fromString(nameOrPath);
+            if (texUuid.isValid()) {
+                mAsset->albedo = texUuid;
+                auto clone = mAsset->cloneTyped();
+                assetMgr->update(mAssetUuid, std::move(mAsset));
+                auto matAsset = assetMgr->getOrLoad<Assets::MaterialAsset>(mAssetUuid);
+                if (matAsset) {
+                    Assets::AssetConverter::toResource(*matAsset, mEngine->getResourceManager(), assetMgr, mAssetUuid);
+                }
+                mAsset = std::move(clone);
+            }
+        }
     };
 }
 
 void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) {
     if (!mAsset) return;
 
+    auto assetMgr = Gui::GetAssetManager();
+    auto meta = assetMgr ? assetMgr->getMetadata(mAssetUuid) : nullptr;
+    std::string assetName = meta ? meta->fileName.c_str() : "Material";
+    std::string assetPath = assetMgr ? assetMgr->getPath(mAssetUuid).c_str() : "";
+
     bool isOpen = true;
-    std::string winTitle = "Material Editor - " + std::string(mAsset->getName().c_str()) + "###MaterialEditor";
+    std::string winTitle = "Material Editor - " + assetName + "###MaterialEditor";
     ImGui::SetNextWindowSize(ImVec2(360, 480), ImGuiCond_FirstUseEver);
 
     if (!ImGui::Begin(winTitle.c_str(), &isOpen)) {
@@ -56,8 +83,10 @@ void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) 
     ImGui::Spacing();
     DrawAssetBadge(AssetType::MATERIAL);
     ImGui::SameLine();
-    ImGui::TextUnformatted(mAsset->getName().c_str());
-    ImGui::TextDisabled("Path: %s", mAsset->getPath().c_str());
+    ImGui::TextUnformatted(assetName.c_str());
+    if (!assetPath.empty()) {
+        ImGui::TextDisabled("Path: %s", assetPath.c_str());
+    }
 
     ImGui::Spacing();
     ImGui::Separator();
@@ -115,14 +144,12 @@ void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) 
     }
 
     if (changed) {
-        auto path = mAsset->getPath();
         auto clone = mAsset->cloneTyped();
-        auto assetMgr = Gui::GetAssetManager();
         if (assetMgr) {
-            assetMgr->update(path, std::move(mAsset));
-            auto matAsset = assetMgr->findByPath<Assets::MaterialAsset>(path);
+            assetMgr->update(mAssetUuid, std::move(mAsset));
+            auto matAsset = assetMgr->getOrLoad<Assets::MaterialAsset>(mAssetUuid);
             if (matAsset) {
-                Assets::AssetConverter::toResource(*matAsset, mEngine->getResourceManager(), assetMgr);
+                Assets::AssetConverter::toResource(*matAsset, mEngine->getResourceManager(), assetMgr, mAssetUuid);
             }
         }
         mAsset = std::move(clone);

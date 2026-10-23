@@ -1,4 +1,5 @@
 #version 450
+#pragma shader_stage(fragment)
 layout (set = 3, binding = 1) uniform data {
     uint objectIdLo;
     uint objectIdHi;

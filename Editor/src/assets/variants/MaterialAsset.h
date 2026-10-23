@@ -42,7 +42,3 @@ ASSETS_NS
     };
 
 NS_END
-
-namespace Vox::Resources {
-    using MaterialAsset = Vox::Editor::Assets::MaterialAsset;
-}

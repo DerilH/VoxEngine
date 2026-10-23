@@ -48,7 +48,7 @@ ASSETS_NS
 
         void serialize(FILE *file) const override;
 
-        static Expected<UPtr<AssetMetadata> > deserialize(FILE *file);
+        static Expected<Ref<AssetMetadata>> deserialize(FILE *file);
     };
 
 NS_END

@@ -25,7 +25,7 @@ ASSETS_NS
 
     Expected<MaterialAsset*> MaterialAsset::deserialize(FILE *file) {
         auto m = new MaterialAsset();
-        DESERIALIZE(file, FIELD(m->shaders), FIELD(m->polygonMode), FIELD(m->cullMode), FIELD(m->topology), FIELD(m->depthTest), FIELD(m->depthWrite), FIELD(m->depthCompareOp), FIELD(m->albedo));
+        DESERIALIZE(file, FIELD_OF(m, shaders), FIELD_OF(m, polygonMode), FIELD_OF(m, cullMode), FIELD_OF(m, topology), FIELD_OF(m, depthTest), FIELD_OF(m, depthWrite), FIELD_OF(m, depthCompareOp), FIELD_OF(m, albedo));
         return m;
     }
 

@@ -170,32 +170,57 @@ namespace Vox::Editor {
 
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_ITEM")) {
-                buffer.assign(static_cast<const char *>(payload->Data), payload->DataSize);
                 auto assetMgr = Gui::GetAssetManager();
                 if (assetMgr) {
-                    auto asset = assetMgr->findByPath<Assets::ModelAsset>(buffer.c_str());
-                    if (asset) {
-                        for (int i = 0; i < asset.value()->getNestedCount(); ++i) {
-                            auto mesh = asset.value()->getNestedUnsafe<Assets::MeshAsset>(i);
-                            auto obj = mEngine->scene->createObject("mesh");
-                            auto render = new Scene::MeshRendererComponent(obj);
+                    UUID droppedUuid{};
+                    if (payload->DataSize == sizeof(UUID)) {
+                        droppedUuid = *static_cast<const UUID *>(payload->Data);
+                    } else {
+                        buffer.assign(static_cast<const char *>(payload->Data), payload->DataSize);
+                        droppedUuid = assetMgr->getUUID(buffer.c_str());
+                        // if (!droppedUuid.isValid()) droppedUuid = UUID::fromString(buffer.c_str());
+                    }
 
+                    if (droppedUuid.isValid()) {
+                        auto meta = assetMgr->getMetadata(droppedUuid);
+                        if (meta && meta->type == AssetType::MODEL) {
                             auto resMgr = mEngine->getResourceManager();
-                            auto meshHandle = Assets::AssetConverter::toResource(mesh, resMgr);
+                            auto modelRes = resMgr->findByAsset<Resources::ModelResource>(droppedUuid);
+                            if (!modelRes) {
+                                auto modelAsset = assetMgr->getOrLoad<Assets::ModelAsset>(droppedUuid);
+                                if (modelAsset) {
+                                    auto handle = Assets::AssetConverter::toResource(*modelAsset, resMgr, droppedUuid);
+                                    if (handle) modelRes = *handle;
+                                }
+                            }
+                            if (modelRes) {
+                                auto model = resMgr->get(*modelRes);
+                                if (model) {
+                                    UUID defaultMatUuid = assetMgr->getUUID("defaults/DefaultMaterial.vmat");
+                                    ConstRef<Resources::MaterialResource> defaultMatRes = nullptr;
+                                    if (defaultMatUuid.isValid()) {
+                                        auto defaultMatHandle = resMgr->findByAsset<Resources::MaterialResource>(defaultMatUuid);
+                                        if (defaultMatHandle) {
+                                            auto mR = resMgr->get(*defaultMatHandle);
+                                            if (mR) defaultMatRes = mR.value();
+                                        }
+                                    }
 
-                            auto defaultMatHandle = resMgr->find<Resources::MaterialResource>("defaults/DefaultMaterial.vmat");
-                            if (defaultMatHandle) {
-                                auto matRes = resMgr->get(*defaultMatHandle);
-                                if (matRes) render->setMaterial(matRes.value());
+                                    for (uint32_t i = 0; i < model.value()->getMeshCount(); ++i) {
+                                        auto meshHandle = model.value()->getMesh(i);
+                                        auto obj = mEngine->scene->createObject(meta->fileName.c_str());
+                                        auto render = new Scene::MeshRendererComponent(obj);
+                                        if (defaultMatRes) {
+                                            render->setMaterial(defaultMatRes, defaultMatUuid);
+                                        }
+                                        render->setMeshProvider([resMgr, meshHandle]() -> ConstRef<Resources::MeshResource> {
+                                            auto m = resMgr->get(meshHandle);
+                                            return m ? m.value() : nullptr;
+                                        }, droppedUuid);
+                                        obj->attachComponent(render);
+                                    }
+                                }
                             }
-                            if (meshHandle) {
-                                auto h = *meshHandle;
-                                render->setMeshProvider([resMgr, h]() -> ConstRef<Resources::MeshResource> {
-                                    auto m = resMgr->get(h);
-                                    return m ? m.value() : nullptr;
-                                });
-                            }
-                            obj->attachComponent(render);
                         }
                     }
                 }

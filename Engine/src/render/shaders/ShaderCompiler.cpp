@@ -101,6 +101,10 @@ namespace Vox::Render::Shaders {
                 mCompilerOptions
         );
 
+        if (result.GetCompilationStatus() == shaderc_compilation_status_invalid_stage) {
+            VOX_CHECK(false, "Invalid stage in shader, maybe you forgot #pragma directive");
+        }
+
         VOX_CHECK(result.GetCompilationStatus() == shaderc_compilation_status_success, result.GetErrorMessage());
         const std::vector bin(result.cbegin(), result.cend());
 

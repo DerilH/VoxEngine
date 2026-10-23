@@ -10,17 +10,11 @@
 
 EDITOR_NS
     AssetIcon::AssetIcon(const Assets::AssetMetadata asset) : mAsset(asset) {
-        // auto nested = mAsset.getNested();
-        // for (int i = 0; i < mAsset.getNestedCount(); i++) {
-            // auto icon = new AssetIcon(nested[i]);
-            // mNestedIcons.emplace_back(icon);
-        // }
     }
 
     void AssetIcon::render() const {
-        ImGui::PushID(1);
+        ImGui::PushID(mAsset.uuid.toString().c_str());
 
-        // bool hasNested = mAsset->hasNested();
         bool hasNested = false;
         AssetType type = mAsset.type;
         const char *badge = GetAssetTypeBadge(type);

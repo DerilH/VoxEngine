@@ -1,14 +1,12 @@
 #pragma once
 #include <functional>
 #include <VoxCore/containers/Containers.h>
+#include <VoxCore/math/UUID.h>
 #include "GuiComponent.h"
 #include "../../assets/variants/AssetType.h"
 
-enum class AssetType : uint16_t;
-
 namespace Vox::Editor {
     class AssetLinkComponent : public GuiComponent {
-        std::string mBuffer;
         std::function<InternedString()> mValueProvider;
         InternedString mLabel;
         AssetType mAssetType = AssetType::REGULAR;
@@ -18,8 +16,10 @@ namespace Vox::Editor {
         void renderInternal(Render::RenderContext context) override;
 
     public:
-        Event<InternedString> onChanged;
-        Event<InternedString> onDoubleClicked;
+        Event<UUID> onChanged;
+        Event<UUID> onDoubleClicked;
+        Event<UUID> onAssetChanged;
+        Event<UUID> onAssetDoubleClicked;
 
         explicit AssetLinkComponent(InternedString label, AssetType assetType, std::function<InternedString()> valueProvider);
         explicit AssetLinkComponent(InternedString label, std::function<InternedString()> valueProvider);

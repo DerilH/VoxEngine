@@ -17,6 +17,7 @@
 #include <VoxCore/math/UUID.h>
 
 #define FIELD(x) #x, x
+#define FIELD_OF(obj, member) #member, (obj)->member
 
 #define SERIALIZE(file, ...)                              \
 do {                                                    \

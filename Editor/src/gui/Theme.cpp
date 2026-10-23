@@ -178,7 +178,6 @@ namespace Vox::Editor {
             case AssetType::MATERIAL: return "MAT";
             case AssetType::TEXTURE:  return "TEX";
             case AssetType::SHADER:   return "SHD";
-            case AssetType::REGULAR:  return "DOC";
             default:                  return "FILE";
         }
     }

@@ -28,7 +28,7 @@ namespace Vox::Editor {
         DrawBadge("DIR", ThemeColors::AssetDir);
         ImGui::SameLine();
 
-        std::string currentPathStr = mCurrentDir ? mCurrentDir->path : "Root";
+        std::string currentPathStr = mCurrentDir ? mCurrentDir->path.c_str() : "Root";
         ImGui::Text("Resources / %s", currentPathStr.c_str());
 
         ImGui::SameLine();
@@ -100,7 +100,7 @@ namespace Vox::Editor {
             flags |= ImGuiTreeNodeFlags_Leaf;
         }
 
-        const std::string folderName = dirNode->name;
+        const std::string folderName = dirNode->name.c_str();
 
         if (mCurrentDir == dirNode) {
             flags |= ImGuiTreeNodeFlags_Selected;
@@ -177,15 +177,18 @@ namespace Vox::Editor {
         }
         if (!mAssetManager) return;
 
-        const auto &assets = mAssetManager->listDirAssets(mCurrentDir->path);
-        if (assets.empty()) return;
+        for (const auto &uuid : mCurrentDir->getAssets()) {
+            auto meta = mAssetManager->getMetadata(uuid);
+            if (!meta) continue;
 
-        for (auto &asset: assets) {
-            auto icon = new AssetIcon(mAssetManager.get);
+            auto icon = new AssetIcon(*meta);
 
-            icon->setOnDoubleClick([asset, this, icon]() {
-                if (asset->type() == AssetType::MATERIAL) {
-                    mAssetEditor = makeUPtr<MaterialEditor>(mEngine, static_cast<ConstRef<Assets::MaterialAsset>>(asset), mShouldCloseEditor);
+            icon->setOnDoubleClick([uuid, type = meta->type, this]() {
+                if (type == AssetType::MATERIAL) {
+                    auto matAsset = mAssetManager->getOrLoad<Assets::MaterialAsset>(uuid);
+                    if (matAsset) {
+                        mAssetEditor = makeUPtr<MaterialEditor>(mEngine, uuid, *matAsset, mShouldCloseEditor);
+                    }
                 }
             });
             mIcons.emplace_back(icon);
@@ -195,15 +198,16 @@ namespace Vox::Editor {
     AssetExplorer::AssetExplorer(Ref<Engine> engine) : mEngine(engine), mAssetManager(Gui::GetAssetManager()) {
     }
 
-    void AssetExplorer::openAsset(InternedString path) {
-        if (path.empty()) return;
+    void AssetExplorer::openAsset(UUID uuid) {
+        if (!uuid.isValid()) return;
         if (!mAssetManager) {
             mAssetManager = Gui::GetAssetManager();
         }
         if (!mAssetManager) return;
-        auto asset = mAssetManager->getAsset(path);
-        if (!asset) return;
+        auto meta = mAssetManager->getMetadata(uuid);
+        if (!meta) return;
 
+        auto path = mAssetManager->getPath(uuid);
         std::filesystem::path p(path.c_str());
 
         std::function<ConstRef<Assets::AssetDirectory>(ConstRef<Assets::AssetDirectory>, const std::string &)> findDir =
@@ -232,11 +236,9 @@ namespace Vox::Editor {
             createContentIcons();
 
             for (auto &icon: mIcons) {
-                for (auto &nested: icon->getNested()) {
-                    if (nested->mAsset && nested->mAsset->getPath() == path) {
-                        icon->expanded = true;
-                        break;
-                    }
+                if (icon->mAsset.uuid == uuid) {
+                    icon->expanded = true;
+                    break;
                 }
             }
         }
@@ -244,8 +246,17 @@ namespace Vox::Editor {
         ImGui::SetWindowFocus("Asset Explorer###AssetExplorer");
     }
 
-    void AssetExplorer::openAsset(ConstRef<Assets::Asset> asset) {
-        if (!asset) return;
-        openAsset(asset->getPath());
+    void AssetExplorer::openAsset(InternedString path) {
+        if (path.empty()) return;
+        if (!mAssetManager) {
+            mAssetManager = Gui::GetAssetManager();
+        }
+        if (!mAssetManager) return;
+
+        UUID uuid = mAssetManager->getUUID(path);
+        // if (!uuid.isValid()) uuid = UUID::fromString(path);
+        // if (uuid.isValid()) {
+            // openAsset(uuid);
+        // }
     }
 }

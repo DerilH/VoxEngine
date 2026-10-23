@@ -1,5 +1,6 @@
 #pragma once
 #include <VoxCore/math/Types.h>
+#include <VoxCore/math/UUID.h>
 #include <VoxEngine/Engine.h>
 #include <VoxEngine/render/RenderContext.h>
 #include <VoxEngine/scene/GameObject.h>
@@ -24,6 +25,7 @@ namespace Vox::Editor {
 
     public:
         Event<InternedString> onOpenAsset;
+        Event<UUID> onOpenAssetUuid;
 
         explicit InspectorComponent(Ref<Engine> engine);
 

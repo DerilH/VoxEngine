@@ -7,12 +7,14 @@
 #include <misc/cpp/imgui_stdlib.h>
 #include <misc/cpp/imgui_stdlib.cpp>
 #include <utility>
+#include "../Gui.h"
 #include "../Theme.h"
+#include "../../assets/AssetManager.h"
 
 namespace Vox::Editor {
     AssetLinkComponent::AssetLinkComponent(InternedString label, AssetType assetType, std::function<InternedString()> valueProvider)
         : mValueProvider(std::move(valueProvider)), mLabel(label), mAssetType(assetType) {
-        mBuffer.reserve(128);
+        // mBuffer.reserve(128);
     }
 
     AssetLinkComponent::AssetLinkComponent(InternedString label, std::function<InternedString()> valueProvider)
@@ -24,7 +26,7 @@ namespace Vox::Editor {
 
         const auto value = mValueProvider ? mValueProvider() : InternedString("");
         if (!mFocused) {
-            mBuffer.assign(value);
+            // mBuffer.assign(value);
         }
 
         ImGui::Columns(2, nullptr, false);
@@ -43,38 +45,81 @@ namespace Vox::Editor {
 
         std::string inputId = "##" + std::string(mLabel.c_str());
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-        bool entered = ImGui::InputText(inputId.c_str(), &mBuffer, ImGuiInputTextFlags_EnterReturnsTrue);
+        // bool entered = ImGui::InputText(inputId.c_str(), &mBuffer, ImGuiInputTextFlags_EnterReturnsTrue);
+        bool entered = false;
         mFocused = ImGui::IsItemActive();
         bool inputHovered = ImGui::IsItemHovered();
         bool inputDoubleClicked = inputHovered && ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left);
 
         if (badgeDoubleClicked || inputDoubleClicked) {
-            if (!mBuffer.empty()) {
-                onDoubleClicked.invoke(mBuffer);
-            }
+            auto assetMgr = Gui::GetAssetManager();
+            // if (assetMgr) {
+                // UUID u = assetMgr->getUUID(mBuffer);
+                // if (!u.isValid()) u = UUID::fromString(mBuffer);
+                // if (u.isValid()) {
+                    // onAssetDoubleClicked.invoke(u);
+                // }
+            // }
+            // onDoubleClicked.invoke(mBuffer);
         }
 
         if (entered || ImGui::IsItemDeactivatedAfterEdit()) {
-            if (mBuffer != value) {
-                if (mFilter(mBuffer)) {
-                    onChanged.invoke(mBuffer);
-                } else {
-                    mBuffer.assign(value);
-                }
-            }
+            // if (mBuffer != value) {
+            //     if (mFilter(mBuffer)) {
+            //         auto assetMgr = Gui::GetAssetManager();
+            //         if (assetMgr) {
+            //             UUID u = assetMgr->getUUID(mBuffer);
+            //             if (!u.isValid()) u = UUID::fromString(mBuffer);
+            //             if (u.isValid()) {
+            //                 auto meta = assetMgr->getMetadata(u);
+            //                 if (meta && (mAssetType == AssetType::REGULAR || meta->type == mAssetType)) {
+            //                     onAssetChanged.invoke(u);
+            //                 }
+            //             }
+            //         }
+            //         onChanged.invoke(mBuffer);
+            //     } else {
+            //         mBuffer.assign(value);
+            //     }
+            // }
         }
 
         if (ImGui::BeginDragDropTarget()) {
             if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("ASSET_ITEM")) {
-                const char *draggedPath = static_cast<const char *>(payload->Data);
-                size_t dataSize = static_cast<size_t>(payload->DataSize);
-                size_t stringLen = (dataSize > 0 && draggedPath[dataSize - 1] == '\0') ? dataSize - 1 : dataSize;
-                std::string dropped(draggedPath, stringLen);
-                if (mFilter(dropped)) {
-                    mBuffer = dropped;
-                    onChanged.invoke(mBuffer);
+                auto assetMgr = Gui::GetAssetManager();
+                if (payload->DataSize == sizeof(UUID)) {
+                    UUID droppedUuid = *static_cast<const UUID *>(payload->Data);
+                    if (assetMgr) {
+                        auto meta = assetMgr->getMetadata(droppedUuid);
+                        if (meta) {
+                            // if (mAssetType == AssetType::REGULAR || meta->type == mAssetType) {
+                                // mBuffer = meta->fileName;
+                                // onAssetChanged.invoke(droppedUuid);
+                                // onChanged.invoke(meta->fileName);
+                            // }
+                        }
+                    }
                 } else {
-                    mBuffer.assign(value);
+                    const char *draggedPath = static_cast<const char *>(payload->Data);
+                    size_t dataSize = static_cast<size_t>(payload->DataSize);
+                    size_t stringLen = (dataSize > 0 && draggedPath[dataSize - 1] == '\0') ? dataSize - 1 : dataSize;
+                    std::string dropped(draggedPath, stringLen);
+                    if (mFilter(dropped)) {
+                        // mBuffer = dropped;
+                        // if (assetMgr) {
+                            // UUID u = assetMgr->getUUID(dropped);
+                            // if (!u.isValid()) u = UUID::fromString(dropped);
+                            // if (u.isValid()) {
+                                // auto meta = assetMgr->getMetadata(u);
+                                // if (meta && (mAssetType == AssetType::REGULAR || meta->type == mAssetType)) {
+                                    // onAssetChanged.invoke(u);
+                                // }
+                            // }
+                        // }
+                        // onChanged.invoke(mBuffer);
+                    } else {
+                        // mBuffer.assign(value);
+                    }
                 }
             }
             ImGui::EndDragDropTarget();

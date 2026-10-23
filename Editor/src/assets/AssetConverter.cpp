@@ -302,7 +302,10 @@ void AssetConverter::convertAll(
 
     for (const auto &[uuid, asset]: assetManager->getLoadedAssets()) {
         if (asset) {
-            getOrConvert(uuid, resManager, assetManager);
+            auto converted = getOrConvert(uuid, resManager, assetManager);
+            if (!converted) {
+                LOG_WARN("Converting asset failed: {}, {}", converted.error().format(), assetManager->getPath(uuid))
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <VoxCore/Define.h>
+#include <VoxCore/math/UUID.h>
 #include <VoxEngine/render/RenderMesh.h>
 #include <VoxEngine/resources/MaterialResource.h>
 #include <VoxEngine/resources/MeshResource.h>
@@ -16,16 +17,28 @@ SCENE_NS
         std::function<ConstRef<Resources::MeshResource>()> mMeshProvider;
         ConstRef<Resources::MaterialResource> mMaterial = nullptr;
         RenderLayer mLayer = RenderLayer::WORLD;
+        UUID mMeshUuid{};
+        UUID mMaterialUuid{};
 
     public:
         explicit MeshRendererComponent(GameObjectRef gameObject, RenderLayer layer = RenderLayer::WORLD);
 
-        void setMeshProvider(const std::function<ConstRef<Resources::MeshResource>()> &meshProvider) {
+        void setMeshProvider(const std::function<ConstRef<Resources::MeshResource>()> &meshProvider, UUID uuid = {}) {
             mMeshProvider = meshProvider;
+            mMeshUuid = uuid;
         }
 
-        void setMaterial(ConstRef<Resources::MaterialResource> material) {
+        void setMaterial(ConstRef<Resources::MaterialResource> material, UUID uuid = {}) {
             mMaterial = material;
+            mMaterialUuid = uuid;
+        }
+
+        UUID getMeshUuid() const noexcept {
+            return mMeshUuid;
+        }
+
+        UUID getMaterialUuid() const noexcept {
+            return mMaterialUuid;
         }
 
         void setLayer(const RenderLayer layer) {

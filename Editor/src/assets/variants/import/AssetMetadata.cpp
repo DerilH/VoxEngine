@@ -9,9 +9,9 @@ ASSETS_NS
         SERIALIZE(file, FIELD(uuid), FIELD(fileName), FIELD(version), FIELD(type));
     }
 
-    Expected<UPtr<AssetMetadata> > AssetMetadata::deserialize(FILE *file) {
+    Expected<Ref<AssetMetadata>> AssetMetadata::deserialize(FILE *file) {
         VOX_EXPECT(file != nullptr, "Invalid file for metadata deserialization");
-        auto metadata = makeUPtr<AssetMetadata>();
+        auto metadata = new AssetMetadata();
         auto ctx = contextForReading(file);
         deserializeInternal(file, ctx, "uuid", metadata->uuid, "fileName", metadata->fileName, "version", metadata->version, "type", metadata->type);
         return metadata;

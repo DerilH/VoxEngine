@@ -157,6 +157,7 @@ RESOURCES_NS
         virtual ~Serializable() = default;
 
         virtual void serialize(FILE *file) const = 0;
+        // virtual void deserialize(FILE* file) = 0;
 
     protected:
         static SerializationContext<JsonSerialization> contextForReading(FILE *file) { return SerializationContext<JsonSerialization>::createForReading(file); }

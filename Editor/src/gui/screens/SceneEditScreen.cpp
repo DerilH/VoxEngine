@@ -8,6 +8,9 @@
 #include "../components/ViewportComponent.h"
 
 namespace Vox::Editor {
+    void SceneEditScreen::renderInternal(Render::RenderContext context) {
+    }
+
     SceneEditScreen::SceneEditScreen(Ref<Engine> engine, Ref<GizmoPass> gizmoPass) : Screen(engine) {
         auto hie = new HierarchyComponent(engine);
         auto inspector = new InspectorComponent(engine);
@@ -23,6 +26,9 @@ namespace Vox::Editor {
 
         inspector->onOpenAsset += [assetExplorer](InternedString path) {
             assetExplorer->openAsset(path);
+        };
+        inspector->onOpenAssetUuid += [assetExplorer](UUID uuid) {
+            assetExplorer->openAsset(uuid);
         };
 
         engine->onSceneChanged += [hie](auto scene) {
@@ -40,8 +46,5 @@ namespace Vox::Editor {
             inspector->setObject(mSelectedObject);
             view->setSelected(obj);
         };
-    }
-
-    void SceneEditScreen::renderInternal(Render::RenderContext context) {
     }
 }

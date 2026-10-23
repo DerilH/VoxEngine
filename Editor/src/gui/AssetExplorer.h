@@ -1,5 +1,6 @@
 #pragma once
 #include <VoxCore/containers/Containers.h>
+#include <VoxCore/math/UUID.h>
 #include <VoxEngine/Engine.h>
 #include "../assets/AssetDirectory.h"
 #include "../assets/AssetManager.h"
@@ -24,7 +25,7 @@ namespace Vox::Editor {
         AssetExplorer(Ref<Engine> engine);
 
         void openAsset(UUID uuid);
-        void openAsset(ConstRef<Assets::Asset> asset);
+        void openAsset(InternedString path);
 
     protected:
         void renderInternal(Render::RenderContext context) override;

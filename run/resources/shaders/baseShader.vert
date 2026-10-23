@@ -1,4 +1,5 @@
 #version 450
+#pragma shader_stage(vertex)
 layout(set = 2, binding = 0) uniform GlobalData {
     mat4 proj;
     mat4 view;

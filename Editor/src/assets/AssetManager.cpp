@@ -164,7 +164,7 @@ ASSETS_NS
                     auto res = AssetMetadata::deserialize(*metaFile);
                     fclose(*metaFile);
                     if (res) {
-                        metadata = std::move(*res);
+                        metadata = UPtr<AssetMetadata>(*res);
                     } else {
                         LOG_WARN("Corrupted metadata at {}, regenerating", metaPath.c_str());
                     }

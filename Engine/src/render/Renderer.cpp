@@ -97,6 +97,9 @@ RENDER_NS
 
 
     Expected<Ref<PipelineState> > Renderer::getPipeline(ConstRef<Resources::MaterialResource> material, ConstRef<RenderingState> renderingState) {
+        VOX_ASSERT_PTR(material, "Material is null");
+        VOX_ASSERT_PTR(renderingState, "Rendering state is null");
+
         const auto pipIt = mPipelinesByMaterial.find(material);
         MaterialPipelines pipelines = pipIt == mPipelinesByMaterial.end() ? MaterialPipelines({}) : pipIt->second;
         auto state = pipelines.find(*renderingState);
@@ -159,6 +162,7 @@ RENDER_NS
         auto mesh = mRenderResourceManager->getMesh(component->getMesh());
         if (!mesh) return;
         auto mat = component->getMaterial();
+        if (!mat) return;
 
         auto t = component->gameObject;
         mLayerDrawListByMaterial[mat][static_cast<uint8_t>(component->getLayer())].emplace_back(mesh, t->transform->computeWorldMatrix(), t->id);

@@ -1,6 +1,7 @@
 #include "./HierarchyComponent.h"
 #include <imgui.h>
 #include "../../assets/AssetManager.h"
+#include "../Gui.h"
 #include <VoxEngine/resources/ResourceManager.h>
 #include <VoxEngine/resources/MaterialResource.h>
 #include <VoxEngine/resources/ModelResource.h>
@@ -28,12 +29,12 @@ namespace Vox::Editor {
         auto renderer = orig->findComponent<Scene::MeshRendererComponent>();
         if (renderer) {
             auto cloneRenderer = new Scene::MeshRendererComponent(clone, renderer->getLayer());
-            cloneRenderer->setMaterial(renderer->getMaterial());
+            cloneRenderer->setMaterial(renderer->getMaterial(), renderer->getMaterialUuid());
             auto mesh = renderer->getMesh();
             if (mesh) {
                 cloneRenderer->setMeshProvider([mesh]() {
                     return mesh;
-                });
+                }, renderer->getMeshUuid());
             }
             clone->attachComponent(cloneRenderer);
         }
@@ -76,20 +77,27 @@ namespace Vox::Editor {
             auto cube = mScene->createObject("Cube");
             auto renderer = new Scene::MeshRendererComponent(cube);
             auto resMgr = mEngine->getResourceManager();
-            auto matHandle = resMgr->find<Resources::MaterialResource>("defaults/DefaultMaterial.vmat");
-            if (matHandle) {
-                auto matRes = resMgr->get(*matHandle);
-                if (matRes) renderer->setMaterial(matRes.value());
+            auto assetMgr = Gui::GetAssetManager();
+            UUID matUuid = assetMgr ? assetMgr->getUUID("defaults/DefaultMaterial.vmat") : UUID{};
+            UUID cubeUuid = assetMgr ? assetMgr->getUUID("defaults/DefaultCube.fbx") : UUID{};
+            if (matUuid.isValid()) {
+                auto matHandle = resMgr->findByAsset<Resources::MaterialResource>(matUuid);
+                if (matHandle) {
+                    auto matRes = resMgr->get(*matHandle);
+                    if (matRes) renderer->setMaterial(matRes.value(), matUuid);
+                }
             }
-            auto modelHandle = resMgr->find<Resources::ModelResource>("defaults/DefaultCube.fbx");
-            if (modelHandle) {
-                auto model = resMgr->get(*modelHandle);
-                if (model && model.value()->getMeshCount() > 0) {
-                    auto meshHandle = model.value()->getMesh(0);
-                    renderer->setMeshProvider([resMgr, meshHandle]() -> ConstRef<Resources::MeshResource> {
-                        auto m = resMgr->get(meshHandle);
-                        return m ? m.value() : nullptr;
-                    });
+            if (cubeUuid.isValid()) {
+                auto modelHandle = resMgr->findByAsset<Resources::ModelResource>(cubeUuid);
+                if (modelHandle) {
+                    auto model = resMgr->get(*modelHandle);
+                    if (model && model.value()->getMeshCount() > 0) {
+                        auto meshHandle = model.value()->getMesh(0);
+                        renderer->setMeshProvider([resMgr, meshHandle]() -> ConstRef<Resources::MeshResource> {
+                            auto m = resMgr->get(meshHandle);
+                            return m ? m.value() : nullptr;
+                        }, cubeUuid);
+                    }
                 }
             }
             cube->attachComponent(renderer);

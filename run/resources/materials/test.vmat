@@ -1,7 +1,7 @@
 {
     "shaders": {
-        "VERTEX": "shaders/baseShader.vert",
-        "FRAGMENT": "shaders/baseShader.frag"
+        "VERTEX": "1c388e86-25be-4908-ac11-a3fd6fbc31d8",
+        "FRAGMENT": "4e500aea-ddd6-45c4-9746-c5675cdb3b10"
     },
     "polygonMode": "FILL",
     "cullMode": "NONE",
@@ -9,5 +9,5 @@
     "depthTest": true,
     "depthWrite": true,
     "depthCompareOp": "LESS_OR_EQUAL",
-    "texture": "textures/testBricks.jpg"
+    "texture": "742da16a-532c-44f1-bd76-54d03f8f7601"
 }
