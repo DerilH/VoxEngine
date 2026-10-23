@@ -13,7 +13,6 @@
 
 RESOURCES_NS
     class TextureResource {
-        InternedString mName;
         Extent mExtent;
         Render::Format mFormat = Render::Format::RGBA8;
         Vector<uint8_t> mPixels;
@@ -21,8 +20,8 @@ RESOURCES_NS
     public:
         TextureResource() : mExtent(0, 0) {}
 
-        TextureResource(InternedString name, Extent extent, Render::Format format, Vector<uint8_t> pixels)
-            : mName(name), mExtent(extent), mFormat(format), mPixels(std::move(pixels)) {}
+        TextureResource(Extent extent, Render::Format format, Vector<uint8_t> pixels)
+            : mExtent(extent), mFormat(format), mPixels(std::move(pixels)) {}
 
         Expected<void> validate() const {
             VOX_EXPECT(mExtent.width > 0 && mExtent.height > 0, "Texture dimensions must be positive, got {}x{}", mExtent.width, mExtent.height);
@@ -30,7 +29,6 @@ RESOURCES_NS
             return {};
         }
 
-        InternedString getName() const noexcept { return mName; }
         Extent getExtent() const noexcept { return mExtent; }
         Render::Format getFormat() const noexcept { return mFormat; }
         const Vector<uint8_t> &getPixels() const noexcept { return mPixels; }

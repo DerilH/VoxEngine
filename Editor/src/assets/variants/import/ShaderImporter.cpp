@@ -10,13 +10,11 @@
 ASSETS_NS
     Vox::Render::Shaders::ShaderCompiler ShaderImporter::compiler;
 
-    Ref<Asset> ShaderImporter::load(InternedString path, ArrayView<void> data) {
+    Ref<Asset> ShaderImporter::load(FILE *data) {
         Render::Shaders::ShaderSrc src(
-            Render::Shaders::shaderTypeFrom(path),
-            InternedString(static_cast<const char *>(data.pData), data.size()),
-            path.c_str()
+            InternedString(static_cast<const char *>(data.pData), data.size())
         );
         Render::Shaders::CompiledShader shader = compiler.compile(src);
-        return new ShaderAsset(path.c_str(), shader);
+        return new ShaderAsset(shader);
     }
 NS_END

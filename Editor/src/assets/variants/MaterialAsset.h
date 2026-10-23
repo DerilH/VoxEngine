@@ -1,32 +1,36 @@
 #pragma once
 #include <VoxCore/Define.h>
 #include <VoxCore/containers/Containers.h>
+#include <VoxCore/math/UUID.h>
 #include <VoxCore/render/Enums.h>
 #include "Asset.h"
 #include "ClonableAsset.h"
+#include "../JsonSerialization.h"
 
 ASSETS_NS
-    class MaterialAsset : public CloneableAsset<MaterialAsset> {
+    class MaterialAsset : public CloneableAsset<MaterialAsset>, Resources::Serializable<Resources::JsonSerialization> {
     protected:
+        MaterialAsset();
         MaterialAsset *cloneImpl(void *ptr) const override;
 
     public:
-        MaterialAsset(InternedString path, HashMap<Render::ShaderStage, InternedString> &shaders,
-                      Render::PolygonMode polygonMode, Render::CullMode cullMode, Render::PrimitiveTopology topology,
-                      bool depthTest = true, bool depthWrite = true, Render::CompareOp depthCompareOp = Render::CompareOp::LESS_OR_EQUAL,
-                      InternedString texture = "");
+        MaterialAsset(HashMap<Render::ShaderStage, UUID> &shaders, Render::PolygonMode polygonMode, Render::CullMode cullMode, Render::PrimitiveTopology topology, UUID albedo, bool depthTest = true, bool depthWrite = true, Render::CompareOp depthCompareOp = Render::CompareOp::LESS_OR_EQUAL);
 
-        HashMap<Render::ShaderStage, InternedString> shaders;
+        HashMap<Render::ShaderStage, UUID> shaders;
         Render::PolygonMode polygonMode;
         Render::CullMode cullMode;
         Render::PrimitiveTopology topology;
         bool depthTest = true;
         bool depthWrite = true;
         Render::CompareOp depthCompareOp = Render::CompareOp::LESS_OR_EQUAL;
-        InternedString texture;
-        InternedString albedo;
+        UUID albedo;
 
         ~MaterialAsset() override;
+
+        void serialize(FILE *file) const override;
+
+        static Expected<UPtr<MaterialAsset> > deserialize(FILE *file);
+
 
         AssetType type() const override {
             return StaticType();
@@ -36,6 +40,7 @@ ASSETS_NS
             return AssetType::MATERIAL;
         }
     };
+
 NS_END
 
 namespace Vox::Resources {

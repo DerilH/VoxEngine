@@ -8,6 +8,6 @@
 ASSETS_NS
     class MaterialWriter : public AssetWriter {
     public:
-        void writeToFile(const std::filesystem::path &path, Asset* asset) override;
+        void writeToFile(FILE* file, Asset* asset) override;
     };
 NS_END

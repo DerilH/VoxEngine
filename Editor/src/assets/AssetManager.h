@@ -49,12 +49,12 @@ ASSETS_NS
 
         void loadDir(const std::filesystem::path &currentPath, AssetDirectory &currentDir);
 
-        bool updateMetadata(UUID metadata, const std::filesystem::path &assetPath);
+        bool updateMetadataCache(UUID metadata, const std::filesystem::path &assetPath);
 
         void writeCache(UUID asset, const AssetCache &cache) const;
 
         Expected<AssetCache> readCache(UUID asset) const;
-
+        Ref<AssetImporter> getImporterOrDefault(InternedString extension) const;
     public:
         AssetManager() = default;
 
@@ -64,7 +64,7 @@ ASSETS_NS
 
         // Querying by UUID
         template<std::derived_from<Asset> T>
-        Expected<ConstRef<T> > get(const UUID key) const {
+        Expected<ConstRef<T> > getOrLoad(const UUID key) const {
             auto it = mLoadedAssets.find(key);
             VOX_EXPECT(it != mLoadedAssets.end(), "Cannot find asset with UUID: {}", key);
             VOX_EXPECT(it->second->type() == T::StaticType(), "Asset type mismatch");
@@ -73,10 +73,10 @@ ASSETS_NS
 
         // Querying by path
         template<std::derived_from<Asset> T>
-        Expected<ConstRef<T> > get(const InternedString path) const {
+        Expected<ConstRef<T> > findByPath(const InternedString path) const {
             auto it = mPathToUUID.find(path);
             if (it != mPathToUUID.end()) {
-                return get<T>(it->second);
+                return getOrLoad<T>(it->second);
             }
             auto nestedIt = mNestedAssets.find(path);
             if (nestedIt != mNestedAssets.end()) {
@@ -84,11 +84,6 @@ ASSETS_NS
                 return static_cast<ConstRef<T>>(nestedIt->second);
             }
             VOX_EXPECT(false, "Cannot find asset: {}", path.c_str());
-        }
-
-        template<std::derived_from<Asset> T>
-        Expected<ConstRef<T> > get(const char *path) const {
-            return get<T>(InternedString(path));
         }
 
         ConstRef<Asset> getAsset(const UUID key) const {
@@ -184,16 +179,11 @@ ASSETS_NS
 
     template<>
     inline ConstRef<MaterialAsset> AssetManager::getDefault() const {
-        return get<MaterialAsset>("defaults/DefaultMaterial.vmat").value();
+        return findByPath<MaterialAsset>("defaults/DefaultMaterial.vmat").value();
     }
 
     template<>
     inline ConstRef<ModelAsset> AssetManager::getDefault() const {
-        return get<ModelAsset>("defaults/DefaultCube.fbx").value();
+        return findByPath<ModelAsset>("defaults/DefaultCube.fbx").value();
     }
-
 NS_END
-
-namespace Vox::Resources {
-    using AssetManager = Vox::Editor::Assets::AssetManager;
-}

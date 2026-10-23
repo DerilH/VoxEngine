@@ -9,7 +9,7 @@
 ASSETS_NS
     class RegularFileImporter : public AssetImporter {
     public:
-        Ref<Asset> load(InternedString path, ArrayView<void> data) override;
+        Ref<Asset> load(FILE *data) override;
         AssetType type() override {
             return AssetType::REGULAR;
         }

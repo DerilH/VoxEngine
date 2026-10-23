@@ -14,31 +14,53 @@
 #include "SerializationType.h"
 #include "SerializationContext.h"
 #include "BlobView.h"
+#include <VoxCore/math/UUID.h>
 
-SERIALIZATION_NS
+#define FIELD(x) #x, x
 
-    template<std::derived_from<SerializationType> T = BinarySerialization>
+#define SERIALIZE(file, ...)                              \
+do {                                                    \
+auto ctx = contextForWriting(file);                 \
+serializeInternal(file, ctx, __VA_ARGS__);        \
+ctx.flush(file);\
+} while (0)
+
+#define DESERIALIZE(file, ...)                              \
+{                                                    \
+auto ctx = contextForReading(file);                 \
+deserializeInternal(file, ctx, __VA_ARGS__);        \
+} while (0)
+
+RESOURCES_NS
+    template<std::derived_from<SerializationType> T>
     class Serializable {
     public:
         virtual ~Serializable() = default;
+
         virtual void serialize(FILE *file) const = 0;
+
+    protected:
     };
 
     template<>
     class Serializable<BinarySerialization> {
     public:
         virtual ~Serializable() = default;
+
         virtual void serialize(FILE *file) const = 0;
 
-        // SINGLE VALUE SERIALIZATION HELPERS
+    protected:
+        static SerializationContext<BinarySerialization> contextForReading(FILE *) { return {}; }
+        static SerializationContext<BinarySerialization> contextForWriting(FILE *) { return {}; }
+
         template<typename T>
-        requires std::is_arithmetic_v<T>
+            requires std::is_arithmetic_v<T>
         static inline void serializeInternal(FILE *file, const T &arithmetic) {
             fwrite(static_cast<const void *>(&arithmetic), sizeof(T), 1, file);
         }
 
         template<typename T>
-        requires std::is_enum_v<T>
+            requires std::is_enum_v<T>
         static inline void serializeInternal(FILE *file, const T &val) {
             auto underlying = std::to_underlying(val);
             fwrite(&underlying, sizeof(underlying), 1, file);
@@ -57,7 +79,7 @@ SERIALIZATION_NS
         }
 
         template<typename T>
-        requires std::is_base_of_v<BlobView, T>
+            requires std::is_base_of_v<BlobView, T>
         static inline void serializeInternal(FILE *file, const T &blob) {
             fwrite(static_cast<const void *>(&blob.elementSize), sizeof(blob.elementSize), 1, file);
             fwrite(static_cast<const void *>(&blob.count), sizeof(blob.count), 1, file);
@@ -78,42 +100,45 @@ SERIALIZATION_NS
         static inline void serializeInternal(FILE *file, const std::vector<T> &vec) {
             uint32_t count = static_cast<uint32_t>(vec.size());
             serializeInternal(file, count);
-            for (const auto &item : vec) {
+            for (const auto &item: vec) {
                 serializeInternal(file, item);
             }
         }
 
-        // MULTI-VALUE BINARY SERIALIZATION (without context/keys)
-        template<typename Value1, typename Value2, typename... Rest>
-        requires (!std::is_same_v<std::decay_t<Value1>, SerializationContext<BinarySerialization>>)
-        static inline void serializeInternal(FILE *file, const Value1 &val1, const Value2 &val2, const Rest &... rest) {
-            serializeInternal(file, val1);
-            serializeInternal(file, val2);
-            (serializeInternal(file, rest), ...);
+        // Single unified
+        // template<typename T>
+        // static inline void serializeInternal(FILE *file, const T &val) {
+        // serializeInternal(file, val);
+        // }
+
+
+        // Single multi unified
+
+
+        static inline void serializeFields(FILE *) {
         }
 
-        // UNIFIED SERIALIZATION (with context and key)
-        template<typename T>
-        static inline void serializeInternal(FILE *file, const SerializationContext<BinarySerialization> &, const char *, const T &val) {
+        template<typename V, typename... Rest>
+        static inline void serializeFields(FILE *file, const char *, const V &val, Rest &&... rest) {
             serializeInternal(file, val);
+            serializeFields(file, std::forward<Rest>(rest)...);
         }
 
-        template<typename T, typename... Rest>
-        requires (sizeof...(Rest) > 0 && sizeof...(Rest) % 2 == 0)
-        static inline void serializeInternal(FILE *file, const SerializationContext<BinarySerialization> &ctx, const char *key, const T &val, Rest &&... rest) {
-            serializeInternal(file, ctx, key, val);
-            serializeInternal(file, ctx, std::forward<Rest>(rest)...);
+        template<typename... Rest>
+            requires (sizeof...(Rest) > 0 && sizeof...(Rest) % 2 == 0)
+        static inline void serializeInternal(FILE *file, const SerializationContext<BinarySerialization> &, Rest &&... rest) {
+            serializeFields(file, std::forward<Rest>(rest)...);
         }
 
         // SINGLE VALUE DESERIALIZATION HELPERS
         template<typename T>
-        requires std::is_arithmetic_v<T>
+            requires std::is_arithmetic_v<T>
         static inline void deserializeInternal(FILE *file, T &arithmetic) {
             fread(static_cast<void *>(&arithmetic), sizeof(T), 1, file);
         }
 
         template<typename T>
-        requires std::is_enum_v<T>
+            requires std::is_enum_v<T>
         static inline void deserializeInternal(FILE *file, T &val) {
             std::underlying_type_t<T> underlying{};
             fread(&underlying, sizeof(underlying), 1, file);
@@ -152,37 +177,25 @@ SERIALIZATION_NS
             uint32_t count = 0;
             deserializeInternal(file, count);
             vec.resize(count);
-            for (auto &item : vec) {
+            for (auto &item: vec) {
                 deserializeInternal(file, item);
             }
         }
 
-        // MULTI-VALUE BINARY DESERIALIZATION (without context/keys)
-        template<typename Value1, typename Value2, typename... Rest>
-        requires (!std::is_same_v<std::decay_t<Value1>, SerializationContext<BinarySerialization>>)
-        static inline void deserializeInternal(FILE *file, Value1 &val1, Value2 &val2, Rest &... rest) {
-            deserializeInternal(file, val1);
-            deserializeInternal(file, val2);
-            (deserializeInternal(file, rest), ...);
+        static inline void deserializeFields(FILE *) {
         }
 
-        // UNIFIED DESERIALIZATION (with context and key)
-        template<typename T>
-        static inline void deserializeInternal(FILE *file, const SerializationContext<BinarySerialization> &, const char *, T &val) {
+        template<typename V, typename... Rest>
+        static inline void deserializeFields(FILE *file, const char *, V &val, Rest &&... rest) {
             deserializeInternal(file, val);
+            deserializeFields(file, std::forward<Rest>(rest)...);
         }
 
-        template<typename T, typename... Rest>
-        requires (sizeof...(Rest) > 0 && sizeof...(Rest) % 2 == 0)
-        static inline void deserializeInternal(FILE *file, const SerializationContext<BinarySerialization> &ctx, const char *key, T &val, Rest &&... rest) {
-            deserializeInternal(file, ctx, key, val);
-            deserializeInternal(file, ctx, std::forward<Rest>(rest)...);
+        template<typename... Rest>
+            requires (sizeof...(Rest) > 0 && sizeof...(Rest) % 2 == 0)
+        static inline void deserializeInternal(FILE *file, const SerializationContext<BinarySerialization> &, Rest &&... rest) {
+            deserializeFields(file, std::forward<Rest>(rest)...);
         }
     };
 
-NS_END
-
-VOX_NS
-    template<std::derived_from<SerializationType> T = BinarySerialization>
-    using Serializable = Vox::Resources::Serialization::Serializable<T>;
 NS_END

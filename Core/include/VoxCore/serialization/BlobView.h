@@ -4,8 +4,7 @@
 #include <VoxCore/Assert.h>
 #include <VoxCore/Define.h>
 
-SERIALIZATION_NS
-
+RESOURCES_NS
     struct BlobView {
         void const *pData;
         const size_t count;
@@ -23,8 +22,4 @@ SERIALIZATION_NS
         NO_COPY_MOVE_DEFAULT(BlobView)
     };
 
-NS_END
-
-VOX_NS
-    using BlobView = Vox::Resources::Serialization::BlobView;
 NS_END

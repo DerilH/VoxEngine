@@ -15,7 +15,7 @@ RENDER_NS
     class RenderResourceManager {
     protected:
         HashMap<PipelineStateDesc, Ref<PipelineState> > mPipelineStateByHash;
-        HashMap<InternedString, Ref<RenderMesh> > mLoadedMeshes;
+        HashMap<ConstRef<Resources::MeshResource>, Ref<RenderMesh> > mLoadedMeshes;
         Ref<RenderBackend> mBackend;
         UniformBufferAllocator mUniformAllocator;
 

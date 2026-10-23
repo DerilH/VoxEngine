@@ -4,18 +4,13 @@
 
 #pragma once
 
-#include "../Serializable.h"
 #include "AssetType.h"
-#include <string>
+#include "../../Define.h"
 #include <VoxCore/Pointers.h>
-#include <VoxCore/containers/Containers.h>
 
 ASSETS_NS
     class Asset {
     protected:
-        InternedString mPath;
-        InternedString mName;
-
         Asset **mNestedResources = nullptr;
         uint32_t mNestedResourceCount = 0;
 
@@ -26,15 +21,7 @@ ASSETS_NS
         Asset &operator=(const Asset &asset) = default;
 
     public:
-        explicit Asset(InternedString path, Asset **nested = nullptr, uint32_t nestedCount = 0);
-
-        InternedString getPath() const {
-            return mPath;
-        }
-
-        InternedString getName() const {
-            return mName;
-        }
+        explicit Asset(Asset **nested, uint32_t nestedCount);
 
         virtual ~Asset();
 
@@ -67,7 +54,3 @@ ASSETS_NS
     };
 
 NS_END
-
-namespace Vox::Resources {
-    using Asset = Vox::Editor::Assets::Asset;
-}

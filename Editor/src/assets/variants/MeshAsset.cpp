@@ -6,8 +6,8 @@
 #include <utility>
 
 ASSETS_NS
-    MeshAsset::MeshAsset(InternedString path, const Vector<char8_t>& interleaved, std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<uint32_t>& indices)
-        : Asset(std::move(path), nullptr, 0), mVertices(std::move(vertices)), mInterleaved(std::move(interleaved)), mIndices(std::move(indices)), mNormals(std::move(normals)) {
+    MeshAsset::MeshAsset(const Vector<char8_t>& interleaved, std::vector<glm::vec3>& vertices, std::vector<glm::vec3>& normals, std::vector<uint32_t>& indices)
+        : Asset(nullptr, 0), mVertices(std::move(vertices)), mInterleaved(std::move(interleaved)), mIndices(std::move(indices)), mNormals(std::move(normals)) {
     }
 
     MeshAsset::~MeshAsset() = default;

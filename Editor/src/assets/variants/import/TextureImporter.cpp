@@ -9,7 +9,7 @@
 #include "../../../Define.h"
 
 ASSETS_NS
-    Ref<Asset> TextureImporter::load(InternedString path, ArrayView<void> data) {
+    Ref<Asset> TextureImporter::load(FILE *data) {
         int width = 0, height = 0, channels = 0;
         unsigned char *img_data = stbi_load_from_memory(
             static_cast<stbi_uc const *>(data.pData),
@@ -17,8 +17,8 @@ ASSETS_NS
             &width, &height, &channels,
             STBI_rgb_alpha
         );
-        VOX_CHECK_FMT(img_data != nullptr, "Cannot read image {}", path.c_str());
+        VOX_CHECK(img_data != nullptr, "Cannot read image");
         const size_t size = static_cast<size_t>(width) * height * 4;
-        return new TextureAsset(path, ArrayView<void>(img_data, size), Extent(width, height));
+        return new TextureAsset(ArrayView<void>(img_data, size), Extent(width, height));
     }
 NS_END

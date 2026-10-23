@@ -1,11 +1,15 @@
 #pragma once
-#include "../../Serializable.h"
+#include "../../JsonSerialization.h"
 #include "../../../Define.h"
 
 ASSETS_NS
-class ImportSettings : public Serializable<Json> {
+class ImportSettings : public Resources::Serializable<Resources::JsonSerialization> {
 public:
-    virtual ~ImportSettings() = default;
-    void serialize(FILE *file) const override {}
+    ~ImportSettings() override = default;
+    virtual ImportSettings* clone() = 0;
+
+
+    void serialize(FILE *file) const override {
+    }
 };
 NS_END

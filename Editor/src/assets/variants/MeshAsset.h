@@ -18,7 +18,7 @@ ASSETS_NS
         std::vector<glm::vec3> mNormals;
 
     public:
-        MeshAsset(InternedString path, const Vector<char8_t>& interleaved, std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals, std::vector<uint32_t> &indices);
+        MeshAsset(const Vector<char8_t>& interleaved, std::vector<glm::vec3> &vertices, std::vector<glm::vec3> &normals, std::vector<uint32_t> &indices);
 
         ~MeshAsset() override;
 

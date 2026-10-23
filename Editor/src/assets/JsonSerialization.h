@@ -6,26 +6,22 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <concepts>
 #include <type_traits>
 #include <magic_enum/magic_enum.hpp>
 
 #include <VoxCore/Define.h>
 #include <VoxCore/math/UUID.h>
-#include <VoxCore/math/Hash128.h>
 #include <VoxCore/containers/Containers.h>
 #include <VoxCore/serialization/Serializable.h>
-#include <VoxCore/serialization/SerializationContext.h>
+#include <VoxCore/math/UUID.h>
 
-SERIALIZATION_NS
+#include "../Define.h"
 
+RESOURCES_NS
     class JsonSerialization : public SerializationType {
     public:
         ~JsonSerialization() override = default;
     };
-
-    using Json = JsonSerialization;
-    using json = JsonSerialization;
 
     template<>
     class SerializationContext<JsonSerialization> {
@@ -43,7 +39,8 @@ SERIALIZATION_NS
             yyjson_mut_doc_set_root(doc, root);
         }
 
-        explicit SerializationContext(FILE *) : SerializationContext() {}
+        explicit SerializationContext(FILE *) : SerializationContext() {
+        }
 
         SerializationContext(yyjson_mut_doc *doc, yyjson_mut_val *root)
             : doc(doc), root(root), ownsDoc(false) {
@@ -67,6 +64,7 @@ SERIALIZATION_NS
         }
 
         SerializationContext(const SerializationContext &) = delete;
+
         SerializationContext &operator=(const SerializationContext &) = delete;
 
         SerializationContext(SerializationContext &&other) noexcept
@@ -99,7 +97,7 @@ SERIALIZATION_NS
             return *this;
         }
 
-        void flush(FILE *file, bool pretty = true) {
+        void flush(FILE *file, bool pretty = true) const {
             if (!file || !doc) return;
             size_t jsonSize = 0;
             yyjson_write_err writeErr;
@@ -153,35 +151,147 @@ SERIALIZATION_NS
         }
     };
 
-    using JsonContext = SerializationContext<JsonSerialization>;
-    using json_context = SerializationContext<JsonSerialization>;
-
     template<>
     class Serializable<JsonSerialization> {
     public:
         virtual ~Serializable() = default;
 
-        // Unified virtual method in base Serializable
         virtual void serialize(FILE *file) const = 0;
 
-        // Convenience methods
-        std::string toJsonString(bool pretty = true) const;
-        bool serializeToFile(const std::filesystem::path &path, bool pretty = true) const;
+    protected:
+        static SerializationContext<JsonSerialization> contextForReading(FILE *file) { return SerializationContext<JsonSerialization>::createForReading(file); }
+        static SerializationContext<JsonSerialization> contextForWriting(FILE *) { return {}; }
 
-        // --- UNIFIED SERIALIZATION (with context and key) ---
+        static inline bool readJsonUUID(yyjson_val *v, UUID &out) {
+            if (!v) return false;
+            if (yyjson_is_str(v)) {
+                return parseUUIDString(std::string_view(yyjson_get_str(v), yyjson_get_len(v)), out);
+            }
+            if (yyjson_is_obj(v)) {
+                auto hiVal = yyjson_obj_get(v, "hi");
+                auto loVal = yyjson_obj_get(v, "lo");
+                if (hiVal && loVal) {
+                    out = UUID(yyjson_get_uint(hiVal), yyjson_get_uint(loVal));
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        template<typename T>
+        static inline yyjson_mut_val *makeJsonValue(yyjson_mut_doc *doc, const T &v) {
+            if constexpr (std::is_same_v<T, bool>) {
+                return yyjson_mut_bool(doc, v);
+            } else if constexpr (std::is_integral_v<T>) {
+                if constexpr (std::is_signed_v<T>) return yyjson_mut_sint(doc, static_cast<int64_t>(v));
+                else return yyjson_mut_uint(doc, static_cast<uint64_t>(v));
+            } else if constexpr (std::is_floating_point_v<T>) {
+                return yyjson_mut_real(doc, static_cast<double>(v));
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                return yyjson_mut_strncpy(doc, v.data(), v.size());
+            } else if constexpr (std::is_enum_v<T>) {
+                auto name = magic_enum::enum_name(v);
+                if (!name.empty()) return yyjson_mut_strncpy(doc, name.data(), name.size());
+                using U = std::underlying_type_t<T>;
+                if constexpr (std::is_signed_v<U>) return yyjson_mut_sint(doc, static_cast<int64_t>(std::to_underlying(v)));
+                else return yyjson_mut_uint(doc, static_cast<uint64_t>(std::to_underlying(v)));
+            } else if constexpr (std::is_same_v<T, UUID>) {
+                auto str = v.toString();
+                return yyjson_mut_strncpy(doc, str.data(), str.size());
+            } else {
+                static_assert(!std::is_same_v<T, T>, "makeJsonValue: unsupported type");
+            }
+        }
+
+        template<typename T>
+        static inline bool readJsonValue(yyjson_val *val, T &out) {
+            if constexpr (std::is_same_v<T, bool>) {
+                if (!yyjson_is_bool(val)) return false;
+                out = yyjson_get_bool(val);
+            } else if constexpr (std::is_integral_v<T>) {
+                if (!yyjson_is_int(val)) return false;
+                if constexpr (std::is_signed_v<T>) out = static_cast<T>(yyjson_get_sint(val));
+                else out = static_cast<T>(yyjson_get_uint(val));
+            } else if constexpr (std::is_floating_point_v<T>) {
+                if (!yyjson_is_num(val)) return false;
+                out = static_cast<T>(yyjson_get_real(val));
+            } else if constexpr (std::is_same_v<T, std::string>) {
+                if (!yyjson_is_str(val)) return false;
+                out.assign(yyjson_get_str(val), yyjson_get_len(val));
+            } else if constexpr (std::is_enum_v<T>) {
+                if (yyjson_is_str(val)) {
+                    auto e = magic_enum::enum_cast<T>(std::string_view(yyjson_get_str(val), yyjson_get_len(val)));
+                    if (!e) return false;
+                    out = *e;
+                } else if (yyjson_is_int(val)) {
+                    out = static_cast<T>(yyjson_get_sint(val));
+                } else {
+                    return false;
+                }
+            } else if constexpr (std::is_same_v<T, UUID>) {
+                return readJsonUUID(val, out);
+            } else {
+                static_assert(!std::is_same_v<T, T>, "readJsonValue: неподдерживаемый тип");
+            }
+            return true;
+        }
+
+        template<typename K>
+        static inline bool readJsonKey(yyjson_val *key, K &out) {
+            std::string_view sv(yyjson_get_str(key), yyjson_get_len(key));
+            if constexpr (std::is_same_v<K, std::string>) {
+                out.assign(sv);
+            } else if constexpr (std::is_enum_v<K>) {
+                auto e = magic_enum::enum_cast<K>(sv);
+                if (!e) return false;
+                out = *e;
+            } else if constexpr (std::is_integral_v<K> && !std::is_same_v<K, bool>) {
+                auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), out);
+                if (ec != std::errc{} || ptr != sv.data() + sv.size()) return false;
+            }  else if constexpr (std::is_same_v<K, UUID>) {
+                if (!parseUUIDString(sv, out)) return false;
+            }else {
+                static_assert(!std::is_same_v<K, K>, "readJsonKey: unsupported type");
+            }
+            return true;
+        }
+
+        template<typename K>
+        static inline yyjson_mut_val *makeJsonKey(yyjson_mut_doc *doc, const K &k) {
+            if constexpr (std::is_same_v<K, std::string>) {
+
+                return yyjson_mut_strncpy(doc, k.data(), k.size());
+            } else if constexpr (std::is_enum_v<K>) {
+                auto name = magic_enum::enum_name(k);
+                if (!name.empty()) return yyjson_mut_strncpy(doc, name.data(), name.size());
+                char buf[24];
+                auto res = std::to_chars(buf, buf + sizeof buf, std::to_underlying(k));
+                return yyjson_mut_strncpy(doc, buf, static_cast<size_t>(res.ptr - buf));
+            } else if constexpr (std::is_integral_v<K> && !std::is_same_v<K, bool>) {
+                char buf[24];
+                auto res = std::to_chars(buf, buf + sizeof buf, k);
+                return yyjson_mut_strncpy(doc, buf, static_cast<size_t>(res.ptr - buf));
+            }  else if constexpr (std::is_same_v<K, UUID>) {
+                auto str = k.toString();
+                return yyjson_mut_strncpy(doc, str.data(), str.size());
+            } else {
+                static_assert(!std::is_same_v<K, K>, "makeJsonKey: unsupported key");
+            }
+        }
+
+
         template<typename T>
         static inline void serializeInternal(FILE *, SerializationContext<JsonSerialization> &ctx, const char *key, const T &val) {
             serializeInternal(ctx.doc, ctx.root, key, val);
         }
 
         template<typename T, typename... Rest>
-        requires (sizeof...(Rest) > 0 && sizeof...(Rest) % 2 == 0)
+            requires (sizeof...(Rest) > 0 && sizeof...(Rest) % 2 == 0)
         static inline void serializeInternal(FILE *file, SerializationContext<JsonSerialization> &ctx, const char *key, const T &val, Rest &&... rest) {
             serializeInternal(file, ctx, key, val);
             serializeInternal(file, ctx, std::forward<Rest>(rest)...);
         }
 
-        // --- UNIFIED DESERIALIZATION (with context and key) ---
         template<typename T>
         static inline bool deserializeInternal(FILE *, SerializationContext<JsonSerialization> &ctx, const char *key, T &val) {
             if (!ctx.readRoot) return false;
@@ -189,20 +299,18 @@ SERIALIZATION_NS
         }
 
         template<typename T, typename... Rest>
-        requires (sizeof...(Rest) > 0 && sizeof...(Rest) % 2 == 0)
+            requires (sizeof...(Rest) > 0 && sizeof...(Rest) % 2 == 0)
         static inline bool deserializeInternal(FILE *file, SerializationContext<JsonSerialization> &ctx, const char *key, T &val, Rest &&... rest) {
             bool ok = deserializeInternal(file, ctx, key, val);
             return ok && deserializeInternal(file, ctx, std::forward<Rest>(rest)...);
         }
-
-        // --- DIRECT JSON SERIALIZATION HELPERS ---
 
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, bool val) {
             yyjson_mut_obj_add_bool(doc, obj, key, val);
         }
 
         template<typename T>
-        requires std::is_integral_v<T> && (!std::is_same_v<T, bool>)
+            requires std::is_integral_v<T> && (!std::is_same_v<T, bool>)
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, T val) {
             if constexpr (std::is_signed_v<T>) {
                 yyjson_mut_obj_add_sint(doc, obj, key, static_cast<int64_t>(val));
@@ -212,7 +320,7 @@ SERIALIZATION_NS
         }
 
         template<typename T>
-        requires std::is_floating_point_v<T>
+            requires std::is_floating_point_v<T>
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, T val) {
             yyjson_mut_obj_add_real(doc, obj, key, static_cast<double>(val));
         }
@@ -234,7 +342,7 @@ SERIALIZATION_NS
         }
 
         template<typename T>
-        requires std::is_enum_v<T>
+            requires std::is_enum_v<T>
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const T &val) {
             auto name = magic_enum::enum_name(val);
             if (!name.empty()) {
@@ -256,35 +364,25 @@ SERIALIZATION_NS
             yyjson_mut_obj_add_val(doc, obj, key, hObj);
         }
 
+
+        template<typename M>
+            requires requires { typename M::key_type; typename M::mapped_type; }
+        static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const M &map) {
+            auto node = yyjson_mut_obj(doc);
+            for (const auto &[k, v]: map) {
+                yyjson_mut_obj_add(node, makeJsonKey(doc, k), makeJsonValue(doc, v));
+            }
+            yyjson_mut_obj_add_val(doc, obj, key, node);
+        }
+
         template<typename T>
         static inline void serializeInternal(yyjson_mut_doc *doc, yyjson_mut_val *obj, const char *key, const std::vector<T> &vec) {
             auto arr = yyjson_mut_arr(doc);
             for (const auto &item : vec) {
-                if constexpr (std::is_same_v<T, bool>) {
-                    yyjson_mut_arr_add_bool(doc, arr, item);
-                } else if constexpr (std::is_integral_v<T>) {
-                    if constexpr (std::is_signed_v<T>) {
-                        yyjson_mut_arr_add_sint(doc, arr, static_cast<int64_t>(item));
-                    } else {
-                        yyjson_mut_arr_add_uint(doc, arr, static_cast<uint64_t>(item));
-                    }
-                } else if constexpr (std::is_floating_point_v<T>) {
-                    yyjson_mut_arr_add_real(doc, arr, static_cast<double>(item));
-                } else if constexpr (std::is_same_v<T, std::string>) {
-                    yyjson_mut_arr_add_strncpy(doc, arr, item.data(), item.size());
-                } else if constexpr (std::is_enum_v<T>) {
-                    auto name = magic_enum::enum_name(item);
-                    if (!name.empty()) {
-                        yyjson_mut_arr_add_strncpy(doc, arr, name.data(), name.size());
-                    } else {
-                        yyjson_mut_arr_add_int(doc, arr, std::to_underlying(item));
-                    }
-                }
+                yyjson_mut_arr_append(arr, makeJsonValue(doc, item));
             }
             yyjson_mut_obj_add_val(doc, obj, key, arr);
         }
-
-        // --- DIRECT JSON DESERIALIZATION HELPERS ---
 
         static inline bool deserializeInternal(yyjson_val *obj, const char *key, bool &out) {
             auto v = yyjson_obj_get(obj, key);
@@ -296,7 +394,7 @@ SERIALIZATION_NS
         }
 
         template<typename T>
-        requires std::is_integral_v<T> && (!std::is_same_v<T, bool>)
+            requires std::is_integral_v<T> && (!std::is_same_v<T, bool>)
         static inline bool deserializeInternal(yyjson_val *obj, const char *key, T &out) {
             auto v = yyjson_obj_get(obj, key);
             if (v && yyjson_is_num(v)) {
@@ -311,7 +409,7 @@ SERIALIZATION_NS
         }
 
         template<typename T>
-        requires std::is_floating_point_v<T>
+            requires std::is_floating_point_v<T>
         static inline bool deserializeInternal(yyjson_val *obj, const char *key, T &out) {
             auto v = yyjson_obj_get(obj, key);
             if (v && yyjson_is_num(v)) {
@@ -331,7 +429,7 @@ SERIALIZATION_NS
         }
 
         template<typename T>
-        requires std::is_enum_v<T>
+            requires std::is_enum_v<T>
         static inline bool deserializeInternal(yyjson_val *obj, const char *key, T &out) {
             auto v = yyjson_obj_get(obj, key);
             if (!v) return false;
@@ -349,9 +447,10 @@ SERIALIZATION_NS
         }
 
         static inline bool parseUUIDString(std::string_view str, UUID &out) {
+
             uint64_t hi = 0, lo = 0;
             int digitCount = 0;
-            for (char c : str) {
+            for (char c: str) {
                 if (c == '-') continue;
                 int hex = -1;
                 if (c >= '0' && c <= '9') hex = c - '0';
@@ -374,25 +473,13 @@ SERIALIZATION_NS
         }
 
         static inline bool deserializeInternal(yyjson_val *obj, const char *key, UUID &out) {
-            auto v = yyjson_obj_get(obj, key);
-            if (!v) return false;
-            if (yyjson_is_str(v)) {
-                return parseUUIDString(std::string_view(yyjson_get_str(v), yyjson_get_len(v)), out);
-            } else if (yyjson_is_obj(v)) {
-                auto hiVal = yyjson_obj_get(v, "hi");
-                auto loVal = yyjson_obj_get(v, "lo");
-                if (hiVal && loVal) {
-                    out = UUID(yyjson_get_uint(hiVal), yyjson_get_uint(loVal));
-                    return true;
-                }
-            }
-            return false;
+            return readJsonUUID(yyjson_obj_get(obj, key), out);
         }
 
         static inline bool parseHash128String(std::string_view str, Hash128 &out) {
             uint64_t hi = 0, lo = 0;
             int digitCount = 0;
-            for (char c : str) {
+            for (char c: str) {
                 int hex = -1;
                 if (c >= '0' && c <= '9') hex = c - '0';
                 else if (c >= 'a' && c <= 'f') hex = c - 'a' + 10;
@@ -440,39 +527,34 @@ SERIALIZATION_NS
             size_t idx, max;
             yyjson_val *val;
             yyjson_arr_foreach(arr, idx, max, val) {
-                if constexpr (std::is_same_v<T, bool>) {
-                    if (yyjson_is_bool(val)) out.push_back(yyjson_get_bool(val));
-                } else if constexpr (std::is_integral_v<T>) {
-                    if (yyjson_is_num(val)) {
-                        if constexpr (std::is_signed_v<T>) {
-                            out.push_back(static_cast<T>(yyjson_get_sint(val)));
-                        } else {
-                            out.push_back(static_cast<T>(yyjson_get_uint(val)));
-                        }
-                    }
-                } else if constexpr (std::is_floating_point_v<T>) {
-                    if (yyjson_is_num(val)) out.push_back(static_cast<T>(yyjson_get_real(val)));
-                } else if constexpr (std::is_same_v<T, std::string>) {
-                    if (yyjson_is_str(val)) out.emplace_back(yyjson_get_str(val), yyjson_get_len(val));
-                } else if constexpr (std::is_enum_v<T>) {
-                    if (yyjson_is_str(val)) {
-                        auto e = magic_enum::enum_cast<T>(std::string_view(yyjson_get_str(val), yyjson_get_len(val)));
-                        if (e) out.push_back(*e);
-                    } else if (yyjson_is_num(val)) {
-                        out.push_back(static_cast<T>(yyjson_get_sint(val)));
-                    }
+                T item{};
+                if (readJsonValue(val, item)) out.push_back(std::move(item));
+            }
+            return true;
+        }
+
+        template<typename M>
+            requires requires { typename M::key_type; typename M::mapped_type; }
+        static inline bool deserializeInternal(yyjson_val *obj, const char *key, M &out) {
+            auto node = yyjson_obj_get(obj, key);
+            if (!node || !yyjson_is_obj(node)) return false;
+
+            out.clear();
+            if constexpr (requires { out.reserve(size_t{}); }) {
+                out.reserve(yyjson_obj_size(node));
+            }
+
+            size_t idx, max;
+            yyjson_val *k, *v;
+            yyjson_obj_foreach(node, idx, max, k, v) {
+                typename M::key_type mk{};
+                typename M::mapped_type mv{};
+                if (readJsonKey(k, mk) && readJsonValue(v, mv)) {
+                    out.insert_or_assign(std::move(mk), std::move(mv));
                 }
             }
             return true;
         }
     };
 
-NS_END
-
-VOX_NS
-    using JsonSerialization = Vox::Resources::Serialization::JsonSerialization;
-    using Json = Vox::Resources::Serialization::Json;
-    using json = Vox::Resources::Serialization::json;
-    using JsonContext = Vox::Resources::Serialization::JsonContext;
-    using json_context = Vox::Resources::Serialization::json_context;
 NS_END

@@ -8,23 +8,21 @@
 #include <imgui_internal.h>
 #include "Theme.h"
 
-namespace Vox::Editor {
-    AssetIcon::AssetIcon(const ConstRef<Resources::Asset> asset) : mAsset(asset) {
-        auto nested = mAsset->getNested();
-        for (int i = 0; i < mAsset->getNestedCount(); i++) {
-            auto icon = new AssetIcon(nested[i]);
-            mNestedIcons.emplace_back(icon);
-        }
+EDITOR_NS
+    AssetIcon::AssetIcon(const Assets::AssetMetadata asset) : mAsset(asset) {
+        // auto nested = mAsset.getNested();
+        // for (int i = 0; i < mAsset.getNestedCount(); i++) {
+            // auto icon = new AssetIcon(nested[i]);
+            // mNestedIcons.emplace_back(icon);
+        // }
     }
 
     void AssetIcon::render() const {
-        if (!mAsset) return;
+        ImGui::PushID(1);
 
-        ImGui::PushID(mAsset);
-
-        std::string fileName = mAsset->getName();
-        bool hasNested = mAsset->hasNested();
-        AssetType type = mAsset->type();
+        // bool hasNested = mAsset->hasNested();
+        bool hasNested = false;
+        AssetType type = mAsset.type;
         const char *badge = GetAssetTypeBadge(type);
         ImVec4 badgeColor = GetAssetTypeColor(type);
 
@@ -48,12 +46,11 @@ namespace Vox::Editor {
 
         // Drag and drop source
         if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None)) {
-            ImGui::SetDragDropPayload("ASSET_ITEM", mAsset->getPath().c_str(), mAsset->getPath().size());
+            ImGui::SetDragDropPayload("ASSET_ITEM", &mAsset.uuid, sizeof(mAsset.uuid));
             ImGui::PushStyleColor(ImGuiCol_Text, badgeColor);
             ImGui::Text("[%s]", badge);
             ImGui::PopStyleColor();
             ImGui::SameLine();
-            ImGui::Text("%s", fileName.c_str());
             ImGui::EndDragDropSource();
         }
 
@@ -96,12 +93,12 @@ namespace Vox::Editor {
         // File label below thumbnail
         ImVec2 textPos = ImVec2(startPos.x + 2.0f, startPos.y + thumbHeight + 4.0f);
         ImVec2 clipMax = ImVec2(startPos.x + cardWidth - 2.0f, startPos.y + cardHeight);
-        ImVec2 textSize = ImGui::CalcTextSize(fileName.c_str());
+        ImVec2 textSize = ImGui::CalcTextSize(mAsset.fileName.c_str());
 
         ImGui::RenderTextClipped(
             textPos,
             clipMax,
-            fileName.c_str(),
+            mAsset.fileName.c_str(),
             nullptr,
             &textSize,
             ImVec2(0.5f, 0.0f)
@@ -111,11 +108,10 @@ namespace Vox::Editor {
             ImGui::BeginTooltip();
             ImGui::TextColored(badgeColor, "[%s]", badge);
             ImGui::SameLine();
-            ImGui::Text("%s", fileName.c_str());
-            ImGui::TextDisabled("Path: %s", mAsset->getPath().c_str());
+            ImGui::Text("%s", mAsset.fileName.c_str());
             ImGui::EndTooltip();
         }
 
         ImGui::PopID();
     }
-}
+NS_END

@@ -2,8 +2,7 @@
 
 #include <VoxCore/Define.h>
 
-SERIALIZATION_NS
-
+RESOURCES_NS
     class SerializationType {
     public:
         virtual ~SerializationType() = 0;
@@ -14,15 +13,4 @@ SERIALIZATION_NS
     public:
         ~BinarySerialization() override = default;
     };
-
-    using Binary = BinarySerialization;
-    using binary = BinarySerialization;
-
-NS_END
-
-VOX_NS
-    using SerializationType = Vox::Resources::Serialization::SerializationType;
-    using BinarySerialization = Vox::Resources::Serialization::BinarySerialization;
-    using Binary = Vox::Resources::Serialization::Binary;
-    using binary = Vox::Resources::Serialization::binary;
 NS_END

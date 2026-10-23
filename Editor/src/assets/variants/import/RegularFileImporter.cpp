@@ -6,7 +6,7 @@
 #include "../RegularFileAsset.h"
 
 ASSETS_NS
-    Ref<Asset> RegularFileImporter::load(InternedString path, ArrayView<void> data) {
-        return new RegularFileAsset(path, data);
+    Ref<Asset> RegularFileImporter::load(FILE *data) {
+        return new RegularFileAsset(data);
     }
 NS_END

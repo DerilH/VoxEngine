@@ -5,11 +5,9 @@
 namespace Vox::Render::Shaders {
     class ShaderSrc {
     public:
-        const ShaderStage type;
         InternedString src;
-        InternedString name;
 
-        ShaderSrc(const ShaderStage type, InternedString src, InternedString name) : type(type), src(std::move(src)), name(std::move(name))
+        ShaderSrc(InternedString src) : src(std::move(src))
         {}
 
         ShaderSrc() = delete;
@@ -22,7 +20,7 @@ namespace Vox::Render::Shaders {
 
             std::stringstream ss;
             ss << file.rdbuf();
-            return {shaderTypeFrom(path), ss.str(), path.filename().string()};
+            return {ss.str()};
         }
     };
 }

@@ -13,8 +13,8 @@ ASSETS_NS
         ArrayView<void> mPixels;
         Extent mExtent;
     public:
-        TextureAsset(InternedString path, ArrayView<void> pixels, Extent extent)
-            : Asset(path, nullptr, 0), mPixels(pixels), mExtent(extent) {
+        TextureAsset(ArrayView<void> pixels, Extent extent)
+            : Asset(nullptr, 0), mPixels(pixels), mExtent(extent) {
         }
 
         ArrayView<void> getPixels() const {

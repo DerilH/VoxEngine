@@ -28,7 +28,7 @@ Vox::Editor::MaterialEditor::MaterialEditor(Ref<Engine> engine, ConstRef<Assets:
         auto assetMgr = Gui::GetAssetManager();
         if (assetMgr) {
             assetMgr->update(matPath, std::move(mAsset));
-            auto matAsset = assetMgr->get<Assets::MaterialAsset>(matPath);
+            auto matAsset = assetMgr->findByPath<Assets::MaterialAsset>(matPath);
             if (matAsset) {
                 Assets::AssetConverter::toResource(*matAsset, mEngine->getResourceManager(), assetMgr);
             }
@@ -120,7 +120,7 @@ void Vox::Editor::MaterialEditor::renderInternal(Render::RenderContext context) 
         auto assetMgr = Gui::GetAssetManager();
         if (assetMgr) {
             assetMgr->update(path, std::move(mAsset));
-            auto matAsset = assetMgr->get<Assets::MaterialAsset>(path);
+            auto matAsset = assetMgr->findByPath<Assets::MaterialAsset>(path);
             if (matAsset) {
                 Assets::AssetConverter::toResource(*matAsset, mEngine->getResourceManager(), assetMgr);
             }

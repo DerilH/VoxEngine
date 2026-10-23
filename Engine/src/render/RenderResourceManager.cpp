@@ -30,7 +30,7 @@ Vox::Ref<Vox::Render::PipelineState> Vox::Render::RenderResourceManager::getPipe
 
 Vox::Ref<Vox::Render::RenderMesh> Vox::Render::RenderResourceManager::getMesh(ConstRef<Resources::MeshResource> meshRes) {
     if (!meshRes) return nullptr;
-    decltype(auto) mesh = mLoadedMeshes[meshRes->getName()];
+    decltype(auto) mesh = mLoadedMeshes[meshRes];
     if (mesh == nullptr) {
         VertexBufferRef vBuff = mBackend->createVertexBuffer(data(meshRes->getInterleaved()), sizeof(char8_t) * meshRes->getInterleaved().size(), BufferUsage::VERTEX);
         IndexBufferRef iBuff = mBackend->createIndexBuffer(data(meshRes->getIndices()), sizeof(uint32_t) * meshRes->getIndices().size(), IndexType::UINT32);

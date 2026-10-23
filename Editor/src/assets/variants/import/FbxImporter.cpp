@@ -65,14 +65,14 @@ ASSETS_NS
         return buffer;
     }
 
-    Ref<Asset> FbxImporter::load(InternedString path, ArrayView<void> data) {
+    Ref<Asset> FbxImporter::load(FILE *data) {
         Assimp::Importer importer{};
 
         const aiScene *scene = importer.ReadFileFromMemory(data.pData, data.size(), aiPostProcessSteps::aiProcess_Triangulate);
-        VOX_CHECK_FMT(scene != nullptr, "Failed to load model {}: {}", path.c_str(), importer.GetErrorString());
+        VOX_CHECK_FMT(scene != nullptr, "Failed to load model: {}", importer.GetErrorString());
 
         auto **nested = static_cast<Asset **>(malloc(scene->mNumMeshes * sizeof(Asset *)));
-        LOG_VERBOSE("Loading model {}", path.c_str());
+        LOG_VERBOSE("Loading model {}", scene->mName.C_Str());
         LOG_VERBOSE("Loading {} meshes", scene->mNumMeshes);
 
         for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
@@ -85,13 +85,13 @@ ASSETS_NS
                 ? createInterleaved<glm::vec4>(vertices, readVec4Array(mesh->mColors[0], mesh->mNumVertices))
                 : createInterleaved<glm::vec2>(vertices, readVec2Array(mesh->mTextureCoords[0], mesh->mNumVertices));
 
-            std::string meshPath = path.c_str();
-            meshPath += "/";
-            meshPath += mesh->mName.C_Str();
+            // std::string meshPath = path.c_str();
+            // meshPath += "/";
+            // meshPath += mesh->mName.C_Str();
 
-            nested[i] = new MeshAsset(InternedString(meshPath), interleaved, vertices, normals, indices);
-            LOG_VERBOSE("Mesh loaded {}", nested[i]->getPath().c_str());
+            nested[i] = new MeshAsset(interleaved, vertices, normals, indices);
+            // LOG_VERBOSE("Mesh loaded {}", nested[i]->getPath().c_str());
         }
-        return new ModelAsset(path, nested, scene->mNumMeshes);
+        return new ModelAsset(nested, scene->mNumMeshes);
     }
 NS_END

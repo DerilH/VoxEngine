@@ -4,17 +4,18 @@
 
 #pragma once
 #include "../assets/variants/Asset.h"
+#include "../assets/variants/import/AssetMetadata.h"
 
 namespace Vox::Editor {
     class AssetIcon {
     public:
-        ConstRef<Assets::Asset> mAsset;
+        Assets::AssetMetadata mAsset;
         std::function<void()> mDoubleClickCallback = [](){};
         Vector<UPtr<AssetIcon>> mNestedIcons;
     public:
         mutable bool expanded = false;
 
-        explicit AssetIcon(ConstRef<Assets::Asset> asset);
+        explicit AssetIcon(Assets::AssetMetadata mAsset);
 
         void render() const;
         void setOnDoubleClick(std::function<void()> callback) {

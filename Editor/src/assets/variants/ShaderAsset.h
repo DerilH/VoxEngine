@@ -11,7 +11,7 @@ ASSETS_NS
     class ShaderAsset : public Asset {
         const Render::Shaders::CompiledShader mCompiled;
     public:
-        explicit ShaderAsset(std::string path, const Render::Shaders::CompiledShader compiled);
+        explicit ShaderAsset(const Render::Shaders::CompiledShader compiled);
         const Render::Shaders::CompiledShader& getCompiled() const;
 
         AssetType type() const override {

@@ -12,6 +12,7 @@ ASSETS_NS
     class AssetWriter {
     public:
         virtual ~AssetWriter() = default;
-        virtual void writeToFile(const std::filesystem::path &path, Asset* asset) = 0;
+
+        virtual void writeToFile(FILE*, Asset*) = 0;
     };
 NS_END

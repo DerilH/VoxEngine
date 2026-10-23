@@ -10,7 +10,7 @@
 ASSETS_NS
     class ModelAsset : public Asset {
     public:
-        ModelAsset(InternedString path, Asset **nested, uint32_t nestedCount);
+        ModelAsset(Asset **nested, uint32_t nestedCount);
 
         Expected<Ref<MeshAsset>> getMesh(int index) const {
             return getNestedUnsafe<MeshAsset>(index);

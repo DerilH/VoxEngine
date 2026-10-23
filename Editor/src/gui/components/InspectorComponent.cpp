@@ -32,7 +32,7 @@ namespace Vox::Editor {
             if (!renderer) return;
             auto assetMgr = Gui::GetAssetManager();
             if (!assetMgr) return;
-            auto newMat = assetMgr->get<Assets::MaterialAsset>(path);
+            auto newMat = assetMgr->findByPath<Assets::MaterialAsset>(path);
             if (newMat) {
                 auto resMgr = mEngine->getResourceManager();
                 auto matHandle = Assets::AssetConverter::toResource(*newMat, resMgr, assetMgr);
@@ -71,13 +71,13 @@ namespace Vox::Editor {
             auto assetMgr = Gui::GetAssetManager();
             if (!assetMgr) return;
             auto matPath = renderer->getMaterial()->getName();
-            auto oldMat = assetMgr->get<Assets::MaterialAsset>(matPath);
+            auto oldMat = assetMgr->findByPath<Assets::MaterialAsset>(matPath);
             if (oldMat) {
                 auto newMat = (*oldMat)->cloneTyped();
                 newMat->texture = path;
                 newMat->albedo = path;
                 assetMgr->update(matPath, std::move(newMat));
-                auto updated = assetMgr->get<Assets::MaterialAsset>(matPath);
+                auto updated = assetMgr->findByPath<Assets::MaterialAsset>(matPath);
                 if (updated) {
                     auto resMgr = mEngine->getResourceManager();
                     auto handle = Assets::AssetConverter::toResource(*updated, resMgr, assetMgr);
@@ -110,7 +110,7 @@ namespace Vox::Editor {
             if (!renderer) return;
             auto assetMgr = Gui::GetAssetManager();
             if (!assetMgr) return;
-            auto mesh = assetMgr->get<Assets::MeshAsset>(path);
+            auto mesh = assetMgr->findByPath<Assets::MeshAsset>(path);
             if (mesh) {
                 auto resMgr = mEngine->getResourceManager();
                 auto meshHandle = Assets::AssetConverter::toResource(*mesh, resMgr);

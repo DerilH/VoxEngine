@@ -12,22 +12,20 @@
 
 RESOURCES_NS
     class ShaderResource {
-        InternedString mName;
         Render::Shaders::CompiledShader mCompiled;
 
     public:
         ShaderResource()
             : mCompiled(Render::ShaderStage::VERTEX, {}, {}, {}, "", {}) {}
 
-        ShaderResource(InternedString name, Render::Shaders::CompiledShader compiled)
-            : mName(name), mCompiled(std::move(compiled)) {}
+        ShaderResource(Render::Shaders::CompiledShader compiled)
+            :  mCompiled(std::move(compiled)) {}
 
         Expected<void> validate() const {
             VOX_EXPECT(!mCompiled.bin.empty(), "ShaderResource compiled bytecode is empty");
             return {};
         }
 
-        InternedString getName() const noexcept { return mName; }
         const Render::Shaders::CompiledShader &getCompiled() const noexcept { return mCompiled; }
         Render::ShaderStage getStage() const noexcept { return mCompiled.stage; }
     };

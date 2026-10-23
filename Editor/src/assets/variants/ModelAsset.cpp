@@ -5,6 +5,6 @@
 #include "ModelAsset.h"
 
 ASSETS_NS
-    ModelAsset::ModelAsset(InternedString path, Asset **nested, uint32_t nestedCount)
-        : Asset(path, nested, nestedCount) {}
+    ModelAsset::ModelAsset(Asset **nested, uint32_t nestedCount)
+        : Asset(nested, nestedCount) {}
 NS_END

@@ -88,6 +88,11 @@ ASSETS_NS
         return map;
     }();
 
+    Ref<AssetImporter> AssetManager::getImporterOrDefault(InternedString extension) const {
+        const auto importer = sImporterByExtension.find(extension);
+        return importer == sImporterByExtension.end() ? sRegularLoader.get() : importer->second.get();
+    }
+
     Expected<AssetCache> AssetManager::readCache(UUID asset) const {
         auto path = mAssetsCache / asset.toString();
         auto file = openFileRead(path.c_str());
@@ -114,10 +119,6 @@ ASSETS_NS
         loadDir(mAssetsRoot, *mRootDir);
     }
 
-    bool isMetadata(const std::filesystem::path &extension) {
-        return extension == ".meta";
-    }
-
     Expected<AssetCache> createCache(const std::filesystem::path &path) {
         const auto size = std::filesystem::file_size(path);
         const auto mtime = readTime(path);
@@ -128,7 +129,7 @@ ASSETS_NS
         return AssetCache{Hash128(high64, low64), mtime, size};
     }
 
-    bool AssetManager::updateMetadata(UUID metadata, const std::filesystem::path &assetPath) {
+    bool AssetManager::updateMetadataCache(UUID metadata, const std::filesystem::path &assetPath) {
         namespace fs = std::filesystem;
         auto cache = readCache(metadata);
 
@@ -169,16 +170,12 @@ ASSETS_NS
             if (!entry.is_regular_file()) continue;
 
             auto extension = path.extension();
-            if (isMetadata(extension)) {
+            if (extension == ".meta") {
                 auto base = path.stem();
                 auto assetPath = path.parent_path() / base;
                 if (!fs::exists(assetPath)) {
                     LOG_WARN("Alone asset metadata found: {}", path.c_str());
                 }
-                continue;
-            }
-
-            if (path.filename().string().starts_with(".")) {
                 continue;
             }
 
@@ -188,8 +185,7 @@ ASSETS_NS
 
             UPtr<AssetMetadata> metadata = nullptr;
             if (fs::exists(metaPath)) {
-                auto metaFile = openFileRead(metaPath.c_str());
-                if (metaFile) {
+                if (auto metaFile = openFileRead(metaPath.c_str())) {
                     auto res = AssetMetadata::deserialize(*metaFile);
                     fclose(*metaFile);
                     if (res) {
@@ -200,13 +196,11 @@ ASSETS_NS
                 }
             }
 
+            auto importer = getImporterOrDefault(extension);
             if (!metadata) {
                 UUID uuid = UUID::uuid4();
-                AssetType type = AssetType::REGULAR;
-                auto it = sImporterByExtension.find(extension.string());
-                if (it != sImporterByExtension.end()) {
-                    type = it->second->type();
-                }
+                AssetType type = importer->type();
+
                 metadata = makeUPtr<AssetMetadata>(uuid, 1, type, nullptr);
                 auto metaWriteFile = openFileWrite(metaPath.c_str());
                 if (metaWriteFile) {
@@ -220,17 +214,14 @@ ASSETS_NS
             UUID assetUuid = metadata->uuid;
             currentDir.addAsset(assetUuid);
 
-            updateMetadata(assetUuid, path);
+            updateMetadataCache(assetUuid, path);
 
-            auto it = sImporterByExtension.find(extension.string());
-            const auto importer = (it == sImporterByExtension.end()) ? sRegularLoader.get() : it->second.get();
-
+            //Loading
             try {
-                auto fileData = readFileData(path);
-                if (fileData) {
-                    Ref<Asset> asset = importer->load(relPath.string(), *fileData);
+                if (auto fileData = openFileRead(path.c_str())) {
+                    Ref<Asset> asset = importer->load(*fileData);
                     if (asset) {
-                        mLoadedAssets.emplace(assetUuid, UPtr<Asset>(asset));
+                        mLoadedAssets.emplace(assetUuid, asset);
                         mPathToUUID[relPath.string()] = assetUuid;
                         mUUIDToPath[assetUuid] = relPath.string();
 
@@ -264,7 +255,7 @@ ASSETS_NS
                 LOG_WARN("No writer provided for asset: {} of type: {}. Skipped", asset->getPath().c_str(), magic_enum::enum_name<>(asset->type()));
             } else {
                 writer->second->writeToFile(mAssetsRoot / asset->getPath().c_str(), asset.get());
-                updateMetadata(key, mAssetsRoot / asset->getPath().c_str());
+                updateMetadataCache(key, mAssetsRoot / asset->getPath().c_str());
             }
         }
         mDirty.clear();

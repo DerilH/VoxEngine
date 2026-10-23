@@ -6,7 +6,7 @@
 #include <VoxCore/Assert.h>
 
 ASSETS_NS
-    RegularFileAsset::RegularFileAsset(InternedString path, ArrayView<void> data) : Asset(path), mData(data) {
+    RegularFileAsset::RegularFileAsset(ArrayView<void> data) : Asset(nullptr, 0), mData(data) {
         VOX_CHECK(!mData.isNull(), "Invalid data pointer");
     }
 

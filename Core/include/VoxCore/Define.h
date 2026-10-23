@@ -13,7 +13,6 @@ constexpr int GIGABYTE_SIZE = MEGABYTE_SIZE * 1024;
 #define VULKAN_NS namespace Vox::Render::Vulkan {
 #define RESOURCES_NS namespace Vox::Resources {
 #define PLATFORM_NS namespace Vox::Platform {
-#define SERIALIZATION_NS namespace Vox::Resources::Serialization {
 #define NS_END }
 
 #define BUILDER_ENTRY(builderClass, name, type, dst) \

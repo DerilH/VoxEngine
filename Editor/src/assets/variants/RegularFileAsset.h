@@ -10,7 +10,7 @@ ASSETS_NS
     class RegularFileAsset : public Asset {
         ArrayView<void> mData;
     public:
-        RegularFileAsset(InternedString path, ArrayView<void> data);
+        RegularFileAsset(ArrayView<void> data);
         ~RegularFileAsset() override;
 
         ArrayView<void> getData() const {

@@ -14,7 +14,6 @@
 
 RESOURCES_NS
     class MaterialResource {
-        InternedString mName;
         HashMap<Render::ShaderStage, ShaderHandle> mShaders;
         TextureHandle mTexture;
 
@@ -28,8 +27,7 @@ RESOURCES_NS
     public:
         MaterialResource() = default;
 
-        MaterialResource(InternedString name,
-                         HashMap<Render::ShaderStage, ShaderHandle> shaders,
+        MaterialResource(HashMap<Render::ShaderStage, ShaderHandle> shaders,
                          Render::PolygonMode polygonMode,
                          Render::CullMode cullMode,
                          Render::PrimitiveTopology topology,
@@ -37,7 +35,7 @@ RESOURCES_NS
                          bool depthWrite = true,
                          Render::CompareOp depthCompareOp = Render::CompareOp::LESS_OR_EQUAL,
                          TextureHandle texture = {})
-            : mName(name),
+            :
               mShaders(std::move(shaders)),
               mTexture(texture),
               mPolygonMode(polygonMode),
@@ -57,7 +55,6 @@ RESOURCES_NS
             return {};
         }
 
-        InternedString getName() const noexcept { return mName; }
         const HashMap<Render::ShaderStage, ShaderHandle> &getShaders() const noexcept { return mShaders; }
         bool hasShader(Render::ShaderStage stage) const noexcept { return mShaders.contains(stage); }
         ShaderHandle getShader(Render::ShaderStage stage) const {

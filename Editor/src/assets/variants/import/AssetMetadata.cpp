@@ -6,19 +6,15 @@
 
 ASSETS_NS
     void AssetMetadata::serialize(FILE *file) const {
-        SerializationContext<Json> ctx;
-        serializeInternal(file, ctx, "uuid", uuid, "version", version, "type", type);
-        ctx.flush(file);
+        SERIALIZE(file, FIELD(uuid), FIELD(version), FIELD(type));
     }
 
-    Expected<UPtr<AssetMetadata>> AssetMetadata::deserialize(FILE *file) {
+    Expected<UPtr<AssetMetadata> > AssetMetadata::deserialize(FILE *file) {
         VOX_EXPECT(file != nullptr, "Invalid file for metadata deserialization");
         auto metadata = makeUPtr<AssetMetadata>();
-        auto ctx = SerializationContext<Json>::createForReading(file);
-        if (ctx.readRoot) {
-            deserializeInternal(file, ctx, "uuid", metadata->uuid, "version", metadata->version, "type", metadata->type);
-            return metadata;
-        }
-        VOX_EXPECT(false, "Invalid metadata file, root not found")
+        auto ctx = contextForReading(file);
+        deserializeInternal(file, ctx, "uuid", metadata->uuid, "version", metadata->version, "type", metadata->type);
+        return metadata;
     }
+
 NS_END

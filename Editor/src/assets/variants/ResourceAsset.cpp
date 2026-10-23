@@ -7,10 +7,8 @@
 #include <VoxCore/Assert.h>
 
 ASSETS_NS
-    Asset::Asset(InternedString path, Asset **nested, uint32_t nestedCount)
-        : mPath(path),
-          mName(std::filesystem::path(path.c_str()).filename().string()),
-          mNestedResources(nested),
+    Asset::Asset(Asset **nested, uint32_t nestedCount)
+        : mNestedResources(nested),
           mNestedResourceCount(nestedCount) {
     }
 

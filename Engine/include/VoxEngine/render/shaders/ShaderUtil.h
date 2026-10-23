@@ -1,5 +1,6 @@
 #pragma once
 #include <filesystem>
+#include <spirv.hpp>
 #include <stdexcept>
 #include <string>
 #include <shaderc/shaderc.h>
@@ -15,6 +16,16 @@ namespace Vox::Render::Shaders {
             default: throw std::invalid_argument("Unknown shader type");
         }
     }
+
+    inline ShaderStage shaderTypeFrom(spv::ExecutionModel model) {
+        switch (model) {
+            case spv::ExecutionModelVertex: return ShaderStage::VERTEX;
+            case spv::ExecutionModelFragment: return ShaderStage::FRAGMENT;
+            default: VOX_CHECK_FMT(false, "Unsupported shader type {}", static_cast<uint32_t>(model));;
+        }
+    }
+
+
     inline ShaderStage shaderTypeFrom(std::string path) {
         if (path.ends_with(".vert")) return ShaderStage::VERTEX;
         if (path.ends_with(".frag")) return ShaderStage::FRAGMENT;

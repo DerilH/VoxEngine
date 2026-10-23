@@ -173,7 +173,7 @@ namespace Vox::Editor {
                 buffer.assign(static_cast<const char *>(payload->Data), payload->DataSize);
                 auto assetMgr = Gui::GetAssetManager();
                 if (assetMgr) {
-                    auto asset = assetMgr->get<Assets::ModelAsset>(buffer.c_str());
+                    auto asset = assetMgr->findByPath<Assets::ModelAsset>(buffer.c_str());
                     if (asset) {
                         for (int i = 0; i < asset.value()->getNestedCount(); ++i) {
                             auto mesh = asset.value()->getNestedUnsafe<Assets::MeshAsset>(i);

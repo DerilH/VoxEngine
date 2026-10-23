@@ -14,7 +14,6 @@ Expected<Resources::MeshResource> AssetConverter::convertMesh(ConstRef<MeshAsset
     std::vector<uint32_t> indices = asset->getIndices();
 
     Resources::MeshResource res(
-        asset->getName(),
         std::move(interleaved),
         std::move(vertices),
         std::move(normals),
@@ -28,7 +27,7 @@ Expected<Resources::MeshResource> AssetConverter::convertMesh(ConstRef<MeshAsset
 
 Expected<Resources::ShaderResource> AssetConverter::convertShader(ConstRef<ShaderAsset> asset) {
     VOX_EXPECT(asset != nullptr, "Null ShaderAsset pointer");
-    Resources::ShaderResource res(asset->getName(), asset->getCompiled());
+    Resources::ShaderResource res(asset->getCompiled());
     auto valRes = res.validate();
     VOX_EXPECT(valRes, valRes.error());
     return res;
@@ -43,7 +42,6 @@ Expected<Resources::TextureResource> AssetConverter::convertTexture(ConstRef<Tex
     std::memcpy(pixels.data(), pixelsView.pData, pixelsView.size());
 
     Resources::TextureResource res(
-        asset->getName(),
         asset->getExtent(),
         Render::Format::RGBA8,
         std::move(pixels)
@@ -65,7 +63,7 @@ Expected<Resources::MaterialResource> AssetConverter::convertMaterial(
 
     HashMap<Render::ShaderStage, Resources::ShaderHandle> shaderHandles;
     for (const auto &[stage, shaderPath]: asset->shaders) {
-        auto shaderAsset = assetManager->get<ShaderAsset>(shaderPath);
+        auto shaderAsset = assetManager->findByPath<ShaderAsset>(shaderPath);
         VOX_EXPECT(shaderAsset, "Failed to resolve shader at '{}' for material '{}'", shaderPath.c_str(), asset->getName().c_str());
 
         UUID shaderUuid = assetManager->getUUID(shaderPath);
@@ -76,7 +74,7 @@ Expected<Resources::MaterialResource> AssetConverter::convertMaterial(
 
     Resources::TextureHandle texHandle{};
     if (!asset->texture.empty()) {
-        auto texAsset = assetManager->get<TextureAsset>(asset->texture);
+        auto texAsset = assetManager->findByPath<TextureAsset>(asset->texture);
         if (texAsset) {
             UUID texUuid = assetManager->getUUID(asset->texture);
             auto handleRes = toResource(*texAsset, resManager, texUuid);
@@ -219,7 +217,7 @@ Expected<Resources::MaterialHandle> AssetConverter::toResource(
         if (existing) return *existing;
     }
 
-    auto existingByName = resManager->find<Resources::MaterialResource>(asset->getPath());
+    auto existingByName = resManager->find<Resources::MaterialResource>();
     if (existingByName) return *existingByName;
 
     auto matRes = convertMaterial(asset, resManager, assetManager);
@@ -275,35 +273,35 @@ Expected<Resources::ResourceHandleRaw> AssetConverter::getOrConvert(
 
     switch (meta->type) {
         case AssetType::MESH: {
-            auto asset = assetManager->get<MeshAsset>(assetUuid);
+            auto asset = assetManager->getOrLoad<MeshAsset>(assetUuid);
             VOX_EXPECT(asset, asset.error());
             auto handle = toResource(*asset, resManager, assetUuid);
             VOX_EXPECT(handle, handle.error());
             return static_cast<Resources::ResourceHandleRaw>(*handle);
         }
         case AssetType::MODEL: {
-            auto asset = assetManager->get<ModelAsset>(assetUuid);
+            auto asset = assetManager->getOrLoad<ModelAsset>(assetUuid);
             VOX_EXPECT(asset, asset.error());
             auto handle = toResource(*asset, resManager, assetUuid);
             VOX_EXPECT(handle, handle.error());
             return static_cast<Resources::ResourceHandleRaw>(*handle);
         }
         case AssetType::MATERIAL: {
-            auto asset = assetManager->get<MaterialAsset>(assetUuid);
+            auto asset = assetManager->getOrLoad<MaterialAsset>(assetUuid);
             VOX_EXPECT(asset, asset.error());
             auto handle = toResource(*asset, resManager, assetManager, assetUuid);
             VOX_EXPECT(handle, handle.error());
             return static_cast<Resources::ResourceHandleRaw>(*handle);
         }
         case AssetType::SHADER: {
-            auto asset = assetManager->get<ShaderAsset>(assetUuid);
+            auto asset = assetManager->getOrLoad<ShaderAsset>(assetUuid);
             VOX_EXPECT(asset, asset.error());
             auto handle = toResource(*asset, resManager, assetUuid);
             VOX_EXPECT(handle, handle.error());
             return static_cast<Resources::ResourceHandleRaw>(*handle);
         }
         case AssetType::TEXTURE: {
-            auto asset = assetManager->get<TextureAsset>(assetUuid);
+            auto asset = assetManager->getOrLoad<TextureAsset>(assetUuid);
             VOX_EXPECT(asset, asset.error());
             auto handle = toResource(*asset, resManager, assetUuid);
             VOX_EXPECT(handle, handle.error());

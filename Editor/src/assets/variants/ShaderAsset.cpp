@@ -6,8 +6,8 @@
 #include <VoxEngine/render/shaders/CompiledShader.h>
 
 ASSETS_NS
-    ShaderAsset::ShaderAsset(std::string path, const Render::Shaders::CompiledShader compiled)
-        : Asset(InternedString(path)), mCompiled(compiled) {
+    ShaderAsset::ShaderAsset(const Render::Shaders::CompiledShader compiled)
+        : Asset(nullptr, 0), mCompiled(compiled) {
     }
 
     const Render::Shaders::CompiledShader &ShaderAsset::getCompiled() const {

@@ -9,5 +9,5 @@
     "depthTest": true,
     "depthWrite": true,
     "depthCompareOp": "LESS_OR_EQUAL",
-    "texture": "textures/Wood.png"
+    "texture": "textures/testBricks.jpg"
 }

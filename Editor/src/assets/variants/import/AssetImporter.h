@@ -17,7 +17,7 @@ ASSETS_NS
 
         virtual ~AssetImporter() = default;
 
-        virtual Ref<Asset> load(InternedString path, ArrayView<void> data) = 0;
+        virtual Ref<Asset> load(FILE *data) = 0;
         virtual AssetType type() = 0;
     };
 NS_END

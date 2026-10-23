@@ -96,8 +96,8 @@ namespace Vox::Render::Shaders {
     CompiledShader ShaderCompiler::compile(const ShaderSrc& src) const {
         const shaderc::SpvCompilationResult result = mCompiler.CompileGlslToSpv(
                 src.src,
-                vox2shaderc(src.type),
-                src.name.c_str(),
+                shaderc_glsl_infer_from_source,
+                "",
                 mCompilerOptions
         );
 
@@ -105,8 +105,9 @@ namespace Vox::Render::Shaders {
         const std::vector bin(result.cbegin(), result.cend());
 
         spirv_cross::Compiler compiler(bin);
+        auto model = compiler.get_execution_model();
+        auto type = shaderTypeFrom(model);
         spirv_cross::ShaderResources resources = compiler.get_shader_resources();
-
         auto inputs = getAttributes(compiler, resources.stage_inputs, ShaderAttribute::Direction::IN);
         auto outputs = getAttributes(compiler, resources.stage_outputs, ShaderAttribute::Direction::OUT);
 
@@ -131,15 +132,15 @@ namespace Vox::Render::Shaders {
 
         Vector<PushConstantRange> pushConstants;
         for (const auto& pc: resources.push_constant_buffers) {
-            const spirv_cross::SPIRType& type = compiler.get_type(pc.base_type_id);
+            const spirv_cross::SPIRType& spvType = compiler.get_type(pc.base_type_id);
             size_t size = 0;
-            if (type.basetype == spirv_cross::SPIRType::Struct) {
-                size = compiler.get_declared_struct_size(type);
+            if (spvType.basetype == spirv_cross::SPIRType::Struct) {
+                size = compiler.get_declared_struct_size(spvType);
             }
-            pushConstants.emplace_back(0, static_cast<uint32_t>(size), src.type);
+            pushConstants.emplace_back(0, static_cast<uint32_t>(size), type);
         }
 
-        return CompiledShader(src.type, std::move(inputs), std::move(outputs), std::move(uniforms), src.name, std::move(bin), std::move(pushConstants));
+        return CompiledShader(type, std::move(inputs), std::move(outputs), std::move(uniforms), "", std::move(bin), std::move(pushConstants));
     }
 
     shaderc_shader_kind getShaderKind(const std::filesystem::path& path) {
