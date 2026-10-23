@@ -181,7 +181,7 @@ namespace Vox::Editor {
         if (assets.empty()) return;
 
         for (auto &asset: assets) {
-            auto icon = new AssetIcon(asset);
+            auto icon = new AssetIcon(mAssetManager.get);
 
             icon->setOnDoubleClick([asset, this, icon]() {
                 if (asset->type() == AssetType::MATERIAL) {

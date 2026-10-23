@@ -62,7 +62,6 @@ ASSETS_NS
 
         HashMap<InternedString, UUID> mPathToUUID;
         HashMap<UUID, InternedString> mUUIDToPath;
-        HashMap<UUID, Asset *> mNestedAssets;
 
         Vector<UUID> mDirty;
         static const UPtr<RegularFileImporter> sRegularLoader;
@@ -102,11 +101,6 @@ ASSETS_NS
             if (it != mPathToUUID.end()) {
                 return getOrLoad<T>(it->second);
             }
-            // auto nestedIt = mNestedAssets.find(path);
-            // if (nestedIt != mNestedAssets.end()) {
-                // VOX_EXPECT(nestedIt->second->type() == T::StaticType(), "Asset type mismatch");
-                // return static_cast<ConstRef<T>>(nestedIt->second);
-            // }
             VOX_EXPECT(false, "Cannot find asset: {}", path.c_str());
         }
 
@@ -114,18 +108,6 @@ ASSETS_NS
             auto it = mLoadedAssets.find(key);
             return it != mLoadedAssets.end() ? it->second.get() : nullptr;
         }
-
-        // ConstRef<Asset> getAsset(const InternedString path) const {
-        //     auto it = mPathToUUID.find(path);
-        //     if (it != mPathToUUID.end()) {
-        //         return getAsset(it->second);
-        //     }
-        //     auto nestedIt = mNestedAssets.find(path);
-        //     if (nestedIt != mNestedAssets.end()) {
-        //         return nestedIt->second;
-        //     }
-        //     return nullptr;
-        // }
 
         template<std::derived_from<Asset> T>
         ConstRef<T> getDefault() const {
@@ -141,7 +123,7 @@ ASSETS_NS
 
         template<std::derived_from<Asset> T>
         UPtr<T> getForEdit(const InternedString key) const {
-            auto res = get<T>(key);
+            auto res = findByPath<T>(key);
             if (!res) return nullptr;
             return (*res)->cloneTyped();
         }
@@ -167,8 +149,6 @@ ASSETS_NS
 
         void processDirty();
 
-        Expected<ArrayView<void> > readFile(const std::filesystem::path &path) const;
-
         ConstRef<AssetDirectory> getRootDir() const {
             return mRootDir.get();
         }
@@ -181,7 +161,7 @@ ASSETS_NS
             return mLoadedAssets;
         }
 
-        Vector<ConstRef<Asset> > listDirAssets(InternedString path) const;
+        Vector<UUID> listDirAssets(InternedString path) const;
 
         void setPaths(std::filesystem::path path, std::filesystem::path cachePath);
 

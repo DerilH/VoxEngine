@@ -176,7 +176,7 @@ ASSETS_NS
                 UUID uuid = UUID::uuid4();
                 AssetType type = importer->type();
 
-                metadata = makeUPtr<AssetMetadata>(uuid, 1, type, nullptr);
+                metadata = makeUPtr<AssetMetadata>(uuid, path.filename().string(), 1, type, nullptr);
                 auto metaWriteFile = openFileWrite(metaPath.c_str());
                 if (metaWriteFile) {
                     metadata->serialize(*metaWriteFile);
@@ -184,6 +184,8 @@ ASSETS_NS
                 } else {
                     LOG_WARN("Cannot write metadata to {}: {}", metaPath.c_str(), metaWriteFile.error().format());
                 }
+            } else if (metadata->fileName.empty()) {
+                metadata->fileName = path.filename().string();
             }
 
             UUID assetUuid = metadata->uuid;
@@ -199,13 +201,6 @@ ASSETS_NS
                         mLoadedAssets.emplace(assetUuid, asset);
                         mPathToUUID[relPath.string()] = assetUuid;
                         mUUIDToPath[assetUuid] = relPath.string();
-
-                        for (uint32_t i = 0; i < asset->getNestedCount(); i++) {
-                            auto nested = asset->getNested()[i];
-                            if (nested) {
-                                mNestedAssets[nested->getPath()] = nested;
-                            }
-                        }
                     }
                 } else {
                     LOG_ERROR("Failed to read asset file {}: {}", path.c_str(), fileData.error().format());
@@ -226,22 +221,23 @@ ASSETS_NS
             if (it == mLoadedAssets.end() || !it->second) continue;
             const auto &asset = it->second;
             const auto &writer = sWriterByType.find(asset->type());
+            auto pathIt = mUUIDToPath.find(key);
+            if (pathIt == mUUIDToPath.end()) continue;
+            auto assetPath = mAssetsRoot / pathIt->second.c_str();
             if (writer == sWriterByType.end()) {
-                LOG_WARN("No writer provided for asset: {} of type: {}. Skipped", asset->getPath().c_str(), magic_enum::enum_name<>(asset->type()));
+                LOG_WARN("No writer provided for asset: {} of type: {}. Skipped", pathIt->second.c_str(), magic_enum::enum_name<>(asset->type()));
             } else {
-                writer->second->writeToFile(mAssetsRoot / asset->getPath().c_str(), asset.get());
-                updateMetadataCache(key, mAssetsRoot / asset->getPath().c_str());
+                if (auto file = openFileWrite(assetPath.c_str())) {
+                    writer->second->writeToFile(*file, asset.get());
+                    updateMetadataCache(key, assetPath);
+                }
             }
         }
         mDirty.clear();
     }
 
-    Expected<ArrayView<void> > AssetManager::readFile(const std::filesystem::path &path) const {
-        return readFileData(path);
-    }
-
-    Vector<ConstRef<Asset> > AssetManager::listDirAssets(InternedString path) const {
-        Vector<ConstRef<Asset> > out;
+    Vector<UUID> AssetManager::listDirAssets(InternedString path) const {
+        Vector<UUID> out;
         std::function<ConstRef<AssetDirectory>(ConstRef<AssetDirectory>, const std::string &)> findDir =
                 [&](ConstRef<AssetDirectory> node, const std::string &target) -> ConstRef<AssetDirectory> {
             if (!node) return nullptr;
@@ -259,10 +255,7 @@ ASSETS_NS
         auto dir = findDir(mRootDir.get(), target);
         if (dir) {
             for (const auto &uuid: dir->getAssets()) {
-                auto it = mLoadedAssets.find(uuid);
-                if (it != mLoadedAssets.end() && it->second) {
-                    out.emplace_back(it->second.get());
-                }
+                out.emplace_back(uuid);
             }
         }
         return out;

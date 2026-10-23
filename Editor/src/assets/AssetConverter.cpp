@@ -62,11 +62,11 @@ Expected<Resources::MaterialResource> AssetConverter::convertMaterial(
     VOX_EXPECT(assetManager != nullptr, "Null AssetManager pointer");
 
     HashMap<Render::ShaderStage, Resources::ShaderHandle> shaderHandles;
-    for (const auto &[stage, shaderPath]: asset->shaders) {
-        auto shaderAsset = assetManager->getOrLoad<ShaderAsset>(shaderPath);
-        VOX_EXPECT(shaderAsset, "Failed to resolve shader at '{}' for material '{}'", shaderPath);
+    for (const auto &[stage, shaderUuid]: asset->shaders) {
+        if (!shaderUuid.isValid()) continue;
+        auto shaderAsset = assetManager->getOrLoad<ShaderAsset>(shaderUuid);
+        VOX_EXPECT(shaderAsset, "Failed to resolve shader at '{}' for material", shaderUuid.toString().c_str());
 
-        UUID shaderUuid = assetManager->getUUID(shaderPath);
         auto handleRes = toResource(*shaderAsset, resManager, shaderUuid);
         VOX_EXPECT(handleRes, handleRes.error());
         shaderHandles[stage] = *handleRes;
@@ -76,8 +76,7 @@ Expected<Resources::MaterialResource> AssetConverter::convertMaterial(
     if (asset->albedo.isValid()) {
         auto texAsset = assetManager->getOrLoad<TextureAsset>(asset->albedo);
         if (texAsset) {
-            UUID texUuid = assetManager->getUUID(asset->albedo);
-            auto handleRes = toResource(*texAsset, resManager, texUuid);
+            auto handleRes = toResource(*texAsset, resManager, asset->albedo);
             if (handleRes) {
                 texHandle = *handleRes;
             }
@@ -112,16 +111,15 @@ Expected<Resources::ModelResource> AssetConverter::convertModel(
 
     for (uint32_t i = 0; i < asset->getNestedCount(); ++i) {
         auto meshAsset = asset->getNestedUnsafe<MeshAsset>(i);
-        VOX_EXPECT(meshAsset != nullptr, "Null nested mesh at index {} in model '{}'", i, asset->getName().c_str());
+        VOX_EXPECT(meshAsset != nullptr, "Null nested mesh at index {} in model", i);
 
         auto handleRes = toResource(meshAsset, resManager);
         VOX_EXPECT(handleRes, handleRes.error());
 
         meshHandles.push_back(*handleRes);
-        meshNames.push_back(meshAsset->getName());
     }
 
-    Resources::ModelResource res(asset->getName(), std::move(meshHandles), std::move(meshNames));
+    Resources::ModelResource res("", std::move(meshHandles), std::move(meshNames));
     auto valRes = res.validate();
     VOX_EXPECT(valRes, valRes.error());
     return res;
@@ -140,16 +138,13 @@ Expected<Resources::MeshHandle> AssetConverter::toResource(
         if (existing) return *existing;
     }
 
-    auto existingByName = resManager->findByAsset<Resources::MeshResource>(assetUuid);
-    if (existingByName) return *existingByName;
-
     auto meshRes = convertMesh(asset);
     VOX_EXPECT(meshRes, meshRes.error());
 
     if (assetUuid.isValid()) {
-        return resManager->addResourceWithAsset<Resources::MeshResource>(assetUuid, std::move(*meshRes), asset->getPath());
+        return resManager->addResourceWithAsset<Resources::MeshResource>(assetUuid, std::move(*meshRes));
     }
-    return resManager->addResource<Resources::MeshResource>(std::move(*meshRes), asset->getPath());
+    return resManager->addResource<Resources::MeshResource>(std::move(*meshRes));
 }
 
 Expected<Resources::ShaderHandle> AssetConverter::toResource(
@@ -165,16 +160,13 @@ Expected<Resources::ShaderHandle> AssetConverter::toResource(
         if (existing) return *existing;
     }
 
-    auto existingByName = resManager->find<Resources::ShaderResource>(asset->getPath());
-    if (existingByName) return *existingByName;
-
     auto shaderRes = convertShader(asset);
     VOX_EXPECT(shaderRes, shaderRes.error());
 
     if (assetUuid.isValid()) {
-        return resManager->addResourceWithAsset<Resources::ShaderResource>(assetUuid, std::move(*shaderRes), asset->getPath());
+        return resManager->addResourceWithAsset<Resources::ShaderResource>(assetUuid, std::move(*shaderRes));
     }
-    return resManager->addResource<Resources::ShaderResource>(std::move(*shaderRes), asset->getPath());
+    return resManager->addResource<Resources::ShaderResource>(std::move(*shaderRes));
 }
 
 Expected<Resources::TextureHandle> AssetConverter::toResource(
@@ -190,16 +182,13 @@ Expected<Resources::TextureHandle> AssetConverter::toResource(
         if (existing) return *existing;
     }
 
-    auto existingByName = resManager->find<Resources::TextureResource>(asset->getPath());
-    if (existingByName) return *existingByName;
-
     auto texRes = convertTexture(asset);
     VOX_EXPECT(texRes, texRes.error());
 
     if (assetUuid.isValid()) {
-        return resManager->addResourceWithAsset<Resources::TextureResource>(assetUuid, std::move(*texRes), asset->getPath());
+        return resManager->addResourceWithAsset<Resources::TextureResource>(assetUuid, std::move(*texRes));
     }
-    return resManager->addResource<Resources::TextureResource>(std::move(*texRes), asset->getPath());
+    return resManager->addResource<Resources::TextureResource>(std::move(*texRes));
 }
 
 Expected<Resources::MaterialHandle> AssetConverter::toResource(
@@ -216,16 +205,13 @@ Expected<Resources::MaterialHandle> AssetConverter::toResource(
         if (existing) return *existing;
     }
 
-    auto existingByName = resManager->find<Resources::MaterialResource>();
-    if (existingByName) return *existingByName;
-
     auto matRes = convertMaterial(asset, resManager, assetManager);
     VOX_EXPECT(matRes, matRes.error());
 
     if (assetUuid.isValid()) {
-        return resManager->addResourceWithAsset<Resources::MaterialResource>(assetUuid, std::move(*matRes), asset->getPath());
+        return resManager->addResourceWithAsset<Resources::MaterialResource>(assetUuid, std::move(*matRes));
     }
-    return resManager->addResource<Resources::MaterialResource>(std::move(*matRes), asset->getPath());
+    return resManager->addResource<Resources::MaterialResource>(std::move(*matRes));
 }
 
 Expected<Resources::ModelHandle> AssetConverter::toResource(
@@ -241,16 +227,13 @@ Expected<Resources::ModelHandle> AssetConverter::toResource(
         if (existing) return *existing;
     }
 
-    auto existingByName = resManager->find<Resources::ModelResource>(asset->getPath());
-    if (existingByName) return *existingByName;
-
     auto modelRes = convertModel(asset, resManager);
     VOX_EXPECT(modelRes, modelRes.error());
 
     if (assetUuid.isValid()) {
-        return resManager->addResourceWithAsset<Resources::ModelResource>(assetUuid, std::move(*modelRes), asset->getPath());
+        return resManager->addResourceWithAsset<Resources::ModelResource>(assetUuid, std::move(*modelRes));
     }
-    return resManager->addResource<Resources::ModelResource>(std::move(*modelRes), asset->getPath());
+    return resManager->addResource<Resources::ModelResource>(std::move(*modelRes));
 }
 
 Expected<Resources::ResourceHandleRaw> AssetConverter::getOrConvert(

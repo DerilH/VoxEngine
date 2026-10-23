@@ -23,7 +23,7 @@ namespace Vox::Editor {
     public:
         AssetExplorer(Ref<Engine> engine);
 
-        void openAsset(InternedString path);
+        void openAsset(UUID uuid);
         void openAsset(ConstRef<Assets::Asset> asset);
 
     protected:

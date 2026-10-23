@@ -22,8 +22,17 @@ ASSETS_NS
 
         AssetMetadata() = default;
 
+        AssetMetadata(const UUID uuid, InternedString fileName, const uint32_t version, const AssetType type, UPtr<ImportSettings> settings = nullptr)
+            : uuid(uuid),
+              fileName(std::move(fileName)),
+              version(version),
+              type(type),
+              settings(std::move(settings)) {
+        }
+
         AssetMetadata(const UUID uuid, const uint32_t version, const AssetType type, UPtr<ImportSettings> settings = nullptr)
             : uuid(uuid),
+              fileName(),
               version(version),
               type(type),
               settings(std::move(settings)) {

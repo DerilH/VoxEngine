@@ -177,7 +177,7 @@ namespace Vox::Editor {
                     if (asset) {
                         for (int i = 0; i < asset.value()->getNestedCount(); ++i) {
                             auto mesh = asset.value()->getNestedUnsafe<Assets::MeshAsset>(i);
-                            auto obj = mEngine->scene->createObject(mesh->getName());
+                            auto obj = mEngine->scene->createObject("mesh");
                             auto render = new Scene::MeshRendererComponent(obj);
 
                             auto resMgr = mEngine->getResourceManager();
