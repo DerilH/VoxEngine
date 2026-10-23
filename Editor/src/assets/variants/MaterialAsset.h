@@ -29,7 +29,7 @@ ASSETS_NS
 
         void serialize(FILE *file) const override;
 
-        static Expected<UPtr<MaterialAsset> > deserialize(FILE *file);
+        static Expected<MaterialAsset*> deserialize(FILE *file);
 
 
         AssetType type() const override {

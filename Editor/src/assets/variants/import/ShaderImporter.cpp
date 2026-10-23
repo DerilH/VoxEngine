@@ -7,12 +7,15 @@
 #include <VoxEngine/render/shaders/ShaderUtil.h>
 #include <VoxCore/containers/Containers.h>
 
+#include "../../AssetManager.h"
+
 ASSETS_NS
     Vox::Render::Shaders::ShaderCompiler ShaderImporter::compiler;
 
-    Ref<Asset> ShaderImporter::load(FILE *data) {
+    Ref<Asset> ShaderImporter::load(FILE *file) {
+        auto data = readFileData(file);
         Render::Shaders::ShaderSrc src(
-            InternedString(static_cast<const char *>(data.pData), data.size())
+            InternedString(static_cast<const char *>(data.value().pData), data.value().size())
         );
         Render::Shaders::CompiledShader shader = compiler.compile(src);
         return new ShaderAsset(shader);

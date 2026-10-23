@@ -31,6 +31,28 @@ ASSETS_NS
     class AssetWriter;
     class Defaults;
 
+    inline Expected<ArrayView<void> > readFileData(FILE *file) {
+        VOX_EXPECT(std::fseek(file, 0, SEEK_END) == 0, "Cant seek file {}", std::strerror(errno));
+
+        long fileSize = std::ftell(file);
+        if (fileSize < 0) {
+            fclose(file);
+            VOX_EXPECT(false, "Cant read file {}", std::strerror(errno));
+        }
+
+        std::rewind(file);
+
+        auto data = new char8_t[fileSize];
+        if (fileSize > 0) {
+            const auto bytesRead = std::fread(data, 1, fileSize, file);
+            if (bytesRead != static_cast<size_t>(fileSize)) {
+                delete[] data;
+                VOX_EXPECT(false, "Cant fully read file {}", std::strerror(errno));
+            }
+        }
+        return ArrayView(static_cast<void *>(data), fileSize);
+    }
+
     class AssetManager {
         std::filesystem::path mAssetsRoot;
         std::filesystem::path mAssetsCache;
@@ -40,7 +62,7 @@ ASSETS_NS
 
         HashMap<InternedString, UUID> mPathToUUID;
         HashMap<UUID, InternedString> mUUIDToPath;
-        HashMap<InternedString, Asset *> mNestedAssets;
+        HashMap<UUID, Asset *> mNestedAssets;
 
         Vector<UUID> mDirty;
         static const UPtr<RegularFileImporter> sRegularLoader;
@@ -54,7 +76,9 @@ ASSETS_NS
         void writeCache(UUID asset, const AssetCache &cache) const;
 
         Expected<AssetCache> readCache(UUID asset) const;
+
         Ref<AssetImporter> getImporterOrDefault(InternedString extension) const;
+
     public:
         AssetManager() = default;
 
@@ -78,11 +102,11 @@ ASSETS_NS
             if (it != mPathToUUID.end()) {
                 return getOrLoad<T>(it->second);
             }
-            auto nestedIt = mNestedAssets.find(path);
-            if (nestedIt != mNestedAssets.end()) {
-                VOX_EXPECT(nestedIt->second->type() == T::StaticType(), "Asset type mismatch");
-                return static_cast<ConstRef<T>>(nestedIt->second);
-            }
+            // auto nestedIt = mNestedAssets.find(path);
+            // if (nestedIt != mNestedAssets.end()) {
+                // VOX_EXPECT(nestedIt->second->type() == T::StaticType(), "Asset type mismatch");
+                // return static_cast<ConstRef<T>>(nestedIt->second);
+            // }
             VOX_EXPECT(false, "Cannot find asset: {}", path.c_str());
         }
 
@@ -91,17 +115,17 @@ ASSETS_NS
             return it != mLoadedAssets.end() ? it->second.get() : nullptr;
         }
 
-        ConstRef<Asset> getAsset(const InternedString path) const {
-            auto it = mPathToUUID.find(path);
-            if (it != mPathToUUID.end()) {
-                return getAsset(it->second);
-            }
-            auto nestedIt = mNestedAssets.find(path);
-            if (nestedIt != mNestedAssets.end()) {
-                return nestedIt->second;
-            }
-            return nullptr;
-        }
+        // ConstRef<Asset> getAsset(const InternedString path) const {
+        //     auto it = mPathToUUID.find(path);
+        //     if (it != mPathToUUID.end()) {
+        //         return getAsset(it->second);
+        //     }
+        //     auto nestedIt = mNestedAssets.find(path);
+        //     if (nestedIt != mNestedAssets.end()) {
+        //         return nestedIt->second;
+        //     }
+        //     return nullptr;
+        // }
 
         template<std::derived_from<Asset> T>
         ConstRef<T> getDefault() const {
@@ -110,7 +134,7 @@ ASSETS_NS
 
         template<std::derived_from<Asset> T>
         UPtr<T> getForEdit(const UUID key) const {
-            auto res = get<T>(key);
+            auto res = getOrLoad<T>(key);
             if (!res) return nullptr;
             return (*res)->cloneTyped();
         }
@@ -153,7 +177,7 @@ ASSETS_NS
             return mAssetsRoot;
         }
 
-        const HashMap<UUID, UPtr<Asset>> &getLoadedAssets() const {
+        const HashMap<UUID, UPtr<Asset> > &getLoadedAssets() const {
             return mLoadedAssets;
         }
 
@@ -186,4 +210,5 @@ ASSETS_NS
     inline ConstRef<ModelAsset> AssetManager::getDefault() const {
         return findByPath<ModelAsset>("defaults/DefaultCube.fbx").value();
     }
+
 NS_END

@@ -4,9 +4,11 @@
 
 #include "RegularFileImporter.h"
 #include "../RegularFileAsset.h"
+#include "../../AssetManager.h"
 
 ASSETS_NS
-    Ref<Asset> RegularFileImporter::load(FILE *data) {
-        return new RegularFileAsset(data);
+    Ref<Asset> RegularFileImporter::load(FILE *file) {
+        auto data = readFileData(file);
+        return new RegularFileAsset(*data);
     }
 NS_END

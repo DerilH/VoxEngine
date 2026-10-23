@@ -23,10 +23,10 @@ ASSETS_NS
         SERIALIZE(file, FIELD(shaders), FIELD(polygonMode), FIELD(cullMode), FIELD(topology), FIELD(depthTest), FIELD(depthWrite), FIELD(depthCompareOp), FIELD(albedo));
     }
 
-    Expected<UPtr<MaterialAsset>> MaterialAsset::deserialize(FILE *file) {
+    Expected<MaterialAsset*> MaterialAsset::deserialize(FILE *file) {
         auto m = new MaterialAsset();
         DESERIALIZE(file, FIELD(m->shaders), FIELD(m->polygonMode), FIELD(m->cullMode), FIELD(m->topology), FIELD(m->depthTest), FIELD(m->depthWrite), FIELD(m->depthCompareOp), FIELD(m->albedo));
-        return UPtr<MaterialAsset>(m);
+        return m;
     }
 
 

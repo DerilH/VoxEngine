@@ -63,8 +63,8 @@ Expected<Resources::MaterialResource> AssetConverter::convertMaterial(
 
     HashMap<Render::ShaderStage, Resources::ShaderHandle> shaderHandles;
     for (const auto &[stage, shaderPath]: asset->shaders) {
-        auto shaderAsset = assetManager->findByPath<ShaderAsset>(shaderPath);
-        VOX_EXPECT(shaderAsset, "Failed to resolve shader at '{}' for material '{}'", shaderPath.c_str(), asset->getName().c_str());
+        auto shaderAsset = assetManager->getOrLoad<ShaderAsset>(shaderPath);
+        VOX_EXPECT(shaderAsset, "Failed to resolve shader at '{}' for material '{}'", shaderPath);
 
         UUID shaderUuid = assetManager->getUUID(shaderPath);
         auto handleRes = toResource(*shaderAsset, resManager, shaderUuid);
@@ -73,10 +73,10 @@ Expected<Resources::MaterialResource> AssetConverter::convertMaterial(
     }
 
     Resources::TextureHandle texHandle{};
-    if (!asset->texture.empty()) {
-        auto texAsset = assetManager->findByPath<TextureAsset>(asset->texture);
+    if (asset->albedo.isValid()) {
+        auto texAsset = assetManager->getOrLoad<TextureAsset>(asset->albedo);
         if (texAsset) {
-            UUID texUuid = assetManager->getUUID(asset->texture);
+            UUID texUuid = assetManager->getUUID(asset->albedo);
             auto handleRes = toResource(*texAsset, resManager, texUuid);
             if (handleRes) {
                 texHandle = *handleRes;
@@ -85,7 +85,6 @@ Expected<Resources::MaterialResource> AssetConverter::convertMaterial(
     }
 
     Resources::MaterialResource res(
-        asset->getName(),
         std::move(shaderHandles),
         asset->polygonMode,
         asset->cullMode,
@@ -141,7 +140,7 @@ Expected<Resources::MeshHandle> AssetConverter::toResource(
         if (existing) return *existing;
     }
 
-    auto existingByName = resManager->find<Resources::MeshResource>(asset->getPath());
+    auto existingByName = resManager->findByAsset<Resources::MeshResource>(assetUuid);
     if (existingByName) return *existingByName;
 
     auto meshRes = convertMesh(asset);

@@ -46,7 +46,7 @@ ASSETS_NS
     // }
 
     Ref<Asset> MaterialImporter::load(FILE *data) {
-        return MaterialAsset::deserialize();
+        return *MaterialAsset::deserialize(data);
 
     // return new MaterialAsset(shaders, polygonMode, cullMode, topology, depthTest, depthWrite, depthCompareOp, texturePath);
     }

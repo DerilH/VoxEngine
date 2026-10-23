@@ -11,9 +11,7 @@
 ASSETS_NS
     Ref<Asset> TextureImporter::load(FILE *data) {
         int width = 0, height = 0, channels = 0;
-        unsigned char *img_data = stbi_load_from_memory(
-            static_cast<stbi_uc const *>(data.pData),
-            static_cast<int>(data.size()),
+        unsigned char *img_data = stbi_load_from_file(data,
             &width, &height, &channels,
             STBI_rgb_alpha
         );

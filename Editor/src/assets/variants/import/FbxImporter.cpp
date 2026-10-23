@@ -10,6 +10,8 @@
 #include <assimp/postprocess.h>
 #include <vector>
 
+#include "../../AssetManager.h"
+
 ASSETS_NS
     static std::vector<glm::vec3> readVec3Array(aiVector3D *vertices, size_t count) {
         std::vector<glm::vec3> vec(count);
@@ -65,10 +67,11 @@ ASSETS_NS
         return buffer;
     }
 
-    Ref<Asset> FbxImporter::load(FILE *data) {
+    Ref<Asset> FbxImporter::load(FILE *file) {
         Assimp::Importer importer{};
+        auto data = readFileData(file);
 
-        const aiScene *scene = importer.ReadFileFromMemory(data.pData, data.size(), aiPostProcessSteps::aiProcess_Triangulate);
+        const aiScene *scene = importer.ReadFileFromMemory(data.value().pData, data.value().size(), aiPostProcessSteps::aiProcess_Triangulate);
         VOX_CHECK_FMT(scene != nullptr, "Failed to load model: {}", importer.GetErrorString());
 
         auto **nested = static_cast<Asset **>(malloc(scene->mNumMeshes * sizeof(Asset *)));

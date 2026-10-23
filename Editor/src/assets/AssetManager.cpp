@@ -32,33 +32,6 @@ ASSETS_NS
         return file;
     }
 
-    Expected<ArrayView<void> > readFileData(const std::filesystem::path &path) {
-        auto file = openFileRead(path.c_str());
-        VOX_EXPECT(file, file.error());
-        VOX_EXPECT(std::fseek(*file, 0, SEEK_END) == 0, "Cant seek file {}", std::strerror(errno));
-
-        long fileSize = std::ftell(*file);
-        if (fileSize < 0) {
-            fclose(*file);
-            VOX_EXPECT(false, "Cant read file {}", std::strerror(errno));
-        }
-
-        std::rewind(*file);
-
-        auto data = new char8_t[fileSize];
-        if (fileSize > 0) {
-            const auto bytesRead = std::fread(data, 1, fileSize, *file);
-            if (bytesRead != static_cast<size_t>(fileSize)) {
-                delete[] data;
-                fclose(*file);
-                VOX_EXPECT(false, "Cant fully read file {}", std::strerror(errno));
-            }
-        }
-
-        fclose(*file);
-        return ArrayView(static_cast<void *>(data), fileSize);
-    }
-
     inline uint64_t readTime(const std::filesystem::path &path) {
         const auto ftime = std::filesystem::last_write_time(path);
         const auto sys_time = std::chrono::file_clock::to_sys(ftime);
@@ -122,10 +95,12 @@ ASSETS_NS
     Expected<AssetCache> createCache(const std::filesystem::path &path) {
         const auto size = std::filesystem::file_size(path);
         const auto mtime = readTime(path);
-        const auto file = readFileData(path);
+        auto file = openFileRead(path.c_str());
         VOX_EXPECT(file, file.error());
-        const auto [low64, high64] = XXH3_128bits(file->pData, file->size());
-        delete[] static_cast<char8_t *>(file->pData);
+        const auto data = readFileData(*file);
+        VOX_EXPECT(data, data.error());
+        const auto [low64, high64] = XXH3_128bits(data->pData, data->size());
+        delete[] static_cast<char8_t *>(data->pData);
         return AssetCache{Hash128(high64, low64), mtime, size};
     }
 
